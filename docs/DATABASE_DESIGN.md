@@ -1,7 +1,16 @@
 # T-Shirt Shop: Database Design
 
-Status: **Phase 1 logical design**. Phase 2 turns this into Flyway migrations
-(`backend/src/main/resources/db/migration`) with the exact DDL, indexes and seed data.
+Status: **Implemented in Phase 2** as Flyway migrations and verified on MySQL 8.4.
+
+| File | Contents | Environments |
+|------|----------|--------------|
+| `backend/src/main/resources/db/migration/V1__create_schema.sql` | All 31 tables, keys, indexes, CHECK constraints | All |
+| `backend/src/main/resources/db/migration/V2__seed_reference_data.sql` | Roles, categories, sizes, colours, T-Shirt types, print placements, fonts, charges, blank custom T-Shirts, settings | All |
+| `backend/src/main/resources/db/dev-data/V900__dev_sample_catalog.sql` | 13 sample products, 319 SKUs with stock, images, sample coupons | Dev only |
+| `database/setup/01-create-database.sql` | Database and application user creation | Run once per server |
+| `database/verify-migrations.sh` | Applies all migrations to a scratch DB and runs 37 constraint checks | Dev / CI |
+
+The exact DDL in `V1__create_schema.sql` is the source of truth. This document is the readable overview.
 
 Conventions:
 
@@ -38,6 +47,7 @@ The brief's required tables are all present. Extra supporting tables are marked 
 | `carts` | One active cart per user | UK `user_id` |
 | `cart_items` | Lines in a cart | FK `cart_id`, FK `inventory_id`, FK `custom_design_id` (nullable) |
 | `coupons` | Discount codes | UK `code`, type PERCENT/FLAT, min order, max discount, validity window, usage limits |
+| `coupon_redemptions` *(added)* | Which user used which coupon on which order, for per-user limits | UK `order_id`, IDX (`coupon_id`, `user_id`) |
 | `orders` | Order header | UK `order_number`, FK `user_id`, `order_status`, `payment_status`, `payment_method`, totals, shipping address snapshot |
 | `order_items` | Price snapshot per line | FK `order_id`, product name, size, color, unit price, customization breakdown JSON, FK `custom_design_id` |
 | `order_status_history` | Audit trail of order status changes | FK `order_id`, from/to status, `changed_by`, note |
@@ -84,6 +94,9 @@ erDiagram
   custom_designs ||--o{ cart_items : customizes
 
   coupons ||--o{ orders : applied_to
+  coupons ||--o{ coupon_redemptions : redeemed
+  orders ||--o| coupon_redemptions : uses
+  users ||--o{ coupon_redemptions : redeems
   orders ||--o{ order_items : contains
   inventory ||--o{ order_items : sold
   custom_designs ||--o{ order_items : printed_on
@@ -344,19 +357,52 @@ erDiagram
   }
 ```
 
-## 3. Integrity rules enforced in code
+## 3. Integrity rules
+
+Enforced by the database (CHECK and UNIQUE constraints, all covered by `verify-migrations.sh`):
+
+- Stock can never go negative, and reserved stock can never exceed stock on hand.
+- A discount price can never exceed the base price.
+- `orders.grand_total = subtotal + customization_total + shipping_charge - discount_total`.
+- `order_items.line_total = (unit_base_price + unit_customization_charge) * quantity`.
+- Order status, payment status, payment method and reservation status only accept their defined values.
+- A Razorpay order ID and a Razorpay payment ID can each belong to only one payment row. COD rows leave both empty.
+- A refund can never exceed the paid amount.
+- A webhook event ID can be stored only once.
+- Design uploads only record `image/png` or `image/jpeg`. Pincodes must be six digits not starting with 0. Ratings are 1 to 5.
+
+Enforced in application code:
 
 - One default address per user: set within a transaction that clears the previous default.
-- `inventory.quantity_reserved` never exceeds `quantity_on_hand`. Changes happen under `SELECT ... FOR UPDATE`, and a `CHECK` constraint backs it up.
-- `orders.grand_total` must equal the sum of item line totals plus shipping minus discount. This is asserted in `CheckoutService` and in tests.
+- Stock changes happen under `SELECT ... FOR UPDATE` on the inventory rows.
+- `orders.subtotal` and `customization_total` equal the sums over their items. This is asserted in `CheckoutService` and in tests.
+- Mutually exclusive print placements, for example FRONT with FULL_FRONT, are rejected using the `excludes` list in each placement's metadata.
 - A `payments` row reaches `SUCCESS` only after signature verification plus a gateway fetch, or a verified webhook.
 - `payment_webhook_events.event_id` is unique, so a duplicate delivery hits the constraint and is skipped.
 
-## 4. Seed data planned for Phase 2
+## 4. Seed data
 
-- Roles, one admin user (password from an environment variable on first start, never in a migration).
-- Categories: T-Shirts, Shirts, Pants, Customized T-Shirts.
-- Sizes S, M, L, XL, XXL plus pant waist sizes 28 to 38. Colors white, black, red, blue, green, yellow, navy, grey.
-- About 12 sample products with inventory, for development only (in a dev-only migration location).
-- Customization options and charges from the pricing table in [ARCHITECTURE.md](ARCHITECTURE.md#9-pricing-engine).
-- App settings: flat shipping 49, free shipping above 999, reservation 15 minutes.
+Reference data (all environments, `V2`):
+
+- Roles `ROLE_CUSTOMER` and `ROLE_ADMIN`. No user rows: the first admin is created at start-up from `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
+- Categories T-Shirts, Shirts, Pants and Customized T-Shirts.
+- Sizes S, M, L, XL, XXL and waist sizes W28 to W38. Fourteen colours with hex values.
+- T-Shirt types Round Neck, V-Neck, Polo and Oversized. Each has a blank base product priced at INR 299 with every size and eight designer colours, at zero stock.
+- Print placements Front, Back, Left Chest, Full Front and Full Back, with print-area boxes and exclusion rules. Eight Google Fonts for text.
+- Charges: Front 50, Back 50, Left Chest 30, Full Front 90, Full Back 90, Custom Text 30, Premium Design 100, Oversized 80, Polo 60, XXL 40.
+- Settings: shipping 49 below a free-shipping threshold of 999, 15-minute stock hold, 24-hour unpaid cancel, COD enabled up to 5000, 5 MB design uploads.
+
+Development data (dev profile only, `V900`):
+
+- 13 sample products: 5 T-Shirts, 4 Shirts and 4 Pants, with discounts, featured and new-arrival flags.
+- 319 SKUs with stock, including 50 units of every blank custom T-Shirt variant.
+- Image paths under `/assets/products/` and `/assets/mockups/`, supplied by the frontend in Phase 6.
+- Coupons `WELCOME10` and `FLAT100`.
+
+## 5. Re-running the verification
+
+```bash
+MYSQL_PWD=<root password> ./database/verify-migrations.sh /path/to/mysql root
+```
+
+It drops and recreates the scratch database `tshirt_validate`, applies every migration, runs the checks, and drops the scratch database again.

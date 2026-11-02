@@ -1,15 +1,15 @@
 # Project Progress
 
-Last updated: 2026-11-02 (Phase 1)
+Last updated: 2026-11-02 (Phase 2)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
 
 - [x] Repository Analysis
 - [x] Architecture Design
-- [ ] Database Design (logical design and ER diagram done in Phase 1; Flyway SQL in Phase 2)
+- [x] Database Design (schema, ER diagram, Flyway migrations, seed data, 37 constraint checks passing)
 - [ ] Spring Boot Setup
-- [ ] MySQL Integration
+- [ ] MySQL Integration (database server and app user ready; Spring Boot connection comes in Phase 3)
 - [ ] Authentication
 - [ ] Product Management
 - [ ] Angular Homepage
@@ -54,7 +54,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | # | Phase | Main deliverables | Status |
 |---|-------|-------------------|--------|
 | 1 | Repository analysis and architecture | Analysis, architecture doc, ER diagram, roadmap, README, .gitignore, env template | Done |
-| 2 | Database design and MySQL configuration | Flyway `V1__schema.sql`, seed migrations, MySQL user/DB setup script | Pending |
+| 2 | Database design and MySQL configuration | Flyway `V1__create_schema.sql`, `V2__seed_reference_data.sql`, dev `V900` sample catalog, MySQL setup script, verifier | Done |
 | 3 | Spring Boot backend setup | Maven wrapper project, `com.shop` packages, profiles, Swagger, global errors, health check | Pending |
 | 4 | Authentication and security | Register, login, refresh, logout, forgot/reset password, JWT, BCrypt, roles, rate limit | Pending |
 | 5 | Product management | Category/product CRUD, images, variants, inventory, search, filters, sort, pagination | Pending |
@@ -77,10 +77,10 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 
 | # | Item | Needed by | Action for owner |
 |---|------|-----------|------------------|
-| B1 | **JDK 21 is not installed.** The machine has Java 17.0.13 | Phase 3 | Install Temurin JDK 21 and set `JAVA_HOME`, or approve a portable JDK 21 inside the user folder |
-| B2 | **Maven is not installed** | Phase 3 | None. The project will include the Maven wrapper, which downloads Maven itself |
-| B3 | **Node.js and npm are not installed** | Phase 6 | Install Node.js LTS (needed for Angular CLI) |
-| B4 | **MySQL 8 is not installed or not on PATH** | Phase 2 testing | Install MySQL 8 Server, or Docker Desktop to run it in a container |
+| ~~B1~~ | Resolved 2026-11-02: portable Temurin JDK 21.0.13 in `C:\Users\ADMIN\tools`, user `JAVA_HOME` set | - | Java 17 remains first on the system PATH, so build with `JAVA_HOME` (the Maven wrapper does) |
+| ~~B2~~ | Maven: the project will use the Maven wrapper | - | None |
+| ~~B3~~ | Resolved 2026-11-02: portable Node.js 24.22.2 LTS, on user PATH | - | None |
+| ~~B4~~ | Resolved 2026-11-02: portable MySQL 8.4.13 LTS on 127.0.0.1:3306, databases `tshirt_shop` and `tshirt_shop_test`, user `tshirt_app` | - | Start it after a reboot with `C:\Users\ADMIN\tools\start-mysql.cmd`. It is not a Windows service |
 | B5 | Razorpay test keys | Phase 13 | Create test-mode Key ID, Key Secret and Webhook Secret, and put them in a local `.env`. Never paste the secret into chat or commit it |
 | B6 | SMTP credentials | Phase 17 | Provide a mail account (for example Gmail app password or a transactional provider) via `.env` |
 | B7 | Cloudinary account (optional) | Phase 9 | Only if cloud storage is preferred over secure local storage |
@@ -93,9 +93,14 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Stock reservation of 15 minutes for unpaid online orders, then automatic release. Late payments are re-reserved or auto-refunded.
 - Shipping: flat INR 49, free above INR 999. Admin can change both.
 - COD orders are confirmed immediately with payment status `PENDING` until cash is collected.
+- Each T-Shirt type (Round Neck, V-Neck, Polo, Oversized) is its own blank base product, so stock is tracked per type, size and colour.
+- Polo carries a INR 60 type charge and XXL a INR 40 size charge. Both were not in the brief and are editable by the admin.
+- COD is limited to orders up to INR 5000. Admin-editable.
+- Enum-like columns are VARCHAR with CHECK constraints, so adding a value is a small migration.
 
 ## Change log
 
 | Date | Phase | Summary | Commit |
 |------|-------|---------|--------|
-| 2026-11-02 | 1 | Repository analysis, architecture, database design, roadmap, README, .gitignore, env template | see git log on `DEV` |
+| 2026-11-02 | 1 | Repository analysis, architecture, database design, roadmap, README, .gitignore, env template | `2d6df49` |
+| 2026-11-02 | 2 | Flyway schema (31 tables), reference seed, dev sample catalog, MySQL setup, migration verifier (37/37 pass) | see git log on `DEV` |

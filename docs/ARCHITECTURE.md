@@ -237,6 +237,7 @@ Payment APIs: `POST /api/payments/create-order`, `POST /api/payments/verify`,
 | TEXT | CUSTOM_TEXT | 30 |
 | DESIGN | PREMIUM_DESIGN | 100 |
 | TSHIRT_TYPE | OVERSIZED | 80 |
+| TSHIRT_TYPE | POLO | 60 |
 | SIZE | XXL | 40 |
 | COLOR | any color | 0 |
 

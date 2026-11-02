@@ -5,8 +5,8 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phase 1 of 19 complete (architecture and design). Application code
-> starts in Phase 2. See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> **Status:** Phases 1 and 2 of 19 complete (architecture, database schema and
+> migrations). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -25,6 +25,7 @@ online payments alongside Cash on Delivery.
 T-Shirt-Shop/
 ├── backend/              # Spring Boot API (Phase 3+)
 ├── frontend/             # Angular app (Phase 6+)
+├── database/             # MySQL setup script, server settings, migration verifier
 ├── docs/
 │   ├── ARCHITECTURE.md   # system design, payment flow, stock reservation, pricing
 │   ├── DATABASE_DESIGN.md# tables and Mermaid ER diagram
@@ -55,13 +56,26 @@ cp .env.example .env   # then fill in real local values
 
 ## Database configuration
 
-```sql
-CREATE DATABASE tshirt_shop CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
-CREATE USER 'tshirt_app'@'localhost' IDENTIFIED BY '<strong password>';
-GRANT ALL PRIVILEGES ON tshirt_shop.* TO 'tshirt_app'@'localhost';
+1. Edit the password placeholder in `database/setup/01-create-database.sql`, then run it as a MySQL admin:
+
+   ```bash
+   mysql -u root -p < database/setup/01-create-database.sql
+   ```
+
+2. Put the same password in `.env` as `DB_PASSWORD`.
+3. Recommended server settings are in `database/setup/my.cnf.example`. Use UTF-8 (`utf8mb4`) and UTC.
+
+Flyway creates and updates all tables when the backend starts. Migrations live in
+`backend/src/main/resources/db/migration`. Development sample data lives in
+`backend/src/main/resources/db/dev-data` and only loads with the `dev` profile.
+
+To check the migrations and constraints against a scratch database:
+
+```bash
+MYSQL_PWD=<root password> ./database/verify-migrations.sh mysql root
 ```
 
-Flyway creates all tables on backend start-up (Phase 2 onward).
+The schema overview and ER diagram are in [docs/DATABASE_DESIGN.md](docs/DATABASE_DESIGN.md).
 
 ## Backend execution
 
