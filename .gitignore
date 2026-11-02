@@ -1,0 +1,51 @@
+# ===== Secrets: never commit =====
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+**/application-local.yml
+**/application-local.properties
+**/application-prod-secrets.*
+secrets/
+
+# ===== Java / Maven / Spring Boot =====
+backend/target/
+target/
+*.class
+*.log
+hs_err_pid*
+.mvn/wrapper/maven-wrapper.jar
+!**/.mvn/wrapper/maven-wrapper.properties
+
+# ===== Angular / Node =====
+frontend/node_modules/
+node_modules/
+frontend/dist/
+dist/
+frontend/.angular/
+.angular/
+coverage/
+npm-debug.log*
+yarn-error.log*
+
+# ===== Uploaded files (local image storage) =====
+uploads/
+backend/uploads/
+
+# ===== IDE / OS =====
+.idea/
+*.iml
+.vscode/*
+!.vscode/extensions.json
+.classpath
+.project
+.settings/
+.DS_Store
+Thumbs.db
+
+# ===== Database dumps =====
+*.sql.gz
+backups/
