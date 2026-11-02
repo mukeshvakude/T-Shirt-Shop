@@ -29,7 +29,7 @@ public final class TestSecurity {
     public static AppProperties app() {
         return new AppProperties("http://localhost:4200/",
                 new AppProperties.Cors(java.util.List.of("http://localhost:4200")),
-                new AppProperties.Storage("local", "./uploads"),
+                new AppProperties.Storage("local", "./uploads", 5_242_880, 4000),
                 new AppProperties.Stock(15),
                 true);
     }

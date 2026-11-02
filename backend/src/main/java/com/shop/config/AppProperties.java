@@ -26,7 +26,8 @@ public record AppProperties(
     public record Cors(@NotEmpty List<String> allowedOrigins) {
     }
 
-    public record Storage(@NotBlank String provider, @NotBlank String localDir) {
+    public record Storage(@NotBlank String provider, @NotBlank String localDir, @Min(1024) long maxImageBytes,
+            @Min(100) int maxImageDimension) {
     }
 
     public record Stock(@Min(1) int reservationMinutes) {

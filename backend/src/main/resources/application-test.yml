@@ -29,3 +29,5 @@ app:
       full-name: Test Admin
   jobs:
     enabled: false
+  storage:
+    local-dir: ./target/test-uploads

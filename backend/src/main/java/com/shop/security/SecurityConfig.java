@@ -28,6 +28,7 @@ public class SecurityConfig {
             "/api/categories/**",
             "/api/reference/**",
             "/api/products/**",
+            "/media/**",
     };
 
     /** Auth endpoints that must work without an access token. */

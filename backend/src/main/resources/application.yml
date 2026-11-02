@@ -85,6 +85,8 @@ app:
   storage:
     provider: ${STORAGE_PROVIDER:local}
     local-dir: ${STORAGE_LOCAL_DIR:./uploads}
+    max-image-bytes: 5242880
+    max-image-dimension: 4000
   stock:
     reservation-minutes: ${STOCK_RESERVATION_MINUTES:15}
   api-docs-enabled: true

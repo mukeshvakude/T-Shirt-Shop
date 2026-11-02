@@ -10,11 +10,25 @@ import org.springframework.jdbc.core.JdbcTemplate;
 public final class DatabaseCleaner {
 
     public static final String BOOTSTRAP_ADMIN_EMAIL = "admin@test.local";
+    /** Products seeded by Flyway V2 (blank customizable T-Shirts). */
+    private static final String SEEDED_PRODUCTS =
+            "('custom-round-neck-t-shirt','custom-v-neck-t-shirt','custom-polo-t-shirt','custom-oversized-t-shirt')";
+    private static final String SYSTEM_CATEGORIES = "('TSHIRTS','SHIRTS','PANTS','CUSTOM_TSHIRTS')";
 
     private DatabaseCleaner() {
     }
 
     public static void clean(JdbcTemplate jdbc) {
+        // Catalog created by tests
+        jdbc.update("DELETE i FROM product_images i JOIN products p ON p.id = i.product_id WHERE p.slug NOT IN "
+                + SEEDED_PRODUCTS);
+        jdbc.update("DELETE v FROM inventory v JOIN products p ON p.id = v.product_id WHERE p.slug NOT IN "
+                + SEEDED_PRODUCTS);
+        jdbc.update("DELETE FROM products WHERE slug NOT IN " + SEEDED_PRODUCTS);
+        jdbc.update("DELETE FROM categories WHERE code NOT IN " + SYSTEM_CATEGORIES);
+        jdbc.update("UPDATE categories SET active = TRUE");
+
+        // Accounts
         jdbc.update("DELETE FROM refresh_tokens");
         jdbc.update("DELETE FROM password_reset_tokens");
         jdbc.update("DELETE ur FROM user_roles ur JOIN users u ON u.id = ur.user_id WHERE u.email <> ?",
