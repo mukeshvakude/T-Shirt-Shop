@@ -1,0 +1,40 @@
+<mat-sidenav-container class="shell">
+  <mat-sidenav #drawer [mode]="isHandset() ? 'over' : 'side'" [opened]="!isHandset()" class="nav">
+    <div class="brand">
+      <span class="logo">T—SHIRT SHOP</span>
+      <span class="sub">Admin</span>
+    </div>
+    <nav>
+      @for (item of nav; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" (click)="isHandset() && drawer.close()">
+          <span class="material-symbols-outlined">{{ item.icon }}</span>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+    <p class="next muted">Orders, payments, customers and the dashboard arrive in later phases.</p>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="topbar">
+      @if (isHandset()) {
+        <button mat-icon-button (click)="drawer.toggle()" aria-label="Open menu">
+          <span class="material-symbols-outlined">menu</span>
+        </button>
+      }
+      <span class="spacer"></span>
+      <button mat-button [matMenuTriggerFor]="userMenu" class="user">
+        <span class="avatar">{{ initials() }}</span>
+        <span class="name">{{ auth.user()?.fullName }}</span>
+      </button>
+      <mat-menu #userMenu="matMenu" xPosition="before">
+        <div class="menu-email">{{ auth.user()?.email }}</div>
+        <button mat-menu-item (click)="auth.logout()">
+          <span class="material-symbols-outlined">logout</span> Sign out
+        </button>
+      </mat-menu>
+    </mat-toolbar>
+
+    <router-outlet />
+  </mat-sidenav-content>
+</mat-sidenav-container>

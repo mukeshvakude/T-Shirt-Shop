@@ -91,10 +91,18 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 4)
+## Current endpoints (Phase 5)
 
 | Method | Path | Access |
 |--------|------|--------|
+| GET | `/api/products?q&category&minPrice&maxPrice&sizes&colors&featured&newArrival&inStock&sort&page&size` | Public |
+| GET | `/api/products/{slug}`, `/api/products/{slug}/related` | Public |
+| GET | `/media/products/{file}` | Public (uploaded images) |
+| GET, POST, PUT, DELETE | `/api/admin/categories[/{id}]` | `ROLE_ADMIN` |
+| GET, POST, PUT, DELETE | `/api/admin/products[/{id}]`, PATCH `/{id}/status` | `ROLE_ADMIN` |
+| PUT | `/api/admin/products/{id}/variants` | `ROLE_ADMIN` |
+| POST, PATCH, DELETE | `/api/admin/products/{id}/images[/{imageId}]` | `ROLE_ADMIN` |
+| GET | `/api/admin/inventory/low-stock`, PATCH `/api/admin/inventory/{id}` | `ROLE_ADMIN` |
 | POST | `/api/auth/register`, `/login`, `/refresh`, `/logout` | Public |
 | POST | `/api/auth/forgot-password`, `/reset-password` | Public |
 | GET | `/api/auth/me` | Logged in |

@@ -1,0 +1,55 @@
+<main class="login">
+  <section class="brand" aria-hidden="true">
+    <span class="logo">T—SHIRT SHOP</span>
+    <h1>Admin portal</h1>
+    <p>Manage your catalog, stock and images.</p>
+  </section>
+
+  <section class="panel">
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <h2>Sign in</h2>
+
+      @if (reason() === 'expired') {
+        <p class="notice">Your session has expired. Please sign in again.</p>
+      }
+      @if (reason() === 'forbidden') {
+        <p class="notice">You need an admin account to open that page.</p>
+      }
+
+      <mat-form-field>
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="username" required>
+        @if (form.controls.email.hasError('email')) {
+          <mat-error>Enter a valid email address</mat-error>
+        } @else if (form.controls.email.hasError('required')) {
+          <mat-error>Email is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Password</mat-label>
+        <input matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="password"
+               autocomplete="current-password" required>
+        <button mat-icon-button matSuffix type="button" (click)="hidePassword.set(!hidePassword())"
+                [attr.aria-label]="hidePassword() ? 'Show password' : 'Hide password'">
+          <span class="material-symbols-outlined">{{ hidePassword() ? 'visibility' : 'visibility_off' }}</span>
+        </button>
+        @if (form.controls.password.hasError('required')) {
+          <mat-error>Password is required</mat-error>
+        }
+      </mat-form-field>
+
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+
+      <button mat-flat-button type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+          <mat-spinner diameter="18" />
+        } @else {
+          Sign in
+        }
+      </button>
+    </form>
+  </section>
+</main>

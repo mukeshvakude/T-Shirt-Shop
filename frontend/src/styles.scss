@@ -1,0 +1,129 @@
+@use '@angular/material' as mat;
+
+// ---------------------------------------------------------------------------
+// Premium black and white theme (Angular Material 3 with neutral overrides)
+// ---------------------------------------------------------------------------
+html {
+  color-scheme: light;
+  @include mat.theme((
+    color: (theme-type: light, primary: mat.$azure-palette),
+    typography: (plain-family: 'Inter, Helvetica Neue, Arial, sans-serif',
+                 brand-family: 'Playfair Display, Georgia, serif'),
+    density: 0,
+  ));
+  @include mat.theme-overrides((
+    primary: #111111,
+    on-primary: #ffffff,
+    primary-container: #ececec,
+    on-primary-container: #111111,
+    secondary: #3a3a3a,
+    on-secondary: #ffffff,
+    secondary-container: #f1f1f1,
+    on-secondary-container: #111111,
+    surface: #ffffff,
+    surface-container: #f7f7f7,
+    surface-container-low: #fafafa,
+    surface-container-high: #f2f2f2,
+    surface-container-highest: #ececec,
+    outline: #8a8a8a,
+    outline-variant: #dcdcdc,
+  ));
+}
+
+:root {
+  --shop-black: #111111;
+  --shop-ink: #2b2b2b;
+  --shop-muted: #6b6b6b;
+  --shop-line: #e6e6e6;
+  --shop-bg: #fafafa;
+  --shop-success: #1f7a3d;
+  --shop-warning: #a15c00;
+  --shop-danger: #b3261e;
+  --shop-radius: 12px;
+  --shop-gap: 16px;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  color: var(--shop-ink);
+  background: var(--shop-bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--shop-black);
+  letter-spacing: -0.01em;
+  margin: 0;
+}
+
+a { color: inherit; }
+
+.material-symbols-outlined { font-size: 20px; vertical-align: middle; }
+
+// Reusable layout helpers
+.page {
+  padding: 24px;
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+
+  p { margin: 4px 0 0; color: var(--shop-muted); }
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--shop-line);
+  border-radius: var(--shop-radius);
+  padding: 20px;
+}
+
+.toolbar-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.muted { color: var(--shop-muted); }
+.spacer { flex: 1 1 auto; }
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid currentColor;
+
+  &.ACTIVE { color: var(--shop-success); }
+  &.DRAFT { color: var(--shop-muted); }
+  &.INACTIVE { color: var(--shop-warning); }
+  &.ARCHIVED { color: var(--shop-danger); }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 16px;
+  color: var(--shop-muted);
+}
+
+.snack-error { --mat-snack-bar-container-color: var(--shop-danger); }
+
+@media (max-width: 600px) {
+  .page { padding: 16px; }
+}

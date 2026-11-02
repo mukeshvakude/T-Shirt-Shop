@@ -1,0 +1,141 @@
+<div class="page">
+  <a routerLink="/admin/products" class="back"><span class="material-symbols-outlined">arrow_back</span> Products</a>
+
+  <header class="page-header">
+    <div>
+      <h1>{{ isNew() ? 'New product' : (product()?.name ?? 'Product') }}</h1>
+      @if (product(); as p) {
+        <p>
+          <span class="status-chip" [class]="p.status">{{ p.status }}</span>
+          <span class="muted"> · {{ p.soldCount }} sold · slug: {{ p.slug }}</span>
+        </p>
+      } @else if (isNew()) {
+        <p>Save the details first; then add sizes, stock and images.</p>
+      }
+    </div>
+
+    @if (product(); as p) {
+      <div class="toolbar-row">
+        @if (p.status !== 'ACTIVE') {
+          <button mat-flat-button (click)="setStatus('ACTIVE')" [disabled]="!hasActiveVariant()"
+                  [title]="hasActiveVariant() ? '' : 'Add stock for at least one size and colour first'">
+            Publish
+          </button>
+        } @else {
+          <button mat-stroked-button (click)="setStatus('INACTIVE')">Hide from shop</button>
+        }
+        @if (p.status !== 'ARCHIVED') {
+          <button mat-stroked-button (click)="setStatus('ARCHIVED')">Archive</button>
+        }
+        <button mat-button class="danger" (click)="deleteProduct()">Delete</button>
+      </div>
+    }
+  </header>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" />
+  } @else {
+    <form class="card details" [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <h2>Details</h2>
+      <div class="grid">
+        <mat-form-field class="span-2">
+          <mat-label>Product name</mat-label>
+          <input matInput formControlName="name" maxlength="150" required>
+          @if (form.controls.name.hasError('required')) { <mat-error>Name is required</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Category</mat-label>
+          <mat-select formControlName="categoryId" required>
+            @for (c of categories(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}{{ c.active ? '' : ' (inactive)' }}</mat-option>
+            }
+          </mat-select>
+          @if (form.controls.categoryId.hasError('required')) { <mat-error>Choose a category</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>URL name (slug)</mat-label>
+          <input matInput formControlName="slug" placeholder="Generated from the name">
+          <mat-hint>Lowercase letters, digits and dashes</mat-hint>
+          @if (form.controls.slug.hasError('pattern')) { <mat-error>Use lowercase letters, digits and single dashes</mat-error> }
+          @if (form.controls.slug.hasError('taken')) { <mat-error>Another product already uses this</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Price (₹)</mat-label>
+          <input matInput type="number" formControlName="basePrice" min="1" step="0.01" required>
+          @if (form.controls.basePrice.invalid) { <mat-error>Enter a price of at least ₹1</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Sale price (₹)</mat-label>
+          <input matInput type="number" formControlName="discountPrice" min="1" step="0.01">
+          <mat-hint>Optional. Must be lower than the price.</mat-hint>
+        </mat-form-field>
+
+        @if (form.hasError('discountNotLower') && form.controls.discountPrice.touched) {
+          <p class="form-error span-2">The sale price must be lower than the price.</p>
+        }
+
+        <mat-form-field class="span-2">
+          <mat-label>Short description</mat-label>
+          <input matInput formControlName="shortDescription" maxlength="300">
+          <mat-hint>Shown on product cards</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field class="span-2">
+          <mat-label>Full description</mat-label>
+          <textarea matInput formControlName="description" rows="5" maxlength="10000"></textarea>
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Material</mat-label>
+          <input matInput formControlName="material" maxlength="100" placeholder="100% cotton, 180 GSM">
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Fit</mat-label>
+          <input matInput formControlName="fit" maxlength="50" placeholder="Regular, Slim, Oversized">
+        </mat-form-field>
+
+        <mat-form-field class="span-2">
+          <mat-label>Care instructions</mat-label>
+          <input matInput formControlName="careInstructions" maxlength="300">
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Status</mat-label>
+          <mat-select formControlName="status">
+            @for (s of statusOptions(); track s) {
+              <mat-option [value]="s" [disabled]="s === 'ACTIVE' && !hasActiveVariant()">{{ s }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="checks">
+          <mat-checkbox formControlName="featured">Featured on home page</mat-checkbox>
+          <mat-checkbox formControlName="newArrival">New arrival</mat-checkbox>
+        </div>
+      </div>
+
+      <div class="actions">
+        <span class="spacer"></span>
+        <button mat-flat-button type="submit" [disabled]="saving() || (form.pristine && !isNew())">
+          {{ saving() ? 'Saving…' : (isNew() ? 'Create product' : 'Save details') }}
+        </button>
+      </div>
+    </form>
+
+    @if (product(); as p) {
+      <section class="card">
+        <app-variant-editor [product]="p" [sizes]="sizes()" [colors]="colors()" (saved)="reloadAfterChildChange()" />
+      </section>
+
+      <section class="card">
+        <app-image-manager [productId]="p.id" [productName]="p.name" [images]="p.images" [colors]="colors()"
+                           (changed)="reloadAfterChildChange()" />
+      </section>
+    }
+  }
+</div>

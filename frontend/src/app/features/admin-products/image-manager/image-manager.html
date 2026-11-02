@@ -1,0 +1,67 @@
+<div class="head">
+  <div>
+    <h2>Images</h2>
+    <p class="muted">PNG or JPG, up to 5 MB and 4000 × 4000 px. The main image appears in listings.</p>
+  </div>
+  <span class="muted">{{ images().length }} / {{ maxImages }}</span>
+</div>
+
+@if (remaining() > 0) {
+  <label class="drop" [class.over]="dragOver()"
+         (dragover)="$event.preventDefault(); dragOver.set(true)"
+         (dragleave)="dragOver.set(false)" (drop)="onDrop($event)">
+    <input type="file" accept="image/png,image/jpeg" multiple hidden
+           (change)="onFiles($any($event.target).files); $any($event.target).value = ''">
+    <span class="material-symbols-outlined">cloud_upload</span>
+    <span><strong>Click to upload</strong> or drag images here</span>
+  </label>
+}
+
+@if (uploading()) {
+  <mat-progress-bar mode="indeterminate" />
+}
+
+<div class="gallery">
+  @for (img of images(); track img.id; let first = $first; let last = $last) {
+    <figure class="tile" [class.primary]="img.primary">
+      <div class="frame">
+        <img [src]="img.url" [alt]="img.altText ?? productName()" loading="lazy" appImgFallback>
+        @if (img.primary) { <span class="badge">Main</span> }
+      </div>
+      <figcaption>
+        <mat-form-field class="field">
+          <mat-label>Description (alt text)</mat-label>
+          <input matInput [value]="img.altText ?? ''" maxlength="200"
+                 (blur)="setAltText(img, $any($event.target).value)"
+                 (keydown.enter)="$any($event.target).blur()">
+        </mat-form-field>
+        <mat-form-field class="field">
+          <mat-label>Shows colour</mat-label>
+          <mat-select [value]="colorId(img.colorCode)" (valueChange)="setColor(img, $event)">
+            <mat-option [value]="null">Any colour</mat-option>
+            @for (c of colors(); track c.id) {
+              <mat-option [value]="c.id">{{ c.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <div class="tile-actions">
+          <button mat-icon-button (click)="move(img, -1)" [disabled]="first" aria-label="Move left">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button mat-icon-button (click)="move(img, 1)" [disabled]="last" aria-label="Move right">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+          <span class="spacer"></span>
+          @if (!img.primary) {
+            <button mat-button (click)="makePrimary(img)">Make main</button>
+          }
+          <button mat-icon-button (click)="remove(img)" aria-label="Delete image">
+            <span class="material-symbols-outlined">delete</span>
+          </button>
+        </div>
+      </figcaption>
+    </figure>
+  } @empty {
+    <div class="empty-state">No images yet.</div>
+  }
+</div>

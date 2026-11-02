@@ -1,0 +1,47 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: var(--shop-muted);
+  margin-bottom: 12px;
+  font-size: 14px;
+
+  &:hover { color: #111; }
+}
+
+.card + .card, form + .card { margin-top: 20px; }
+
+.details h2 { font-size: 22px; margin-bottom: 16px; }
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+
+  .span-2 { grid-column: span 2; }
+  mat-form-field { width: 100%; }
+}
+
+.checks {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.form-error {
+  color: var(--shop-danger);
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.actions {
+  display: flex;
+  margin-top: 16px;
+}
+
+.danger { color: var(--shop-danger); }
+
+@media (max-width: 700px) {
+  .grid { grid-template-columns: 1fr; .span-2 { grid-column: auto; } }
+}

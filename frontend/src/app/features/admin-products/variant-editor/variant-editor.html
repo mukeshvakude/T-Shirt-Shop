@@ -1,0 +1,69 @@
+<div class="head">
+  <div>
+    <h2>Sizes, colours and stock</h2>
+    <p class="muted">Enter the stock for each size and colour you sell. Leave a box empty to stop offering it.</p>
+  </div>
+  <mat-form-field class="colors">
+    <mat-label>Colours</mat-label>
+    <mat-select multiple [value]="selectedColorIds()" (valueChange)="onColorsChange($event)">
+      @for (c of colors(); track c.id) {
+        <mat-option [value]="c.id">
+          <span class="swatch" [style.background]="c.hex"></span>{{ c.name }}
+        </mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+</div>
+
+@if (selectedColors().length === 0) {
+  <div class="empty-state">Choose at least one colour to start adding stock.</div>
+} @else {
+  <div class="grid-scroll">
+    <table class="grid">
+      <thead>
+        <tr>
+          <th>Size</th>
+          @for (c of selectedColors(); track c.id) {
+            <th>
+              <div class="col-head">
+                <span class="swatch" [style.background]="c.hex"></span>{{ c.name }}
+              </div>
+              <input class="fill" type="text" inputmode="numeric" placeholder="Fill all"
+                     [attr.aria-label]="'Set the same stock for every size in ' + c.name"
+                     (keydown.enter)="fillColumn(c.id, $any($event.target).value); $any($event.target).value = ''">
+            </th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of sizeRows(); track s.id) {
+          <tr>
+            <th scope="row">{{ s.code }}</th>
+            @for (c of selectedColors(); track c.id) {
+              @let current = cell(s.id, c.id);
+              <td>
+                <input type="text" inputmode="numeric" placeholder="—"
+                       [class.invalid]="invalid().has(key(s.id, c.id))"
+                       [value]="current?.quantity ?? ''"
+                       [attr.aria-label]="s.code + ' ' + c.name + ' stock'"
+                       (input)="onQuantity(s.id, c.id, $any($event.target).value)">
+                @if (current && current.reserved > 0) {
+                  <div class="reserved">{{ current.reserved }} reserved</div>
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+<div class="actions">
+  <span class="muted">{{ totalUnits() }} units in stock</span>
+  <span class="spacer"></span>
+  @if (dirty()) { <span class="unsaved">Unsaved changes</span> }
+  <button mat-flat-button (click)="save()" [disabled]="saving() || !dirty()">
+    {{ saving() ? 'Saving…' : 'Save stock' }}
+  </button>
+</div>

@@ -1,0 +1,127 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Products</h1>
+      <p>{{ total() }} product{{ total() === 1 ? '' : 's' }} in your catalog</p>
+    </div>
+    <a mat-flat-button routerLink="/admin/products/new">
+      <span class="material-symbols-outlined">add</span> New product
+    </a>
+  </header>
+
+  <section class="card filters">
+    <mat-form-field class="search">
+      <mat-label>Search</mat-label>
+      <span matPrefix class="material-symbols-outlined prefix">search</span>
+      <input matInput [formControl]="search" placeholder="Name, description or category">
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Category</mat-label>
+      <mat-select [value]="categoryId()" (valueChange)="setCategory($event)">
+        <mat-option [value]="null">All categories</mat-option>
+        @for (c of categories(); track c.id) {
+          <mat-option [value]="c.id">{{ c.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Status</mat-label>
+      <mat-select [value]="status()" (valueChange)="setStatus($event)">
+        <mat-option [value]="null">Any status</mat-option>
+        @for (s of statuses; track s) {
+          <mat-option [value]="s">{{ s | titlecase }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field>
+      <mat-label>Sort by</mat-label>
+      <mat-select [value]="sort()" (valueChange)="setSort($event)">
+        @for (s of sorts; track s.value) {
+          <mat-option [value]="s.value">{{ s.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </section>
+
+  <section class="card table-card">
+    @if (loading()) {
+      <mat-progress-bar mode="indeterminate" />
+    }
+
+    <div class="table-scroll">
+      <table mat-table [dataSource]="rows()">
+        <ng-container matColumnDef="image">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let p">
+            @if (p.imageUrl) {
+              <img class="thumb" [src]="p.imageUrl" [alt]="p.name" loading="lazy" appImgFallback>
+            } @else {
+              <div class="thumb placeholder"><span class="material-symbols-outlined">image</span></div>
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Product</th>
+          <td mat-cell *matCellDef="let p">
+            <div class="name">{{ p.name }}</div>
+            <div class="muted small">{{ p.slug }}</div>
+            <div class="flags">
+              @if (p.featured) { <span class="flag">Featured</span> }
+              @if (p.newArrival) { <span class="flag">New</span> }
+            </div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="category">
+          <th mat-header-cell *matHeaderCellDef>Category</th>
+          <td mat-cell *matCellDef="let p">{{ p.categoryName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="price">
+          <th mat-header-cell *matHeaderCellDef>Price</th>
+          <td mat-cell *matCellDef="let p">
+            @if (p.discountPrice) {
+              <div>{{ p.discountPrice | currency: 'INR' : 'symbol' : '1.0-2' }}</div>
+              <div class="muted small strike">{{ p.basePrice | currency: 'INR' : 'symbol' : '1.0-2' }}</div>
+            } @else {
+              {{ p.basePrice | currency: 'INR' : 'symbol' : '1.0-2' }}
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="stock">
+          <th mat-header-cell *matHeaderCellDef>Stock</th>
+          <td mat-cell *matCellDef="let p">
+            <span [class.low]="p.lowStock">{{ p.totalAvailable }}</span>
+            <div class="muted small">{{ p.activeVariants }} variant{{ p.activeVariants === 1 ? '' : 's' }}</div>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let p"><span class="status-chip" [class]="p.status">{{ p.status }}</span></td>
+        </ng-container>
+
+        <ng-container matColumnDef="updated">
+          <th mat-header-cell *matHeaderCellDef>Updated</th>
+          <td mat-cell *matCellDef="let p" class="muted small">{{ p.updatedAt | date: 'mediumDate' }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns" (click)="open(row)" class="clickable"
+            tabindex="0" (keydown.enter)="open(row)"></tr>
+      </table>
+    </div>
+
+    @if (!loading() && rows().length === 0) {
+      <div class="empty-state">No products match these filters.</div>
+    }
+
+    <mat-paginator [length]="total()" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
+                   [pageSizeOptions]="[10, 20, 50, 100]" (page)="onPage($event)" />
+  </section>
+</div>

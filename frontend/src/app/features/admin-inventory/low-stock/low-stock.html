@@ -1,0 +1,58 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1>Low stock</h1>
+      <p>{{ total() }} size and colour combination{{ total() === 1 ? '' : 's' }} at or below the alert level.</p>
+    </div>
+  </header>
+
+  <section class="card table-card">
+    @if (loading()) { <mat-progress-bar mode="indeterminate" /> }
+    <div class="table-scroll">
+      <table mat-table [dataSource]="rows()">
+        <ng-container matColumnDef="product">
+          <th mat-header-cell *matHeaderCellDef>Product</th>
+          <td mat-cell *matCellDef="let v">
+            <a [routerLink]="['/admin/products', v.productId]">{{ v.productName }}</a>
+            <div class="muted">{{ v.sku }}</div>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="variant">
+          <th mat-header-cell *matHeaderCellDef>Size / colour</th>
+          <td mat-cell *matCellDef="let v">
+            {{ v.sizeCode }} · <span class="swatch" [style.background]="v.colorHex"></span>{{ v.colorName }}
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="available">
+          <th mat-header-cell *matHeaderCellDef>Available</th>
+          <td mat-cell *matCellDef="let v" [class.zero]="v.available === 0">{{ v.available }}</td>
+        </ng-container>
+        <ng-container matColumnDef="reserved">
+          <th mat-header-cell *matHeaderCellDef>Reserved</th>
+          <td mat-cell *matCellDef="let v">{{ v.quantityReserved }}</td>
+        </ng-container>
+        <ng-container matColumnDef="threshold">
+          <th mat-header-cell *matHeaderCellDef>Alert at</th>
+          <td mat-cell *matCellDef="let v">{{ v.lowStockThreshold }}</td>
+        </ng-container>
+        <ng-container matColumnDef="restock">
+          <th mat-header-cell *matHeaderCellDef>Add stock</th>
+          <td mat-cell *matCellDef="let v">
+            <div class="restock">
+              <input #qty type="text" inputmode="numeric" placeholder="+ units" [attr.aria-label]="'Units to add for ' + v.sku"
+                     (keydown.enter)="restock(v, qty.value)">
+              <button mat-stroked-button (click)="restock(v, qty.value)">Add</button>
+            </div>
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </div>
+    @if (!loading() && rows().length === 0) {
+      <div class="empty-state">Everything is well stocked.</div>
+    }
+    <mat-paginator [length]="total()" [pageIndex]="pageIndex()" [pageSize]="pageSize()"
+                   [pageSizeOptions]="[25, 50, 100]" (page)="onPage($event)" />
+  </section>
+</div>

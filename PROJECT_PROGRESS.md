@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-02 (Phase 4)
+Last updated: 2026-11-02 (Phase 5)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -11,7 +11,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Spring Boot Setup (Spring Boot 4.1.2, Java 21, profiles, security baseline, errors, Swagger, logging, health)
 - [x] MySQL Integration (Flyway on start-up, Hibernate schema validation, integration tests on tshirt_shop_test)
 - [x] Authentication (JWT access + rotating refresh cookie, BCrypt, roles, lockout, rate limits, password reset, first admin)
-- [ ] Product Management
+- [x] Product Management (catalog APIs, admin APIs, image upload, stock; admin portal for products, categories and low stock)
 - [ ] Angular Homepage
 - [ ] Product Listing
 - [ ] Product Details
@@ -57,7 +57,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2 | Database design and MySQL configuration | Flyway `V1__create_schema.sql`, `V2__seed_reference_data.sql`, dev `V900` sample catalog, MySQL setup script, verifier | Done |
 | 3 | Spring Boot backend setup | Maven wrapper project, `com.shop` packages, profiles, Swagger, global errors, health check, reference-data API | Done |
 | 4 | Authentication and security | Register, login, refresh, logout, forgot/reset password, JWT, BCrypt, roles, rate limit, admin bootstrap | Done |
-| 5 | Product management | Category/product CRUD, images, variants, inventory, search, filters, sort, pagination | Pending |
+| 5 | Product management | Category/product CRUD, images, variants, inventory, search, filters, sort, pagination; Angular workspace and admin portal for catalog | Done |
 | 6 | Angular website design and homepage | Angular workspace, theme, layout shells, homepage sections, static pages | Pending |
 | 7 | Product pages | Listing, category pages, filters, product details, wishlist | Pending |
 | 8 | Customer portal | Dashboard, profile, password, addresses | Pending |
@@ -68,7 +68,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 13 | Razorpay integration | Create order, Standard Checkout in Angular, retry | Pending |
 | 14 | Payment verification and webhooks | Signature verify, gateway fetch, webhook idempotency, late payment refunds, reconciliation | Pending |
 | 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Pending |
-| 16 | Admin portal | Dashboard metrics, products, orders, payments, refunds, customers, customization | Pending |
+| 16 | Admin portal | Dashboard metrics, orders, payments, refunds, customers, customization (catalog pages delivered in Phase 5) | Pending |
 | 17 | Notifications | Order confirmation, status update and password reset emails | Pending |
 | 18 | Testing | Backend unit and slice tests, frontend tests, payment test checklist, bug fixes | Pending |
 | 19 | Production deployment | Prod builds, Nginx + HTTPS, env vars, backups, logging, monitoring, live-mode guide | Pending |
@@ -106,6 +106,11 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - The refresh token is only ever in an HttpOnly, SameSite=Strict cookie, never in the response body or browser storage.
 - Customers can register with email alone. Phone is optional at sign-up and required at checkout.
 - Email verification is not enforced at login. The `email_verified` flag exists for a later phase.
+- The admin portal for catalog management was built in Phase 5 (owner request), ahead of Phase 16. It uses Angular 22.2 with Angular Material, which also starts the Angular workspace planned for Phase 6.
+- New products start as DRAFT or INACTIVE. Publishing requires at least one active size and colour with stock records.
+- Products that appear in orders cannot be deleted, only archived. Sizes and colours removed from a product are deactivated, never deleted.
+- Product images: PNG or JPG, max 5 MB and 4000 x 4000 px, max 12 per product, validated by content on the server.
+- Customer-facing stock numbers are capped at the per-item order limit (20), so exact stock levels are not exposed.
 
 ## Known issues / technical debt
 
@@ -118,6 +123,9 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T5 | A disabled account keeps a valid access token for up to 15 minutes | Accepted: refresh is blocked immediately. Revisit if instant lockout is needed |
 | T6 | Rate limits are in memory per instance | Fine for one server. Add proxy limits if scaling out (Phase 19) |
 | T7 | Password reset links are not emailed yet | Phase 17. Dev profile logs the link |
+| T8 | Sample products point at `/assets/products/*.jpg` images that do not exist yet | Placeholder shown. Real photos via upload, or sample assets in Phase 6 |
+| T9 | Text search uses LIKE, which is fine for a small catalog | Switch to the existing MySQL FULLTEXT index if the catalog grows into the thousands |
+| T10 | Uploaded images are stored as uploaded (not re-encoded) | Safe because content is validated and served with nosniff from random URLs. Re-encoding/thumbnails can come with Cloudinary in Phase 9 or 19 |
 
 ## Change log
 
@@ -126,4 +134,6 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-02 | 1 | Repository analysis, architecture, database design, roadmap, README, .gitignore, env template | `2d6df49` |
 | 2026-11-02 | 2 | Flyway schema (31 tables), reference seed, dev sample catalog, MySQL setup, migration verifier (37/37 pass) | `06e2408` |
 | 2026-11-02 | 3 | Spring Boot 4.1.2 backend foundation, reference-data API, 30 unit + 11 integration tests passing | `a16cc06` |
-| 2026-11-02 | 4 | Authentication and security, test data cleanup, UTC logs; 60 unit + 22 integration tests passing | see git log on `DEV` |
+| 2026-11-02 | 4 | Authentication and security, test data cleanup, UTC logs; 60 unit + 22 integration tests passing | `3557528` |
+| 2026-11-02 | 5 | Product management backend (71 unit + 29 integration tests) | `e554f74` |
+| 2026-11-02 | 5 | Angular 22 workspace and admin portal for products, categories, stock and images (24 frontend tests, browser end-to-end run) | see git log on `DEV` |

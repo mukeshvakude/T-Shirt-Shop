@@ -5,8 +5,9 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 4 of 19 complete (architecture, database, Spring Boot
-> backend foundation, authentication). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> **Status:** Phases 1 to 5 of 19 complete (architecture, database, backend
+> foundation, authentication, product management with the admin portal for products).
+> See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -94,13 +95,21 @@ More detail, including profiles and the error format, is in [backend/README.md](
 
 ## Frontend execution
 
-Available from Phase 6.
+Requires Node.js 24 LTS. Start the backend first.
 
 ```bash
 cd frontend
 npm install
-npm start   # http://localhost:4200
+npm start   # http://localhost:4200 (proxies /api and /media to the backend)
 ```
+
+The admin portal is at http://localhost:4200/admin. Sign in with `ADMIN_EMAIL` /
+`ADMIN_PASSWORD` from `.env`. Details: [frontend/README.md](frontend/README.md).
+
+## Database tools
+
+MySQL Workbench 26 is installed for browsing the database. Connect to `127.0.0.1:3306`
+as `tshirt_app` (password in `.env` as `DB_PASSWORD`), schema `tshirt_shop`.
 
 ## Razorpay test setup
 
