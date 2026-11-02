@@ -14,3 +14,8 @@ logging:
   level:
     com.shop: DEBUG
     org.hibernate.SQL: INFO
+
+app:
+  security:
+    # Email delivery arrives in Phase 17. Until then the reset link is logged in dev.
+    log-password-reset-links: true

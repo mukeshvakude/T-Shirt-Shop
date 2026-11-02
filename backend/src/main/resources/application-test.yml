@@ -11,3 +11,21 @@ spring:
 logging:
   level:
     com.shop: INFO
+
+app:
+  security:
+    jwt:
+      # Test-only key (public, never valid outside tests).
+      secret: dGVzdC1vbmx5LWtleS1ub3QtZm9yLXByb2R1Y3Rpb24tdXNlLTAxMjM0NTY3ODlhYmNkZWY=
+    refresh-cookie:
+      secure: false
+    rate-limit:
+      login-per-minute: 1000
+      register-per-hour: 1000
+      forgot-password-per-hour: 1000
+    admin:
+      email: admin@test.local
+      password: TestAdmin123
+      full-name: Test Admin
+  jobs:
+    enabled: false

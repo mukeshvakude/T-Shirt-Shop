@@ -15,12 +15,14 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.shop.config.AppProperties;
 import com.shop.config.CorsConfig;
+import com.shop.config.SecurityProperties;
+import com.shop.security.JwtConfig;
 import com.shop.config.RequestIdFilter;
 import com.shop.dto.CategoryResponse;
 import com.shop.exception.ResourceNotFoundException;
@@ -33,16 +35,10 @@ import com.shop.service.ReferenceDataService;
  * with the service mocked (no database).
  */
 @WebMvcTest(CategoryController.class)
-@Import({SecurityConfig.class, ProblemDetailSecurityHandler.class, CorsConfig.class, RequestIdFilter.class})
-@EnableConfigurationProperties(AppProperties.class)
-@TestPropertySource(properties = {
-        "app.frontend-url=http://localhost:4200",
-        "app.cors.allowed-origins=http://localhost:4200",
-        "app.storage.provider=local",
-        "app.storage.local-dir=./uploads",
-        "app.stock.reservation-minutes=15",
-        "app.api-docs-enabled=false"
-})
+@Import({SecurityConfig.class, JwtConfig.class, ProblemDetailSecurityHandler.class, CorsConfig.class,
+        RequestIdFilter.class})
+@EnableConfigurationProperties({AppProperties.class, SecurityProperties.class})
+@ActiveProfiles("test")
 class CategoryControllerTest {
 
     @Autowired

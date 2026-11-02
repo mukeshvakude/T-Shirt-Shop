@@ -88,7 +88,7 @@ backend/
     │   │   ├── entity/        # JPA entities + enums
     │   │   ├── dto/           # request/response records with Bean Validation
     │   │   ├── mapper/        # entity <-> DTO mappers (MapStruct)
-    │   │   ├── security/      # SecurityFilterChain, JwtService, JwtAuthFilter, UserDetailsService
+    │   │   ├── security/      # SecurityFilterChain, JwtConfig, TokenService, RateLimiter, admin bootstrap
     │   │   ├── exception/     # domain exceptions + @RestControllerAdvice (RFC 7807 ProblemDetail)
     │   │   ├── payment/       # RazorpayGateway, signature verification, webhook processor
     │   │   └── util/          # money, slug and file-type sniffing helpers
@@ -118,15 +118,32 @@ backend/
 | `NotificationService` | Async emails for order confirmation, status changes and password reset |
 | `AdminDashboardService` | Revenue, counts, payment stats, best sellers |
 
-### 4.2 Security
+### 4.2 Security (implemented in Phase 4)
 
-- Stateless `SecurityFilterChain`. CSRF is disabled for the JWT API. CORS is restricted to `APP_CORS_ALLOWED_ORIGINS`.
-- Public endpoints: `GET /api/products/**`, `GET /api/categories/**`, `/api/auth/**`, `POST /api/pricing/**/estimate`, `POST /api/payments/webhook`, and Swagger outside prod.
+- Stateless `SecurityFilterChain`. CSRF protection is off for the bearer-token API. CORS is restricted to `APP_CORS_ALLOWED_ORIGINS`.
+- **Access token:** a JWT signed with HS256 using `JWT_SECRET` (at least 256 bits, checked at start-up). Claims are `sub` (user id), `email`, `name`, `roles`, `iss`, `iat`, `exp` and `jti`. It lives 15 minutes and is sent as `Authorization: Bearer ...`. Validation uses Spring Security's OAuth2 resource server support, not a hand-written filter.
+- **Refresh token:** 256 random bits in an `HttpOnly`, `Secure`, `SameSite=Strict` cookie scoped to `/api/auth`, valid 7 days. Only its SHA-256 hash is stored. Every refresh rotates it. Replaying an already-rotated token is treated as theft and revokes all of that user's sessions.
+- **Passwords:** BCrypt cost 12. Rules are 8 to 64 characters with at least one letter and one digit, and at most 72 UTF-8 bytes (the BCrypt limit).
+- **Lockout:** 5 failed logins lock the account for 15 minutes. Unknown emails and wrong passwords return the same error, and unknown emails still run a BCrypt check so response time does not reveal registered emails.
+- **Rate limits** per client IP: 10 logins per minute, 10 registrations per hour, 5 forgot-password requests per hour. They are counted in memory per instance, so add proxy-level limits if several instances run.
+- **Password reset:** a 256-bit single-use token, stored hashed and valid 30 minutes. A new request invalidates older links. A successful reset clears any lockout and logs out every session. Forgot-password always answers 202.
+- **First admin:** created at start-up from `ADMIN_EMAIL` and `ADMIN_PASSWORD` (at least 12 characters with a letter and a digit) when no admin exists. An existing customer account is never promoted.
+- Public endpoints: `GET /api/products/**`, `GET /api/categories/**`, `GET /api/reference/**`, `POST /api/auth/{register,login,refresh,logout,forgot-password,reset-password}`, health, and Swagger outside prod. Later: `POST /api/pricing/**/estimate` and `POST /api/payments/webhook`.
 - `/api/admin/**` requires `ROLE_ADMIN`. Ownership checks make sure a customer can only read their own orders, designs and addresses.
-- Passwords use BCrypt (strength 12). Reset tokens are random, stored hashed, single-use and expire after 30 minutes.
-- Refresh tokens are stored hashed and rotated on each use.
-- Login attempts are rate limited, with temporary lockout after repeated failures.
+- Expired refresh and reset tokens are purged nightly at 03:30 UTC.
 - Secrets come only from environment variables. The Razorpay key secret never leaves the backend.
+
+Auth endpoints:
+
+| Method | Path | Result |
+|--------|------|--------|
+| POST | `/api/auth/register` | 201, access token in body, refresh cookie set |
+| POST | `/api/auth/login` | 200, same shape |
+| POST | `/api/auth/refresh` | 200, new access token, rotated cookie |
+| POST | `/api/auth/logout` | 204, token revoked, cookie cleared |
+| POST | `/api/auth/forgot-password` | 202 always |
+| POST | `/api/auth/reset-password` | 204, all sessions revoked |
+| GET | `/api/auth/me` | 200, current user |
 
 ## 5. Frontend architecture
 

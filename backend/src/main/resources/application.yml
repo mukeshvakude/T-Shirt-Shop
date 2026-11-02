@@ -88,6 +88,33 @@ app:
   stock:
     reservation-minutes: ${STOCK_RESERVATION_MINUTES:15}
   api-docs-enabled: true
+  jobs:
+    enabled: true
+    token-cleanup-cron: "0 30 3 * * *"
+  security:
+    jwt:
+      secret: ${JWT_SECRET}
+      issuer: ${JWT_ISSUER:tshirt-shop}
+      access-token-ttl: ${JWT_ACCESS_TOKEN_TTL_MINUTES:15}m
+      refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL_DAYS:7}d
+    refresh-cookie:
+      name: tshirt_rt
+      path: /api/auth
+      secure: ${REFRESH_COOKIE_SECURE:true}
+      same-site: Strict
+    password-reset-ttl: 30m
+    login:
+      max-failed-attempts: 5
+      lock-duration: 15m
+    rate-limit:
+      login-per-minute: 10
+      register-per-hour: 10
+      forgot-password-per-hour: 5
+    admin:
+      email: ${ADMIN_EMAIL:}
+      password: ${ADMIN_PASSWORD:}
+      full-name: ${ADMIN_FULL_NAME:Store Admin}
+    log-password-reset-links: false
 
 logging:
   level:

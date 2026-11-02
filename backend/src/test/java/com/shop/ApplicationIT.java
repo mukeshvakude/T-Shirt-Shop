@@ -41,6 +41,18 @@ class ApplicationIT {
     @Autowired
     private AppSettingService settings;
 
+    @org.junit.jupiter.api.BeforeEach
+    void cleanDatabase() {
+        com.shop.support.DatabaseCleaner.clean(jdbc);
+    }
+
+    @Test
+    void bootstrapAdminExists() {
+        Integer admins = jdbc.queryForObject("SELECT COUNT(*) FROM users u JOIN user_roles ur ON ur.user_id = u.id "
+                + "JOIN roles r ON r.id = ur.role_id WHERE r.name = 'ROLE_ADMIN'", Integer.class);
+        assertThat(admins).isEqualTo(1);
+    }
+
     @Test
     void flywayAppliedOnlyProductionMigrations() {
         assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");

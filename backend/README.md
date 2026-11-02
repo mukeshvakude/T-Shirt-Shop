@@ -91,14 +91,31 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 3)
+## Current endpoints (Phase 4)
 
 | Method | Path | Access |
 |--------|------|--------|
-| GET | `/api/categories` | Public |
-| GET | `/api/categories/{slug}` | Public |
-| GET | `/api/reference/sizes?group=APPAREL\|WAIST` | Public |
-| GET | `/api/reference/colors` | Public |
+| POST | `/api/auth/register`, `/login`, `/refresh`, `/logout` | Public |
+| POST | `/api/auth/forgot-password`, `/reset-password` | Public |
+| GET | `/api/auth/me` | Logged in |
+| GET | `/api/categories`, `/api/categories/{slug}` | Public |
+| GET | `/api/reference/sizes?group=APPAREL\|WAIST`, `/api/reference/colors` | Public |
 | GET | `/actuator/health`, `/actuator/info` | Public |
-| any | `/api/admin/**` | `ROLE_ADMIN` (login arrives in Phase 4) |
-| any | everything else | Authenticated |
+| any | `/api/admin/**` | `ROLE_ADMIN` |
+| any | everything else | Logged in |
+
+## Authentication
+
+- Log in with `POST /api/auth/login`. Send the returned `accessToken` as `Authorization: Bearer <token>`.
+- The refresh token is an HttpOnly cookie named `tshirt_rt`. Call `POST /api/auth/refresh` with credentials included to get a new access token before the 15 minutes run out.
+- The first admin account comes from `ADMIN_EMAIL` and `ADMIN_PASSWORD` on first start.
+- Until email delivery exists (Phase 17), the dev profile writes password reset links to the log. Search the log for `[DEV] Password reset link`.
+- Full security design: [../docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md#42-security-implemented-in-phase-4).
+
+Required security variables:
+
+| Variable | Notes |
+|----------|-------|
+| `JWT_SECRET` | Base64, at least 32 bytes decoded. Generate with `openssl rand -base64 64`. The app refuses to start otherwise |
+| `ADMIN_EMAIL`, `ADMIN_PASSWORD` | First admin. Password at least 12 characters with a letter and a digit |
+| `REFRESH_COOKIE_SECURE` | Default `true`. Browsers accept Secure cookies on `http://localhost`, so keep it on |
