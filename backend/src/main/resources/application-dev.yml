@@ -1,0 +1,16 @@
+# Local development: sample catalog, readable logs, Swagger UI on.
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/dev-data
+  jpa:
+    show-sql: false
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.shop: DEBUG
+    org.hibernate.SQL: INFO

@@ -1,0 +1,13 @@
+# Integration tests (mvnw verify) against the MySQL test database.
+# TEST_DB_* fall back to the dev credentials with the tshirt_shop_test schema.
+spring:
+  datasource:
+    url: ${TEST_DB_URL:jdbc:mysql://localhost:3306/tshirt_shop_test?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
+    username: ${TEST_DB_USERNAME:${DB_USERNAME}}
+    password: ${TEST_DB_PASSWORD:${DB_PASSWORD}}
+  flyway:
+    locations: classpath:db/migration
+
+logging:
+  level:
+    com.shop: INFO

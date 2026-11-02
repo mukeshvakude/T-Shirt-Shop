@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-02 (Phase 2)
+Last updated: 2026-11-02 (Phase 3)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -8,8 +8,8 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Repository Analysis
 - [x] Architecture Design
 - [x] Database Design (schema, ER diagram, Flyway migrations, seed data, 37 constraint checks passing)
-- [ ] Spring Boot Setup
-- [ ] MySQL Integration (database server and app user ready; Spring Boot connection comes in Phase 3)
+- [x] Spring Boot Setup (Spring Boot 4.1.2, Java 21, profiles, security baseline, errors, Swagger, logging, health)
+- [x] MySQL Integration (Flyway on start-up, Hibernate schema validation, integration tests on tshirt_shop_test)
 - [ ] Authentication
 - [ ] Product Management
 - [ ] Angular Homepage
@@ -55,7 +55,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 |---|-------|-------------------|--------|
 | 1 | Repository analysis and architecture | Analysis, architecture doc, ER diagram, roadmap, README, .gitignore, env template | Done |
 | 2 | Database design and MySQL configuration | Flyway `V1__create_schema.sql`, `V2__seed_reference_data.sql`, dev `V900` sample catalog, MySQL setup script, verifier | Done |
-| 3 | Spring Boot backend setup | Maven wrapper project, `com.shop` packages, profiles, Swagger, global errors, health check | Pending |
+| 3 | Spring Boot backend setup | Maven wrapper project, `com.shop` packages, profiles, Swagger, global errors, health check, reference-data API | Done |
 | 4 | Authentication and security | Register, login, refresh, logout, forgot/reset password, JWT, BCrypt, roles, rate limit | Pending |
 | 5 | Product management | Category/product CRUD, images, variants, inventory, search, filters, sort, pagination | Pending |
 | 6 | Angular website design and homepage | Angular workspace, theme, layout shells, homepage sections, static pages | Pending |
@@ -97,10 +97,22 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Polo carries a INR 60 type charge and XXL a INR 40 size charge. Both were not in the brief and are editable by the admin.
 - COD is limited to orders up to INR 5000. Admin-editable.
 - Enum-like columns are VARCHAR with CHECK constraints, so adding a value is a small migration.
+- Spring Boot 4.1.2 is used: the newest GA release on 2026-11-02, compatible with Java 21.
+- Errors use the RFC 7807 problem format with a stable `code` field the Angular app can rely on.
+- Unit tests (`*Test`) need no database. Integration tests (`*IT`) run on `mvnw verify` against `tshirt_shop_test`. Docker is not installed, so Testcontainers is not used.
+- Virtual threads are enabled for request handling (Java 21).
+
+## Known issues / technical debt
+
+| # | Item | Plan |
+|---|------|------|
+| T1 | `SecurityConfig` has a placeholder user lookup that rejects every login | Replaced by the database-backed user service in Phase 4 |
+| T2 | Dev log timestamps use the machine time zone (IST). Database and API times are UTC | Acceptable for dev. Production servers run in UTC and log JSON |
 
 ## Change log
 
 | Date | Phase | Summary | Commit |
 |------|-------|---------|--------|
 | 2026-11-02 | 1 | Repository analysis, architecture, database design, roadmap, README, .gitignore, env template | `2d6df49` |
-| 2026-11-02 | 2 | Flyway schema (31 tables), reference seed, dev sample catalog, MySQL setup, migration verifier (37/37 pass) | see git log on `DEV` |
+| 2026-11-02 | 2 | Flyway schema (31 tables), reference seed, dev sample catalog, MySQL setup, migration verifier (37/37 pass) | `06e2408` |
+| 2026-11-02 | 3 | Spring Boot 4.1.2 backend foundation, reference-data API, 30 unit + 11 integration tests passing | see git log on `DEV` |
