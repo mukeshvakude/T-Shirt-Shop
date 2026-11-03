@@ -83,14 +83,14 @@ describe('ProductDetail page', () => {
     expect(cart.lines()).toEqual([expect.objectContaining({ sku: 'TS-M-B', quantity: 2, unitPrice: 449, colorName: 'Black' })]);
   });
 
-  it('buy now adds the item and opens the bag', () => {
+  it('buy now adds the item and opens the bag', async () => {
     const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const { el, fixture } = render(PRODUCT);
     button(el, 'M').click();
     fixture.detectChanges();
     button(el, 'Buy now').click();
+    await vi.waitFor(() => expect(navigate).toHaveBeenCalledWith('/cart'));
     expect(TestBed.inject(GuestCartService).count()).toBe(1);
-    expect(navigate).toHaveBeenCalledWith('/cart');
   });
 
   it('shows a friendly page for unknown products', () => {

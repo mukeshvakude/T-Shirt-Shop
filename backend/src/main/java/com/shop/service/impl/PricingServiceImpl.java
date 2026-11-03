@@ -96,6 +96,11 @@ public class PricingServiceImpl implements PricingService {
 
     @Override
     public PriceQuote quote(CustomDesign design, int quantity) {
+        return quote(design, design.getSizeCode(), quantity);
+    }
+
+    @Override
+    public PriceQuote quote(CustomDesign design, String sizeCode, int quantity) {
         String typeLabel = rules.active(CustomizationOption.TSHIRT_TYPE).stream()
                 .filter(o -> o.getCode().equals(design.getTshirtType()))
                 .map(CustomizationOption::getLabel)
@@ -107,7 +112,7 @@ public class PricingServiceImpl implements PricingService {
         JsonNode texts = read(design.getTextItems());
         boolean hasText = texts != null && texts.isArray() && !texts.isEmpty();
         return calculate(design.getBaseProduct(), design.getTshirtType(), typeLabel, design.getColorCode(),
-                design.getSizeCode(), placements, hasText, design.isPremiumDesign(), quantity(quantity));
+                sizeCode, placements, hasText, design.isPremiumDesign(), quantity(quantity));
     }
 
     // ------------------------------------------------------------------ admin

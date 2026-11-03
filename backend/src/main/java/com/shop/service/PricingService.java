@@ -20,8 +20,11 @@ public interface PricingService {
     /** Current price of a saved design (one unit). */
     PriceQuote quote(CustomDesign design);
 
-    /** Current price of a saved design for a quantity (used by the cart). */
+    /** Current price of a saved design for a quantity. */
     PriceQuote quote(CustomDesign design, int quantity);
+
+    /** Current price of a saved design printed on another size (the cart allows several sizes per design). */
+    PriceQuote quote(CustomDesign design, String sizeCode, int quantity);
 
     List<AdminChargeResponse> adminCharges();
 

@@ -47,6 +47,7 @@ public class SecurityConfig {
             "/api/newsletter",
             "/api/contact",
             "/api/pricing/design-estimate",
+            "/api/cart/quote",
     };
 
     static final String[] API_DOCS = {

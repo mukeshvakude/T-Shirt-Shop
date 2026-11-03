@@ -116,7 +116,7 @@
               <span aria-live="polite">{{ quantity() }}</span>
               <button type="button" (click)="changeQuantity(1)" [disabled]="quantity() >= maxQuantity()" aria-label="Increase quantity">+</button>
             </div>
-            <button type="button" class="btn primary grow" (click)="addToBag()" [disabled]="!p.inStock || (size() !== null && !canBuy())">
+            <button type="button" class="btn primary grow" (click)="addToBag()" [disabled]="!p.inStock || adding() || (size() !== null && !canBuy())">
               {{ p.inStock ? 'Add to bag' : 'Sold out' }}
             </button>
             <button type="button" class="icon" [class.saved]="saved()" (click)="wishlist.toggle(p.id)"
@@ -124,7 +124,7 @@
               <span class="material-symbols-outlined">favorite</span>
             </button>
           </div>
-          <button type="button" class="btn secondary wide" (click)="addToBag(true)" [disabled]="!p.inStock || (size() !== null && !canBuy())">
+          <button type="button" class="btn secondary wide" (click)="addToBag(true)" [disabled]="!p.inStock || adding() || (size() !== null && !canBuy())">
             Buy now
           </button>
         }

@@ -53,12 +53,16 @@ export const routes: Routes = [
       { path: 'customize', title: `Design your T-Shirt | ${SHOP}`, loadComponent: designer },
       { path: 'customize/:code', title: `Edit your design | ${SHOP}`, loadComponent: designer },
 
-      // Delivered in a later phase (cart: 11).
+      // Shopping bag (Phase 11)
+      { path: 'cart', title: `Your bag | ${SHOP}`, loadComponent: () => import('./features/cart/cart-page').then((m) => m.CartPage) },
+
+      // Delivered in the next phase (checkout: 12).
       {
-        path: 'cart',
-        title: `Your bag | ${SHOP}`,
+        path: 'checkout',
+        canActivate: [authGuard],
+        title: `Checkout | ${SHOP}`,
         loadComponent: comingSoon,
-        data: { title: 'Your bag', description: 'Online ordering opens very soon.' },
+        data: { title: 'Checkout is almost ready', description: 'Your bag is saved to your account. Address, payment with Razorpay and Cash on Delivery open in the next update.' },
       },
 
       // Customer portal (Phase 8)

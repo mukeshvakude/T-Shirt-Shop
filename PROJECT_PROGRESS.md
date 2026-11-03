@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 10)
+Last updated: 2026-11-03 (Phase 11)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -18,7 +18,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Customer Portal (dashboard with order stats and recent orders, profile, email and password changes, address book with one default, wishlist link)
 - [x] Custom T-Shirt Designer (Fabric.js designer, front and back, print areas, artwork upload, text, previews, saved designs, admin view and ZIP download)
 - [x] Dynamic Pricing (server-side price engine, live price panel with quantity in the designer, admin pricing page for charges and shipping)
-- [ ] Shopping Cart
+- [x] Shopping Cart (server cart for products and custom designs, guest bag priced by the server and merged on sign-in, size/colour/quantity changes, coupons, shipping, stock checks)
 - [ ] Checkout
 - [ ] Razorpay Integration
 - [ ] Payment Verification
@@ -146,6 +146,14 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - The shipping estimate in the designer is for that item alone; the cart and checkout (Phases 11 and 12) will calculate shipping for the whole order.
 - Saved designs return their current price (`price` in `GET /api/designs/{code}`), so a price change applies to designs saved earlier. Orders will store a price snapshot (`order_items.price_breakdown`) in Phase 12.
 - Admin `/admin/pricing`: every chargeable choice is listed, also those without a charge; saving creates or updates the charge. Shipping charge and free-shipping threshold are editable there too. Changes apply to the next calculation (the public price list is not cached).
+- Cart: signed-in customers have one server cart (`carts`, `cart_items`). Guests keep a bag of SKUs and quantities in the browser; the cart page prices it with `POST /api/cart/quote`, and it is merged into the account cart on sign-in (quantities added and capped, unavailable items skipped with a notice).
+- Every cart response is priced from current data: product selling prices, live design prices, stock and the coupon. Nothing price-related is stored in the cart.
+- A cart line is a SKU plus an optional saved design. The same design can be in the bag in several sizes; its colour is fixed by the design (change it with "Edit design"). Blank customizable T-Shirts cannot be bought without a design.
+- Quantity per line: 1 to `cart.max_quantity_per_item` (20) and never more than available stock (counting other lines with the same SKU). Up to 50 lines per cart.
+- Lines that cannot be bought now (out of stock, not enough stock, no longer sold) stay in the bag with a message, are left out of the totals, and block checkout until fixed. The checkout button re-checks the cart on the server first.
+- Coupons need sign-in. Checks: active, inside the validity window, total usage limit, per-customer limit (counted from placed orders), minimum order. PERCENT discounts are capped by `max_discount`. If the bag changes so the coupon no longer applies, the code stays with the reason shown and no discount.
+- Free shipping is decided on the item subtotal before the coupon discount (same rule as the designer hint).
+- "First order" coupons such as WELCOME10 rely on the per-customer limit of 1; there is no separate "no previous orders" rule.
 - Refresh-token reuse detection now allows a 10-second grace window: if a rotated token is replayed while its successor was never used (page reloaded during a refresh call), the session continues with a new token. Any other replay still revokes all sessions.
 
 ## Known issues / technical debt
@@ -169,6 +177,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T16 | Uploaded artwork that is never saved in a design stays on disk | Phase 19: a cleanup job for unattached uploads older than 7 days |
 | T17 | Designer fonts load from Google Fonts | Same plan as T11 (self-host in Phase 19) |
 | T18 | The blank T-Shirt price per style comes from its custom product, so changing it means editing that product in the admin portal | Fine for now; a "base price" field on the Pricing page can be added if the owner prefers one place |
+| T19 | `/checkout` shows a "coming soon" page until Phase 12 | Phase 12 builds checkout on the validated cart |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
 
 ## Change log
@@ -185,4 +194,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 7 | Product listing, category and search pages with facets; product detail page; wishlist; guest bag (74 unit + 39 integration backend tests, 63 frontend tests, catalog browser run) | `4011fb8` |
 | 2026-11-03 | 8 | Customer portal: dashboard, profile, email and password change, address book (74 unit + 45 integration backend tests, 70 frontend tests, portal browser run) | `1677275` |
 | 2026-11-03 | 9 | Custom T-Shirt designer, saved designs, admin designs with ZIP download, back-view mockups (79 unit + 50 integration backend tests, 79 frontend tests, designer browser run) | `e5747ea` |
-| 2026-11-03 | 10 | Dynamic pricing: price engine and estimate API, live price panel with quantity, admin pricing page, refresh-token grace window (84 unit + 56 integration backend tests, 81 frontend tests, pricing browser run) | see git log on `DEV` |
+| 2026-11-03 | 10 | Dynamic pricing: price engine and estimate API, live price panel with quantity, admin pricing page, refresh-token grace window (84 unit + 56 integration backend tests, 81 frontend tests, pricing browser run) | `5a75cab` |
+| 2026-11-03 | 11 | Shopping cart: server cart with products and custom designs, guest quote and merge, coupons, shipping, stock checks, bag page, designer "Add to bag" (84 unit + 62 integration backend tests, 85 frontend tests, cart browser run) | see git log on `DEV` |

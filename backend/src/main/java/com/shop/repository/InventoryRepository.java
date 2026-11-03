@@ -34,6 +34,9 @@ public interface InventoryRepository extends JpaRepository<Inventory, Long> {
     @Query("select i from Inventory i join fetch i.product join fetch i.size join fetch i.color where i.id = :id")
     Optional<Inventory> findByIdForUpdate(@Param("id") Long id);
 
+    @Query("select i from Inventory i join fetch i.product p join fetch p.category join fetch i.size join fetch i.color where i.sku = :sku")
+    Optional<Inventory> findBySkuWithDetails(@Param("sku") String sku);
+
     boolean existsBySku(String sku);
 
     @Query(value = """

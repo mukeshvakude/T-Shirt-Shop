@@ -32,6 +32,7 @@ import {
 } from '../../core/models/design.models';
 import { ChargeType, PriceEstimateRequest, PriceQuote, PricingInfo } from '../../core/models/pricing.models';
 import { NotifyService } from '../../core/notify.service';
+import { CartService } from '../../core/cart/cart.service';
 import { drawTintedShirt, loadImage, renderPreview } from './design-renderer';
 import {
   DesignerDraft,
@@ -78,6 +79,8 @@ const FONT_CSS = 'designer-fonts';
 export class Designer implements AfterViewInit {
   private readonly api = inject(DesignApi);
   private readonly pricingApi = inject(PricingApi);
+  private readonly cartService = inject(CartService);
+  protected readonly addingToBag = signal(false);
   protected readonly auth = inject(AuthService);
   private readonly notify = inject(NotifyService);
   private readonly route = inject(ActivatedRoute);
@@ -717,6 +720,29 @@ export class Designer implements AfterViewInit {
     this.saveDraft();
     this.notify.success(message);
     void this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+  }
+
+  /** Saves the design if needed, then adds it to the bag in the chosen size and quantity. */
+  protected async addToBag(): Promise<void> {
+    if (!this.auth.isLoggedIn()) {
+      this.toLogin('Sign in to add your design to the bag. It is kept on this device until then.');
+      return;
+    }
+    if (this.addingToBag() || this.saving()) return;
+    this.addingToBag.set(true);
+    try {
+      if (!this.code() || this.dirty() || this.locked()) {
+        await this.save();
+        if (!this.code() || this.dirty()) return; // save failed and showed why
+      }
+      await this.cartService.addDesign(this.code()!, this.size(), this.quantity());
+      this.notify.success('Added to your bag.');
+      void this.router.navigateByUrl('/cart');
+    } catch (error) {
+      this.notify.error(error, 'Your design could not be added to the bag.');
+    } finally {
+      this.addingToBag.set(false);
+    }
   }
 
   /** Save (or, for a design that is part of an order, save a copy). */

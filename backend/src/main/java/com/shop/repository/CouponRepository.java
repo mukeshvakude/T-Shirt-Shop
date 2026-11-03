@@ -14,6 +14,10 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     Optional<Coupon> findByCode(String code);
 
+    /** How often this customer has used the coupon on placed orders. */
+    @Query(value = "select count(*) from coupon_redemptions where coupon_id = :couponId and user_id = :userId", nativeQuery = true)
+    long countRedemptions(@Param("couponId") Long couponId, @Param("userId") Long userId);
+
     /** Advertised coupons that are active, inside their validity window and not used up. */
     @Query("""
             select c from Coupon c

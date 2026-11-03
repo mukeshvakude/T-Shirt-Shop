@@ -8,7 +8,8 @@ import { Router, RouterLink } from '@angular/router';
 import { catchError, of, switchMap, tap } from 'rxjs';
 
 import { CatalogApi } from '../../../core/api/catalog.api';
-import { GuestCartService } from '../../../core/cart/guest-cart.service';
+import { CartService } from '../../../core/cart/cart.service';
+import { NotifyService } from '../../../core/notify.service';
 import { SITE } from '../../../core/config/site.config';
 import { ProductDetail as Product, ProductSummary, ReviewHighlight } from '../../../core/models/store.models';
 import { WishlistService } from '../../../core/wishlist.service';
@@ -36,7 +37,9 @@ type Status = 'loading' | 'ready' | 'not-found' | 'error';
 })
 export class ProductDetail {
   private readonly api = inject(CatalogApi);
-  private readonly cart = inject(GuestCartService);
+  private readonly cart = inject(CartService);
+  private readonly notify = inject(NotifyService);
+  protected readonly adding = signal(false);
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly snackBar = inject(MatSnackBar);
@@ -134,7 +137,7 @@ export class ProductDetail {
     this.dialog.open(SizeGuide, { data: { group: this.sizeGroup() }, width: '520px' });
   }
 
-  protected addToBag(goToBag = false): void {
+  protected async addToBag(goToBag = false): Promise<void> {
     const p = this.product();
     const variant = this.variant();
     if (!p) return;
@@ -142,9 +145,11 @@ export class ProductDetail {
       this.sizeError.set(true);
       return;
     }
-    if (!variant || !variant.inStock) return;
-    const already = this.cart.quantityOf(variant.sku);
-    const total = this.cart.add({
+    if (!variant || !variant.inStock || this.adding()) return;
+    this.adding.set(true);
+    let result;
+    try {
+      result = await this.cart.addProduct({
       sku: variant.sku,
       productId: p.id,
       slug: p.slug,
@@ -155,15 +160,20 @@ export class ProductDetail {
       colorName: this.colorName(),
       unitPrice: p.price,
       quantity: this.quantity(),
-      maxQuantity: variant.availableQuantity,
-    });
+        maxQuantity: variant.availableQuantity,
+      });
+    } catch (error) {
+      this.notify.error(error, 'This item could not be added to your bag.');
+      return;
+    } finally {
+      this.adding.set(false);
+    }
     if (goToBag) {
       void this.router.navigateByUrl('/cart');
       return;
     }
-    const capped = total < already + this.quantity();
     const ref = this.snackBar.open(
-      capped ? `You have the maximum available (${total}) in your bag.` : `Added to your bag · ${p.name}`,
+      result.capped ? `You have the most available (${result.quantity}) in your bag.` : `Added to your bag · ${p.name}`,
       'View bag',
       { duration: 4000 },
     );

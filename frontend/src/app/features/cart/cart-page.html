@@ -1,0 +1,169 @@
+<section class="bag">
+  <header class="head">
+    <h1>Your bag</h1>
+    @if (cart(); as c) {
+      @if (c.itemCount) { <p class="muted">{{ c.itemCount }} item{{ c.itemCount === 1 ? '' : 's' }}</p> }
+    }
+  </header>
+
+  @if (loading() && !cart()) {
+    <div class="center"><mat-spinner diameter="36" /></div>
+  } @else if (loadError(); as message) {
+    <div class="empty" role="alert">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="reload()">Try again</button>
+    </div>
+  } @else if (items().length === 0) {
+    <div class="empty">
+      <span class="material-symbols-outlined">shopping_bag</span>
+      <h2>Your bag is empty</h2>
+      <p>Find something you love, or design your own T-Shirt.</p>
+      <div class="row">
+        <a class="btn" routerLink="/shop">Start shopping</a>
+        <a class="btn outline" routerLink="/customize">Design a T-Shirt</a>
+      </div>
+    </div>
+  } @else if (cart(); as c) {
+    @if (c.notices.length && !dismissed()) {
+      <div class="notices" role="status">
+        <ul>@for (n of c.notices; track $index) { <li>{{ n }}</li> }</ul>
+        <button type="button" (click)="dismissed.set(true)" aria-label="Dismiss"><span class="material-symbols-outlined">close</span></button>
+      </div>
+    }
+    <div class="layout">
+      <div class="items">
+        @for (item of items(); track item.key) {
+          <article class="item" [class.problem]="!isBuyable(item)" [class.busy]="busy() === item.key">
+            <a class="thumb" [routerLink]="itemLink(item)" [attr.aria-label]="item.name">
+              <img appImgFallback [src]="item.imageUrl" [alt]="item.design ? 'Preview of your design' : item.name" loading="lazy" />
+            </a>
+            <div class="info">
+              <div class="title-row">
+                <div>
+                  <a class="name" [routerLink]="itemLink(item)">{{ item.name }}</a>
+                  @if (item.design; as d) {
+                    <p class="sub">Custom design · {{ d.name || d.code }}</p>
+                  } @else {
+                    <p class="sub">{{ item.colorName }} · {{ item.sizeLabel }}</p>
+                  }
+                </div>
+                <div class="price">
+                  <strong>{{ item.lineTotal | inr }}</strong>
+                  <small>
+                    @if (item.unitMrp > item.unitPrice) { <s>{{ item.unitMrp | inr }}</s> }
+                    {{ item.unitPrice | inr }} each
+                  </small>
+                </div>
+              </div>
+
+              @if (item.design; as d) {
+                <div class="design">
+                  <span><span class="material-symbols-outlined">palette</span>{{ item.colorName }}</span>
+                  <span><span class="material-symbols-outlined">print</span>{{ d.placements.map(label).join(' + ') }}</span>
+                  @if (d.premiumPrint) { <span><span class="material-symbols-outlined">auto_awesome</span>Premium print</span> }
+                  @for (t of d.texts; track $index) { <span><span class="material-symbols-outlined">title</span>{{ t }}</span> }
+                </div>
+                <details class="breakdown">
+                  <summary>Price details</summary>
+                  <div><span>T-Shirt</span><span>{{ d.basePrice | inr }}</span></div>
+                  @for (l of d.charges; track l.type + l.code) {
+                    <div><span>{{ l.label }}</span><span>+{{ l.amount | inr }}</span></div>
+                  }
+                </details>
+              }
+
+              <div class="controls">
+                @if (!item.design && colorsFor(item).length > 1) {
+                  <label>Colour
+                    <select [value]="item.colorCode" (change)="setColor(item, $any($event.target).value)" [disabled]="busy() === item.key">
+                      @for (c of colorsFor(item); track c.code) {
+                        <option [value]="c.code" [selected]="c.code === item.colorCode" [disabled]="!c.inStock && c.code !== item.colorCode">
+                          {{ c.name }}{{ c.inStock ? '' : ' (out of stock)' }}</option>
+                      }
+                    </select>
+                  </label>
+                }
+                <label>Size
+                  <select [value]="item.sizeCode" (change)="setSize(item, $any($event.target).value)" [disabled]="busy() === item.key">
+                    @for (s of sizesFor(item); track s.sizeCode) {
+                      <option [value]="s.sizeCode" [selected]="s.sizeCode === item.sizeCode" [disabled]="!s.inStock && s.sizeCode !== item.sizeCode">
+                        {{ s.sizeLabel }}{{ s.inStock ? '' : ' (out of stock)' }}</option>
+                    }
+                  </select>
+                </label>
+                <div class="qty" role="group" [attr.aria-label]="'Quantity of ' + item.name">
+                  <button type="button" (click)="setQuantity(item, item.quantity - 1)" [disabled]="item.quantity <= 1 || busy() === item.key"
+                          aria-label="Decrease quantity"><span class="material-symbols-outlined">remove</span></button>
+                  <span>{{ item.quantity }}</span>
+                  <button type="button" (click)="setQuantity(item, item.quantity + 1)"
+                          [disabled]="item.quantity >= item.maxQuantity || busy() === item.key"
+                          aria-label="Increase quantity"><span class="material-symbols-outlined">add</span></button>
+                </div>
+                <div class="actions">
+                  @if (item.design) { <a [routerLink]="['/customize', item.design.code]">Edit design</a> }
+                  <button type="button" class="link danger" (click)="remove(item)" [disabled]="busy() === item.key">Remove</button>
+                </div>
+              </div>
+              @if (item.message) {
+                <p class="status" [class.warn]="!isBuyable(item)">
+                  <span class="material-symbols-outlined">{{ isBuyable(item) ? 'info' : 'warning' }}</span>{{ item.message }}
+                </p>
+              }
+            </div>
+          </article>
+        }
+        <a class="continue" routerLink="/shop"><span class="material-symbols-outlined">arrow_back</span>Continue shopping</a>
+      </div>
+
+      <aside class="summary" aria-label="Order summary">
+        <h2>Order summary</h2>
+        <div class="line"><span>Subtotal</span><span>{{ c.subtotal | inr }}</span></div>
+
+        <div class="coupon">
+          @if (!auth.isLoggedIn()) {
+            <p class="muted small"><a routerLink="/login" [queryParams]="{ returnUrl: '/cart' }">Sign in</a> to use a coupon code.</p>
+          } @else if (c.coupon; as cp) {
+            <div class="applied" [class.off]="!cp.applied">
+              <span class="material-symbols-outlined">sell</span>
+              <div>
+                <strong>{{ cp.code }}</strong>
+                <small>{{ cp.applied ? cp.description : cp.message }}</small>
+              </div>
+              <button type="button" class="link" (click)="removeCoupon()" [disabled]="couponBusy()">Remove</button>
+            </div>
+          } @else {
+            <form (submit)="$event.preventDefault(); applyCoupon(code.value)">
+              <label class="sr-only" for="coupon">Coupon code</label>
+              <input #code id="coupon" type="text" placeholder="Coupon code" maxlength="40" autocomplete="off" (input)="couponError.set(null)" />
+              <button type="submit" class="btn outline" [disabled]="couponBusy()">Apply</button>
+            </form>
+            @if (couponError(); as e) { <p class="error small" role="alert">{{ e }}</p> }
+          }
+        </div>
+
+        @if (c.discount > 0) {
+          <div class="line discount"><span>Discount ({{ c.coupon?.code }})</span><span>−{{ c.discount | inr }}</span></div>
+        }
+        <div class="line">
+          <span>Shipping</span>
+          <span>{{ c.subtotal > 0 && c.shipping === 0 ? 'Free' : (c.shipping | inr) }}</span>
+        </div>
+        @if (c.amountToFreeShipping > 0) {
+          <p class="hint">Add {{ c.amountToFreeShipping | inr }} more for free shipping.</p>
+        }
+        <div class="line total"><span>Total</span><strong>{{ c.total | inr }}</strong></div>
+        <p class="muted small">Inclusive of all taxes.</p>
+
+        @if (blocked()) {
+          <p class="error small">{{ blocked() === 1 ? 'One item needs' : blocked() + ' items need' }} your attention before checkout.</p>
+        }
+        <button type="button" class="btn primary wide" (click)="checkout()" [disabled]="checkingOut() || (auth.isLoggedIn() && !c.canCheckout)">
+          @if (checkingOut()) { <mat-spinner diameter="18" /> }
+          {{ auth.isLoggedIn() ? 'Checkout' : 'Sign in to checkout' }}
+        </button>
+        <p class="secure"><span class="material-symbols-outlined">lock</span>Secure payments with Razorpay, or Cash on Delivery</p>
+      </aside>
+    </div>
+  }
+</section>

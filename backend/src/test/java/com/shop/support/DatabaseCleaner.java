@@ -20,6 +20,8 @@ public final class DatabaseCleaner {
 
     public static void clean(JdbcTemplate jdbc) {
         // Storefront engagement
+        jdbc.update("DELETE FROM cart_items");
+        jdbc.update("DELETE FROM carts");
         jdbc.update("DELETE FROM design_assets");
         jdbc.update("DELETE FROM order_items");
         jdbc.update("DELETE FROM orders");

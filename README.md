@@ -5,10 +5,10 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 10 of 19 complete (architecture, database, backend
+> **Status:** Phases 1 to 11 of 19 complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
 > home page, product listing and details, customer portal, custom T-Shirt designer,
-> dynamic pricing). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> dynamic pricing, shopping cart). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -106,6 +106,7 @@ npm start   # http://localhost:4200 (proxies /api and /media to the backend)
 
 - Storefront: http://localhost:4200
 - T-Shirt designer: http://localhost:4200/customize
+- Shopping bag: http://localhost:4200/cart
 - Admin portal: http://localhost:4200/admin (sign in with `ADMIN_EMAIL` / `ADMIN_PASSWORD` from `.env`)
 
 Shop details such as support email, phone and address live in

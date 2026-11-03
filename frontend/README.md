@@ -77,7 +77,8 @@ src/app/
 | `/account`, `/account/orders`, `/account/profile`, `/account/addresses` | Customer portal: dashboard, orders, profile and security, address book (sign-in required) |
 | `/account/designs` | Saved custom designs: open, edit, delete |
 | `/customize`, `/customize/:code` | Custom T-Shirt designer (Phase 9) |
-| `/cart` | "Coming soon" page until Phase 11 |
+| `/cart` | Shopping bag: products and custom T-Shirts, size/colour/quantity, coupons, totals (Phase 11) |
+| `/checkout` | "Coming soon" page until Phase 12 (sign-in required) |
 
 The home page loads everything from `GET /api/home` and hides sections that have no content.
 
@@ -110,6 +111,16 @@ Replace them with real product photography (upload through the admin portal) bef
 - `design-utils.ts` holds the pure helpers (unit tested); `design-renderer.ts` draws previews.
 
 Admins see all designs at `/admin/designs` and can download a ZIP for printing.
+
+## Shopping bag (Phase 11)
+
+- `CartService` (`core/cart/cart.service.ts`) is the single bag for the app. Signed in, it uses the
+  server cart. As a guest, the bag lives in `localStorage` (SKUs and quantities) and the server
+  prices it through `POST /api/cart/quote`. On sign-in the guest bag is merged into the account cart.
+- The header count, product page ("Add to bag", "Buy now") and designer ("Add to bag") all go
+  through `CartService`.
+- The bag page shows server prices, stock messages per line, custom design details and price
+  breakdown, coupons (signed in), shipping and the total. Checkout re-checks the cart first.
 
 ## Dynamic pricing (Phase 10)
 

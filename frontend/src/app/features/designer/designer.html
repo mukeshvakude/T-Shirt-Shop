@@ -242,6 +242,10 @@
               <span class="material-symbols-outlined">save</span>{{ locked() ? 'Save as new design' : code() ? 'Save changes' : 'Save design' }}
             }
           </button>
+          <button type="button" class="btn outline wide bag-btn" (click)="addToBag()" [disabled]="addingToBag() || saving() || !ready() || !inStock()">
+            @if (addingToBag()) { <mat-spinner diameter="18" /> } @else { <span class="material-symbols-outlined">shopping_bag</span> }
+            Add to bag
+          </button>
           @if (!auth.isLoggedIn()) {
             <p class="fine center">You will be asked to sign in. Your design stays on this device.</p>
           } @else {

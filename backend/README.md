@@ -91,10 +91,16 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 10)
+## Current endpoints (Phase 11)
 
 | Method | Path | Access |
 |--------|------|--------|
+| GET, DELETE | `/api/cart` | Signed in (cart with current prices, stock status, coupon, shipping, total; DELETE empties it) |
+| POST | `/api/cart/items` | Signed in (`sku` for a product, or `designCode` + optional `sizeCode` for a custom T-Shirt) |
+| PATCH, DELETE | `/api/cart/items/{id}` | Signed in (quantity, size, colour; remove) |
+| POST | `/api/cart/merge` | Signed in (move the browser guest bag into the cart) |
+| PUT, DELETE | `/api/cart/coupon` | Signed in (apply or remove a coupon code) |
+| POST | `/api/cart/quote` | Public (price a guest bag of SKUs and quantities) |
 | GET | `/api/pricing/charges` | Public (active extra charges, shipping rules, max quantity; not cached) |
 | POST | `/api/pricing/design-estimate` | Public (price breakdown for custom T-Shirt choices and quantity, calculated on the server) |
 | GET, PUT | `/api/admin/pricing/charges` | `ROLE_ADMIN` (all chargeable choices; PUT creates or updates one charge) |

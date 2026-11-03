@@ -23,8 +23,8 @@ export const CART_STORAGE_KEY = 'tshirt_shop_bag_v1';
 const MAX_LINES = 50;
 
 /**
- * Guest bag kept in this browser. Phase 11 adds the server cart and merges this bag
- * into it when the customer signs in.
+ * Guest bag kept in this browser (SKUs and quantities; the display fields are only a fallback).
+ * The cart page prices it on the server, and it is merged into the account cart on sign-in.
  */
 @Injectable({ providedIn: 'root' })
 export class GuestCartService {
@@ -56,6 +56,22 @@ export class GuestCartService {
 
   quantityOf(sku: string): number {
     return this.state().find((l) => l.sku === sku)?.quantity ?? 0;
+  }
+
+  setQuantity(sku: string, quantity: number): void {
+    this.save(this.state().map((l) => (l.sku === sku ? { ...l, quantity: Math.max(1, Math.min(quantity, Math.max(1, l.maxQuantity))) } : l)));
+  }
+
+  /** Switches a line to another size or colour, combining it with an existing line for that SKU. */
+  replace(oldSku: string, line: CartLine): void {
+    const old = this.state().find((l) => l.sku === oldSku);
+    if (!old) return;
+    const rest = this.state().filter((l) => l.sku !== oldSku);
+    const same = rest.find((l) => l.sku === line.sku);
+    const merged = same
+      ? rest.map((l) => (l.sku === line.sku ? { ...l, quantity: Math.min(l.quantity + old.quantity, Math.max(1, line.maxQuantity)) } : l))
+      : [...rest, { ...old, ...line, quantity: Math.min(old.quantity, Math.max(1, line.maxQuantity)) }];
+    this.save(merged);
   }
 
   remove(sku: string): void {
