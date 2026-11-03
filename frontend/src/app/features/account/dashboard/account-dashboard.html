@@ -1,0 +1,81 @@
+<header class="page-head">
+  <h1>{{ greeting() }}, {{ auth.firstName() }}</h1>
+  <p>Track your orders, manage your details and saved addresses.</p>
+</header>
+
+@if (error()) {
+  <div class="panel center">
+    <p>Your dashboard could not be loaded.</p>
+    <button class="btn" type="button" (click)="load()">Try again</button>
+  </div>
+} @else if (data(); as d) {
+  <section class="stats" aria-label="Order summary">
+    <a class="stat" routerLink="/account/orders"><span class="num">{{ d.orders.total }}</span><span>Total orders</span></a>
+    <a class="stat" routerLink="/account/orders"><span class="num">{{ d.orders.active }}</span><span>In progress</span></a>
+    <a class="stat" routerLink="/account/orders"><span class="num">{{ d.orders.delivered }}</span><span>Delivered</span></a>
+    <a class="stat" routerLink="/wishlist"><span class="num">{{ d.wishlistCount }}</span><span>Wishlist</span></a>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <h2>Recent orders</h2>
+      @if (d.recentOrders.length) { <a routerLink="/account/orders">View all</a> }
+    </div>
+    @if (d.recentOrders.length === 0) {
+      <div class="empty">
+        <span class="material-symbols-outlined">shopping_bag</span>
+        <p>You have not placed an order yet. Your orders and their delivery status will appear here.</p>
+        <a class="btn" routerLink="/shop">Start shopping</a>
+      </div>
+    } @else {
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Order</th><th>Date</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+          <tbody>
+            @for (o of d.recentOrders; track o.orderNumber) {
+              <tr>
+                <td class="strong">{{ o.orderNumber }}</td>
+                <td>{{ o.placedAt | date: 'd MMM y' }}</td>
+                <td>{{ o.itemCount }}</td>
+                <td>{{ o.grandTotal | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                <td><span class="pill" [attr.data-status]="o.orderStatus">{{ statusLabels[o.orderStatus] ?? o.orderStatus }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </section>
+
+  <div class="two-col">
+    <section class="panel">
+      <div class="panel-head"><h2>Profile</h2><a routerLink="/account/profile">Edit</a></div>
+      <dl class="facts">
+        <dt>Name</dt><dd>{{ d.profile.fullName }}</dd>
+        <dt>Email</dt><dd>{{ d.profile.email }}</dd>
+        <dt>Mobile</dt><dd>{{ d.profile.phone ? '+91 ' + d.profile.phone : 'Not added' }}</dd>
+        <dt>Member since</dt><dd>{{ d.profile.createdAt | date: 'MMMM y' }}</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Default address</h2>
+        <a routerLink="/account/addresses">{{ d.addressCount ? 'Manage (' + d.addressCount + ')' : 'Add' }}</a>
+      </div>
+      @if (d.defaultAddress; as a) {
+        <address>
+          <strong>{{ a.fullName }}</strong>@if (a.label) { <span class="tag">{{ a.label }}</span> }<br>
+          {{ a.line1 }}@if (a.line2) {, {{ a.line2 }}}<br>
+          @if (a.landmark) { {{ landmark(a.landmark) }}<br> }
+          {{ a.city }}, {{ a.state }} {{ a.pincode }}<br>
+          +91 {{ a.phone }}
+        </address>
+      } @else {
+        <p class="muted">No saved address yet. Add one to check out faster.</p>
+      }
+    </section>
+  </div>
+} @else {
+  <div class="stats">@for (i of [1, 2, 3, 4]; track i) { <div class="stat skeleton"></div> }</div>
+}

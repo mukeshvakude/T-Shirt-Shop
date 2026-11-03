@@ -1,8 +1,8 @@
 # Frontend (Angular)
 
 Angular 22 single-page app with the **storefront** (home page, product listing, search,
-product details, wishlist, content pages, customer sign-in and registration) and the
-**admin portal** for product management. The customer portal arrives in Phase 8.
+product details, wishlist, content pages, customer sign-in and registration), the **customer
+portal** at `/account`, and the **admin portal** for product management.
 
 ## Stack
 
@@ -74,7 +74,8 @@ src/app/
 | `/shop`, `/shop/:category`, `/search?q=` | Listing with filters (price, size, colour, stock, sale), sorting and pagination, all kept in the URL |
 | `/product/:slug` | Product page: colour-aware gallery, size and colour availability, quantity, size guide, add to bag, buy now, reviews, related products |
 | `/wishlist` | Saved products (sign-in required) |
-| `/customize`, `/cart`, `/account` | "Coming soon" pages until Phases 9, 11 and 8 |
+| `/account`, `/account/orders`, `/account/profile`, `/account/addresses` | Customer portal: dashboard, orders, profile and security, address book (sign-in required) |
+| `/customize`, `/cart` | "Coming soon" pages until Phases 9 and 11 |
 
 The home page loads everything from `GET /api/home` and hides sections that have no content.
 

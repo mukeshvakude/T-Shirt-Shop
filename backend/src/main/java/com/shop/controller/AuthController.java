@@ -1,12 +1,7 @@
 package com.shop.controller;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.util.Arrays;
-
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -16,7 +11,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.shop.config.SecurityProperties;
 import com.shop.dto.auth.AuthResponse;
 import com.shop.dto.auth.ForgotPasswordRequest;
 import com.shop.dto.auth.LoginRequest;
@@ -24,13 +18,13 @@ import com.shop.dto.auth.RegisterRequest;
 import com.shop.dto.auth.ResetPasswordRequest;
 import com.shop.dto.auth.UserResponse;
 import com.shop.security.ClientInfo;
+import com.shop.security.RefreshCookies;
 import com.shop.service.AuthService;
 import com.shop.service.AuthService.AuthResult;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -47,44 +41,41 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private final AuthService authService;
-    private final SecurityProperties security;
-    private final Clock clock;
+    private final RefreshCookies cookies;
 
     @PostMapping("/register")
     @SecurityRequirements
     @Operation(summary = "Create a customer account and log in")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request,
             HttpServletRequest http) {
-        return withRefreshCookie(HttpStatus.CREATED, authService.register(request, ClientInfo.from(http)));
+        return withSession(HttpStatus.CREATED, authService.register(request, ClientInfo.from(http)), cookies);
     }
 
     @PostMapping("/login")
     @SecurityRequirements
     @Operation(summary = "Log in with email and password")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, HttpServletRequest http) {
-        return withRefreshCookie(HttpStatus.OK, authService.login(request, ClientInfo.from(http)));
+        return withSession(HttpStatus.OK, authService.login(request, ClientInfo.from(http)), cookies);
     }
 
     @PostMapping("/refresh")
     @SecurityRequirements
     @Operation(summary = "Get a new access token using the refresh-token cookie (rotates it). 204 when there is no cookie")
     public ResponseEntity<AuthResponse> refresh(HttpServletRequest http) {
-        String refreshToken = readRefreshCookie(http);
+        String refreshToken = cookies.read(http);
         if (refreshToken == null || refreshToken.isBlank()) {
             // No session cookie at all: an anonymous visitor, not an error.
             return ResponseEntity.noContent().build();
         }
-        return withRefreshCookie(HttpStatus.OK, authService.refresh(refreshToken, ClientInfo.from(http)));
+        return withSession(HttpStatus.OK, authService.refresh(refreshToken, ClientInfo.from(http)), cookies);
     }
 
     @PostMapping("/logout")
     @SecurityRequirements
     @Operation(summary = "Revoke the current refresh token and clear the cookie")
     public ResponseEntity<Void> logout(HttpServletRequest http) {
-        authService.logout(readRefreshCookie(http));
-        return ResponseEntity.noContent()
-                .header(HttpHeaders.SET_COOKIE, refreshCookie("", Duration.ZERO).toString())
-                .build();
+        authService.logout(cookies.read(http));
+        return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, cookies.clear()).build();
     }
 
     @PostMapping("/forgot-password")
@@ -110,35 +101,11 @@ public class AuthController {
         return authService.getUser(Long.valueOf(jwt.getSubject()));
     }
 
-    private ResponseEntity<AuthResponse> withRefreshCookie(HttpStatus status, AuthResult result) {
-        Duration maxAge = Duration.between(clock.instant(), result.refreshTokenExpiresAt());
+    /** Response carrying a new session: access token in the body, refresh token in the cookie. */
+    public static ResponseEntity<AuthResponse> withSession(HttpStatus status, AuthResult result, RefreshCookies cookies) {
         return ResponseEntity.status(status)
-                .header(HttpHeaders.SET_COOKIE, refreshCookie(result.refreshToken(), maxAge).toString())
+                .header(HttpHeaders.SET_COOKIE, cookies.issue(result.refreshToken(), result.refreshTokenExpiresAt()))
                 .header(HttpHeaders.CACHE_CONTROL, "no-store")
                 .body(result.response());
-    }
-
-    private ResponseCookie refreshCookie(String value, Duration maxAge) {
-        SecurityProperties.RefreshCookie cfg = security.refreshCookie();
-        return ResponseCookie.from(cfg.name(), value)
-                .httpOnly(true)
-                .secure(cfg.secure())
-                .sameSite(cfg.sameSite())
-                .path(cfg.path())
-                .maxAge(maxAge.isNegative() ? Duration.ZERO : maxAge)
-                .build();
-    }
-
-    private String readRefreshCookie(HttpServletRequest http) {
-        Cookie[] cookies = http.getCookies();
-        if (cookies == null) {
-            return null;
-        }
-        String name = security.refreshCookie().name();
-        return Arrays.stream(cookies)
-                .filter(c -> name.equals(c.getName()))
-                .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
     }
 }

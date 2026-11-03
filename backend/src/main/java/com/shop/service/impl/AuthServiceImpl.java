@@ -183,6 +183,14 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
+    @Override
+    @Transactional
+    public AuthResult issueSession(Long userId, ClientInfo client) {
+        User user = userRepository.findWithRolesById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        return issueTokens(user, client);
+    }
+
     private void registerFailedAttempt(User user, Instant now) {
         int attempts = user.getFailedLoginAttempts() + 1;
         if (attempts >= security.login().maxFailedAttempts()) {

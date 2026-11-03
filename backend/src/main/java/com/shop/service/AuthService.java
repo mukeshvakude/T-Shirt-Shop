@@ -28,4 +28,7 @@ public interface AuthService {
     void resetPassword(String token, String newPassword);
 
     UserResponse getUser(Long userId);
+
+    /** A fresh access + refresh token pair for an already authenticated user (e.g. after a password change). */
+    AuthResult issueSession(Long userId, ClientInfo client);
 }

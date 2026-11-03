@@ -48,7 +48,7 @@ export const routes: Routes = [
         loadComponent: () => import('./features/products/wishlist-page/wishlist-page').then((m) => m.WishlistPage),
       },
 
-      // Pages delivered in later phases (account: 8, designer: 9, cart: 11).
+      // Pages delivered in later phases (designer: 9, cart: 11).
       {
         path: 'customize',
         title: `Design your T-Shirt | ${SHOP}`,
@@ -61,12 +61,35 @@ export const routes: Routes = [
         loadComponent: comingSoon,
         data: { title: 'Your bag', description: 'Online ordering opens very soon.' },
       },
+
+      // Customer portal (Phase 8)
       {
         path: 'account',
         canActivate: [authGuard],
-        title: `My account | ${SHOP}`,
-        loadComponent: comingSoon,
-        data: { title: 'My account', description: 'Your profile, addresses and orders will appear here very soon.' },
+        loadComponent: () => import('./features/account/account-shell/account-shell').then((m) => m.AccountShell),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            title: `My account | ${SHOP}`,
+            loadComponent: () => import('./features/account/dashboard/account-dashboard').then((m) => m.AccountDashboard),
+          },
+          {
+            path: 'orders',
+            title: `My orders | ${SHOP}`,
+            loadComponent: () => import('./features/account/orders/account-orders').then((m) => m.AccountOrders),
+          },
+          {
+            path: 'profile',
+            title: `Profile & security | ${SHOP}`,
+            loadComponent: () => import('./features/account/profile/account-profile').then((m) => m.AccountProfile),
+          },
+          {
+            path: 'addresses',
+            title: `Addresses | ${SHOP}`,
+            loadComponent: () => import('./features/account/addresses/account-addresses').then((m) => m.AccountAddresses),
+          },
+        ],
       },
     ],
   },

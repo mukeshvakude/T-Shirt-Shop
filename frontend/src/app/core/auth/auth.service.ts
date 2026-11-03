@@ -103,6 +103,16 @@ export class AuthService {
     void this.router.navigate(['/login'], { queryParams: { returnUrl, reason: 'expired' } });
   }
 
+  /** After profile or email changes: refresh the user shown in the header. */
+  updateUser(user: AuthUser): void {
+    this.currentUser.set(user);
+  }
+
+  /** After a password change the server returns a brand-new session for this device. */
+  applySession(response: AuthResponse): void {
+    this.apply(response);
+  }
+
   private apply(response: AuthResponse): AuthUser {
     this.accessToken = response.accessToken;
     this.currentUser.set(response.user);

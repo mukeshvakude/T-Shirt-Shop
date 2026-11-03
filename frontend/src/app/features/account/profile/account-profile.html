@@ -1,0 +1,102 @@
+<header class="page-head">
+  <h1>Profile &amp; security</h1>
+  <p>Keep your details up to date so we can reach you about your orders.</p>
+</header>
+
+<section class="panel">
+  <div class="panel-head"><div><h2>Personal details</h2></div></div>
+  <form [formGroup]="details" (ngSubmit)="saveDetails()" novalidate class="grid">
+    <mat-form-field>
+      <mat-label>Full name</mat-label>
+      <input matInput formControlName="fullName" autocomplete="name" required>
+      @if (details.controls.fullName.invalid) { <mat-error>Enter your name</mat-error> }
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Mobile number</mat-label>
+      <span matTextPrefix>+91&nbsp;</span>
+      <input matInput type="tel" formControlName="phone" inputmode="numeric" maxlength="10" autocomplete="tel-national">
+      @if (details.controls.phone.hasError('taken')) {
+        <mat-error>This number is used by another account</mat-error>
+      } @else if (details.controls.phone.invalid) {
+        <mat-error>Enter a 10-digit mobile number</mat-error>
+      }
+    </mat-form-field>
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="savingDetails() || details.pristine">
+        {{ savingDetails() ? 'Saving…' : 'Save details' }}
+      </button>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Sign-in email</h2>
+      <p>Currently <strong>{{ user()?.email }}</strong></p>
+    </div>
+  </div>
+  <form [formGroup]="email" (ngSubmit)="saveEmail()" novalidate class="grid">
+    <mat-form-field>
+      <mat-label>New email</mat-label>
+      <input matInput type="email" formControlName="newEmail" autocomplete="email" required>
+      @if (email.controls.newEmail.hasError('taken')) {
+        <mat-error>Another account already uses this email</mat-error>
+      } @else if (email.controls.newEmail.invalid) {
+        <mat-error>Enter a valid email address</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Current password</mat-label>
+      <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" required>
+      @if (email.controls.currentPassword.hasError('wrong')) {
+        <mat-error>That password is not correct</mat-error>
+      } @else if (email.controls.currentPassword.invalid) {
+        <mat-error>Enter your current password</mat-error>
+      }
+    </mat-form-field>
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="savingEmail()">{{ savingEmail() ? 'Saving…' : 'Change email' }}</button>
+    </div>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Password</h2>
+      <p>Changing your password signs you out on all other devices.</p>
+    </div>
+  </div>
+  <form [formGroup]="password" (ngSubmit)="savePassword()" novalidate class="grid">
+    <mat-form-field class="full">
+      <mat-label>Current password</mat-label>
+      <input matInput type="password" formControlName="currentPassword" autocomplete="current-password" required>
+      @if (password.controls.currentPassword.hasError('wrong')) {
+        <mat-error>That password is not correct</mat-error>
+      } @else if (password.controls.currentPassword.invalid) {
+        <mat-error>Enter your current password</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>New password</mat-label>
+      <input matInput type="password" formControlName="password" autocomplete="new-password" required>
+      <mat-hint>At least 8 characters, with a letter and a number</mat-hint>
+      @if (password.controls.password.hasError('same')) {
+        <mat-error>Choose a password different from the current one</mat-error>
+      } @else if (password.controls.password.invalid) {
+        <mat-error>At least 8 characters, with a letter and a number</mat-error>
+      }
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Confirm new password</mat-label>
+      <input matInput type="password" formControlName="confirmPassword" autocomplete="new-password" required>
+    </mat-form-field>
+    @if (password.hasError('mismatch') && password.controls.confirmPassword.touched) {
+      <p class="form-error full">The new passwords do not match.</p>
+    }
+    <div class="actions">
+      <button mat-flat-button type="submit" [disabled]="savingPassword()">{{ savingPassword() ? 'Saving…' : 'Change password' }}</button>
+    </div>
+  </form>
+</section>

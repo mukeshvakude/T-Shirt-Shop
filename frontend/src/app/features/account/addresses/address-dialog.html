@@ -1,0 +1,60 @@
+<h2 mat-dialog-title>{{ data ? 'Edit address' : 'Add an address' }}</h2>
+<mat-dialog-content>
+  <div class="labels" role="group" aria-label="Address label">
+    @for (l of labels; track l) {
+      <button type="button" [class.on]="form.controls.label.value === l" [attr.aria-pressed]="form.controls.label.value === l"
+              (click)="form.controls.label.setValue(l); form.markAsDirty()">{{ l }}</button>
+    }
+  </div>
+  <form [formGroup]="form" (ngSubmit)="save()" novalidate id="address-form">
+    <mat-form-field>
+      <mat-label>Full name</mat-label>
+      <input matInput formControlName="fullName" autocomplete="name" required>
+      @if (form.controls.fullName.invalid) { <mat-error>Enter the recipient's name</mat-error> }
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Mobile number</mat-label>
+      <span matTextPrefix>+91&nbsp;</span>
+      <input matInput type="tel" formControlName="phone" inputmode="numeric" maxlength="10" autocomplete="tel-national" required>
+      @if (form.controls.phone.invalid) { <mat-error>Enter a 10-digit mobile number</mat-error> }
+    </mat-form-field>
+    <mat-form-field class="full">
+      <mat-label>Flat, house no., building, street</mat-label>
+      <input matInput formControlName="line1" autocomplete="address-line1" required>
+      @if (form.controls.line1.invalid) { <mat-error>Enter the address</mat-error> }
+    </mat-form-field>
+    <mat-form-field class="full">
+      <mat-label>Area, colony (optional)</mat-label>
+      <input matInput formControlName="line2" autocomplete="address-line2">
+    </mat-form-field>
+    <mat-form-field class="full">
+      <mat-label>Landmark (optional)</mat-label>
+      <input matInput formControlName="landmark" placeholder="e.g. Opposite City Mall">
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>City</mat-label>
+      <input matInput formControlName="city" autocomplete="address-level2" required>
+      @if (form.controls.city.invalid) { <mat-error>Enter the city</mat-error> }
+    </mat-form-field>
+    <mat-form-field>
+      <mat-label>Pincode</mat-label>
+      <input matInput formControlName="pincode" inputmode="numeric" maxlength="6" autocomplete="postal-code" required>
+      @if (form.controls.pincode.invalid) { <mat-error>Enter a 6-digit pincode</mat-error> }
+    </mat-form-field>
+    <mat-form-field class="full">
+      <mat-label>State / union territory</mat-label>
+      <mat-select formControlName="state" required>
+        @for (s of states(); track s) { <mat-option [value]="s">{{ s }}</mat-option> }
+      </mat-select>
+      @if (form.controls.state.invalid) { <mat-error>Choose a state</mat-error> }
+    </mat-form-field>
+    <mat-checkbox class="full" formControlName="makeDefault">
+      {{ data?.isDefault ? 'This is your default address' : 'Make this my default address' }}
+    </mat-checkbox>
+    @if (error()) { <p class="error full" role="alert">{{ error() }}</p> }
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button type="button" mat-dialog-close>Cancel</button>
+  <button mat-flat-button type="submit" form="address-form" [disabled]="saving()">{{ saving() ? 'Saving…' : 'Save address' }}</button>
+</mat-dialog-actions>
