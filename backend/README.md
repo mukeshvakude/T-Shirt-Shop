@@ -91,10 +91,13 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 6)
+## Current endpoints (Phase 7)
 
 | Method | Path | Access |
 |--------|------|--------|
+| GET | `/api/products/facets?category&q` | Public (sizes, colours, price range, categories with counts) |
+| GET | `/api/products/{slug}/reviews?page&size` | Public (approved reviews) |
+| GET, PUT, DELETE | `/api/account/wishlist`, `/ids`, `/{productId}` | Signed in |
 | GET | `/api/home` | Public (all home page sections, 60 s cache) |
 | GET | `/api/offers`, `/api/reviews/highlights?limit=6` | Public |
 | POST | `/api/newsletter`, `/api/contact` | Public, rate limited, always 202 |

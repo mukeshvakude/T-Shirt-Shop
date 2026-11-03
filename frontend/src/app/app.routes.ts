@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { adminGuard, authGuard, guestGuard } from './core/auth/auth.guards';
 
 const comingSoon = () => import('./features/static-pages/coming-soon').then((m) => m.ComingSoon);
+const listing = () => import('./features/products/product-listing/product-listing').then((m) => m.ProductListing);
 const SHOP = 'T-Shirt Shop';
 
 export const routes: Routes = [
@@ -31,25 +32,23 @@ export const routes: Routes = [
         loadComponent: () => import('./features/static-pages/returns-policy').then((m) => m.ReturnsPolicy),
       },
 
-      // Pages delivered in later phases (listing and details: 7, account: 8, designer: 9, cart: 11).
-      {
-        path: 'shop/:category',
-        title: SHOP,
-        loadComponent: comingSoon,
-        data: { title: 'The full collection is almost here', description: 'Browsing with filters and sorting is coming very soon. Meanwhile, explore the highlights on our home page.' },
-      },
+      // Catalog (Phase 7)
+      { path: 'shop', title: `Shop all | ${SHOP}`, loadComponent: listing },
+      { path: 'shop/:category', title: SHOP, loadComponent: listing },
+      { path: 'search', title: `Search | ${SHOP}`, loadComponent: listing },
       {
         path: 'product/:slug',
         title: SHOP,
-        loadComponent: comingSoon,
-        data: { title: 'Product pages are almost here', description: 'Detailed product pages with sizes, colours and photos are coming very soon.' },
+        loadComponent: () => import('./features/products/product-detail/product-detail').then((m) => m.ProductDetail),
       },
       {
-        path: 'search',
-        title: `Search | ${SHOP}`,
-        loadComponent: comingSoon,
-        data: { title: 'Search', description: 'Product search is coming very soon. Meanwhile, explore the highlights on our home page.' },
+        path: 'wishlist',
+        canActivate: [authGuard],
+        title: `Wishlist | ${SHOP}`,
+        loadComponent: () => import('./features/products/wishlist-page/wishlist-page').then((m) => m.WishlistPage),
       },
+
+      // Pages delivered in later phases (account: 8, designer: 9, cart: 11).
       {
         path: 'customize',
         title: `Design your T-Shirt | ${SHOP}`,

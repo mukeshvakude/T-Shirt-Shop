@@ -84,3 +84,72 @@ export interface ContactMessage {
   /** Honeypot: must stay empty. */
   website: string;
 }
+
+export interface VariantAvailability {
+  sizeCode: string;
+  colorCode: string;
+  sku: string;
+  /** Capped at the per-item order limit; exact stock is never exposed. */
+  availableQuantity: number;
+  inStock: boolean;
+  lowStock: boolean;
+}
+
+export interface ProductImageView {
+  id: number;
+  url: string;
+  altText?: string;
+  colorCode?: string;
+  sortOrder: number;
+  primary: boolean;
+}
+
+export interface ProductDetail {
+  id: number;
+  name: string;
+  slug: string;
+  category: Category;
+  shortDescription?: string;
+  description?: string;
+  basePrice: number;
+  discountPrice?: number;
+  price: number;
+  discountPercent: number;
+  material?: string;
+  fit?: string;
+  careInstructions?: string;
+  avgRating: number;
+  reviewCount: number;
+  featured: boolean;
+  newArrival: boolean;
+  customizable: boolean;
+  inStock: boolean;
+  images: ProductImageView[];
+  sizes: { id: number; code: string; label: string; sizeGroup: 'APPAREL' | 'WAIST'; sortOrder: number }[];
+  colors: { id: number; code: string; name: string; hex: string; sortOrder: number }[];
+  variants: VariantAvailability[];
+}
+
+export interface Facets {
+  minPrice?: number;
+  maxPrice?: number;
+  sizes: { code: string; label: string; count: number }[];
+  colors: { code: string; name: string; hex: string; count: number }[];
+  categories: { code: string; name: string; slug: string; count: number }[];
+}
+
+export type CatalogSort = 'NEWEST' | 'PRICE_ASC' | 'PRICE_DESC' | 'POPULAR' | 'RATING' | 'NAME_ASC';
+
+export interface CatalogQuery {
+  category?: string | null;
+  q?: string | null;
+  sizes?: string[];
+  colors?: string[];
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  inStock?: boolean;
+  onSale?: boolean;
+  sort?: CatalogSort;
+  page?: number;
+  size?: number;
+}

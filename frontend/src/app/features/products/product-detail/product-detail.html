@@ -1,0 +1,198 @@
+@switch (status()) {
+  @case ('loading') {
+    <div class="pdp skeleton-pdp" aria-busy="true">
+      <div class="sk media"></div>
+      <div class="sk-lines"><div class="sk w60"></div><div class="sk w40"></div><div class="sk w80"></div></div>
+    </div>
+  }
+  @case ('not-found') {
+    <section class="missing">
+      <h1>This product is not available</h1>
+      <p>It may be sold out for good or no longer in our range.</p>
+      <a class="btn primary" routerLink="/shop">Browse all products</a>
+    </section>
+  }
+  @case ('error') {
+    <section class="missing">
+      <h1>Something went wrong</h1>
+      <p>We could not load this product. Please try again.</p>
+      <a class="btn primary" [routerLink]="['/product', slug()]">Retry</a>
+    </section>
+  }
+  @default {
+    @let p = product()!;
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <a routerLink="/">Home</a><span aria-hidden="true">/</span>
+      <a [routerLink]="p.category.code === 'CUSTOM_TSHIRTS' ? '/customize' : ['/shop', p.category.slug]">{{ p.category.name }}</a>
+      <span aria-hidden="true">/</span><span>{{ p.name }}</span>
+    </nav>
+
+    <div class="pdp">
+      <!-- Gallery -->
+      <section class="gallery" aria-label="Product images">
+        <div class="main">
+          <img [src]="mainImage()?.url ?? ''" [alt]="mainImage()?.altText ?? p.name" appImgFallback width="800" height="1000">
+          @if (p.discountPercent > 0) { <span class="badge">−{{ p.discountPercent }}%</span> }
+        </div>
+        @if (gallery().length > 1) {
+          <div class="thumbs" role="list">
+            @for (img of gallery(); track img.id; let i = $index) {
+              <button type="button" role="listitem" [class.on]="i === imageIndex()" (click)="imageIndex.set(i)"
+                      [attr.aria-label]="'Show image ' + (i + 1)" [attr.aria-current]="i === imageIndex()">
+                <img [src]="img.url" [alt]="''" loading="lazy" appImgFallback>
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Buy box -->
+      <section class="info">
+        <span class="category">{{ p.category.name }}</span>
+        <h1>{{ p.name }}</h1>
+
+        @if (p.reviewCount > 0) {
+          <a class="rating" href="#reviews">
+            <app-rating-stars [rating]="p.avgRating" [count]="p.reviewCount" />
+            {{ p.avgRating.toFixed(1) }} · {{ p.reviewCount }} review{{ p.reviewCount === 1 ? '' : 's' }}
+          </a>
+        }
+
+        <div class="price">
+          @if (p.customizable) { <span class="from">From</span> }
+          <strong>{{ p.price | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          @if (p.discountPrice) {
+            <s>{{ p.basePrice | currency: 'INR' : 'symbol' : '1.0-0' }}</s>
+            <span class="save">Save {{ p.basePrice - p.price | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+          }
+        </div>
+        <p class="tax">Inclusive of all taxes</p>
+
+        @if (p.shortDescription) { <p class="lead">{{ p.shortDescription }}</p> }
+
+        @if (p.customizable) {
+          <div class="custom-cta">
+            <p>This T-Shirt is printed with your own design.</p>
+            <a class="btn primary wide" routerLink="/customize">Design yours</a>
+          </div>
+        } @else {
+          <!-- Colour -->
+          <fieldset class="option">
+            <legend>Colour: <strong>{{ colorName() }}</strong></legend>
+            <div class="swatches">
+              @for (c of p.colors; track c.code) {
+                <button type="button" class="swatch" [class.on]="c.code === color()" [class.unavailable]="!isColorAvailable(c.code)"
+                        [style.--swatch]="c.hex" (click)="selectColor(c.code)"
+                        [attr.aria-pressed]="c.code === color()"
+                        [attr.aria-label]="c.name + (isColorAvailable(c.code) ? '' : ' (out of stock)')" [title]="c.name"></button>
+              }
+            </div>
+          </fieldset>
+
+          <!-- Size -->
+          <fieldset class="option" [class.error]="sizeError()">
+            <legend>
+              Size @if (size()) { : <strong>{{ size()!.replace('W', '') }}</strong> }
+              <button type="button" class="link" (click)="openSizeGuide()">Size guide</button>
+            </legend>
+            <div class="sizes">
+              @for (s of p.sizes; track s.code) {
+                <button type="button" [class.on]="s.code === size()" [disabled]="!isSizeAvailable(s.code)"
+                        (click)="selectSize(s.code)" [attr.aria-pressed]="s.code === size()"
+                        [attr.aria-label]="s.label + (isSizeAvailable(s.code) ? '' : ' (out of stock)')">
+                  {{ s.code.replace('W', '') }}
+                </button>
+              }
+            </div>
+            @if (sizeError()) { <p class="field-error" role="alert">Please choose a size.</p> }
+          </fieldset>
+
+          @if (stock(); as m) { <p class="stock {{ m.tone }}" aria-live="polite">{{ m.text }}</p> }
+
+          <!-- Quantity and actions -->
+          <div class="buy">
+            <div class="qty" role="group" aria-label="Quantity">
+              <button type="button" (click)="changeQuantity(-1)" [disabled]="quantity() <= 1" aria-label="Decrease quantity">−</button>
+              <span aria-live="polite">{{ quantity() }}</span>
+              <button type="button" (click)="changeQuantity(1)" [disabled]="quantity() >= maxQuantity()" aria-label="Increase quantity">+</button>
+            </div>
+            <button type="button" class="btn primary grow" (click)="addToBag()" [disabled]="!p.inStock || (size() !== null && !canBuy())">
+              {{ p.inStock ? 'Add to bag' : 'Sold out' }}
+            </button>
+            <button type="button" class="icon" [class.saved]="saved()" (click)="wishlist.toggle(p.id)"
+                    [attr.aria-pressed]="saved()" [attr.aria-label]="saved() ? 'Remove from wishlist' : 'Save to wishlist'">
+              <span class="material-symbols-outlined">favorite</span>
+            </button>
+          </div>
+          <button type="button" class="btn secondary wide" (click)="addToBag(true)" [disabled]="!p.inStock || (size() !== null && !canBuy())">
+            Buy now
+          </button>
+        }
+
+        <ul class="perks">
+          <li><span class="material-symbols-outlined">local_shipping</span>Free shipping on larger orders, fast delivery across India</li>
+          <li><span class="material-symbols-outlined">payments</span>UPI, cards, net banking or Cash on Delivery</li>
+          <li><span class="material-symbols-outlined">autorenew</span>7-day returns on ready-made styles · <a routerLink="/returns-policy">Details</a></li>
+        </ul>
+
+        <!-- Details -->
+        <div class="details">
+          <details open>
+            <summary>Description</summary>
+            <p>{{ p.description ?? p.shortDescription ?? 'Details coming soon.' }}</p>
+          </details>
+          @if (p.material || p.fit || p.careInstructions) {
+            <details>
+              <summary>Fabric, fit &amp; care</summary>
+              <dl>
+                @if (p.material) { <dt>Fabric</dt><dd>{{ p.material }}</dd> }
+                @if (p.fit) { <dt>Fit</dt><dd>{{ p.fit }}</dd> }
+                @if (p.careInstructions) { <dt>Care</dt><dd>{{ p.careInstructions }}</dd> }
+              </dl>
+            </details>
+          }
+          <details>
+            <summary>Shipping &amp; returns</summary>
+            <p>Orders are packed within 1–2 business days. Ready-made styles can be returned or exchanged within 7 days of
+              delivery if unworn with tags. See our <a routerLink="/returns-policy">returns policy</a>.</p>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <!-- Reviews -->
+    @if (reviewTotal() > 0) {
+      <section id="reviews" class="block">
+        <h2>Customer reviews</h2>
+        <div class="summary">
+          <span class="big">{{ p.avgRating.toFixed(1) }}</span>
+          <app-rating-stars [rating]="p.avgRating" [count]="p.reviewCount" />
+          <span class="muted">{{ p.reviewCount }} review{{ p.reviewCount === 1 ? '' : 's' }}</span>
+        </div>
+        <ul class="reviews">
+          @for (r of reviews(); track r.id) {
+            <li>
+              <app-rating-stars [rating]="r.rating" />
+              @if (r.title) { <h3>{{ r.title }}</h3> }
+              <p>{{ r.comment }}</p>
+              <small>{{ r.reviewerName }} · {{ r.createdAt | date: 'd MMM y' }}</small>
+            </li>
+          }
+        </ul>
+        @if (reviews().length < reviewTotal()) {
+          <button type="button" class="btn secondary" (click)="loadMoreReviews()">Show more reviews</button>
+        }
+      </section>
+    }
+
+    <!-- Related -->
+    @if (related().length) {
+      <section class="block">
+        <h2>You may also like</h2>
+        <div class="related">
+          @for (r of related(); track r.id) { <app-product-card [product]="r" /> }
+        </div>
+      </section>
+    }
+  }
+}

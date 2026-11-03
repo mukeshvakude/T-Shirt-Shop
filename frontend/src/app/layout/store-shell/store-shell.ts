@@ -7,6 +7,7 @@ import { catchError, filter, map, of } from 'rxjs';
 import { ReferenceApi } from '../../core/api/reference.api';
 import { StoreApi } from '../../core/api/store.api';
 import { AuthService } from '../../core/auth/auth.service';
+import { GuestCartService } from '../../core/cart/guest-cart.service';
 import { SITE, categoryLink } from '../../core/config/site.config';
 import { Category } from '../../core/models/catalog.models';
 import { Offer } from '../../core/models/store.models';
@@ -19,6 +20,7 @@ import { Offer } from '../../core/models/store.models';
 })
 export class StoreShell {
   protected readonly auth = inject(AuthService);
+  protected readonly bagCount = inject(GuestCartService).count;
   private readonly router = inject(Router);
 
   protected readonly site = SITE;

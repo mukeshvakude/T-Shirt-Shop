@@ -1,8 +1,8 @@
 # Frontend (Angular)
 
-Angular 22 single-page app with the **storefront** (home page, content pages, customer
-sign-in and registration) and the **admin portal** for product management. Product listing
-and details arrive in Phase 7, the customer portal in Phase 8.
+Angular 22 single-page app with the **storefront** (home page, product listing, search,
+product details, wishlist, content pages, customer sign-in and registration) and the
+**admin portal** for product management. The customer portal arrives in Phase 8.
 
 ## Stack
 
@@ -63,7 +63,7 @@ src/app/
   a single refresh. If the refresh fails, the user is sent to the login page.
 - `/admin/**` is protected by `adminGuard` (ROLE_ADMIN). The backend enforces the same rule.
 
-## Storefront (Phase 6)
+## Storefront (Phases 6 and 7)
 
 | Route | Page |
 |-------|------|
@@ -71,7 +71,10 @@ src/app/
 | `/about`, `/contact` | About us; contact form (stored server-side, honeypot against bots) |
 | `/privacy-policy`, `/terms`, `/returns-policy` | Policy pages (review the wording for your business) |
 | `/login`, `/register`, `/forgot-password`, `/reset-password` | Customer and admin sign-in, registration, password reset |
-| `/shop/:category`, `/product/:slug`, `/search`, `/customize`, `/cart`, `/account` | "Coming soon" pages until Phases 7, 8, 9 and 11 |
+| `/shop`, `/shop/:category`, `/search?q=` | Listing with filters (price, size, colour, stock, sale), sorting and pagination, all kept in the URL |
+| `/product/:slug` | Product page: colour-aware gallery, size and colour availability, quantity, size guide, add to bag, buy now, reviews, related products |
+| `/wishlist` | Saved products (sign-in required) |
+| `/customize`, `/cart`, `/account` | "Coming soon" pages until Phases 9, 11 and 8 |
 
 The home page loads everything from `GET /api/home` and hides sections that have no content.
 

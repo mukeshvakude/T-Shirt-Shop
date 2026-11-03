@@ -1,0 +1,208 @@
+@let s = state();
+@let f = facets();
+
+<div class="listing">
+  <nav class="crumbs" aria-label="Breadcrumb">
+    <a routerLink="/">Home</a>
+    <span aria-hidden="true">/</span>
+    @if (isSearch()) {
+      <span>Search</span>
+    } @else if (category(); as c) {
+      <a routerLink="/shop">Shop</a><span aria-hidden="true">/</span><span>{{ c.name }}</span>
+    } @else {
+      <span>Shop</span>
+    }
+  </nav>
+
+  @if (categoryMissing()) {
+    <section class="empty">
+      <h1>We could not find that collection</h1>
+      <p>It may have moved. Browse everything we have instead.</p>
+      <a class="btn" routerLink="/shop">Shop all products</a>
+    </section>
+  } @else {
+    <header class="head">
+      <h1>{{ heading() }}</h1>
+      @if (category()?.description) { <p>{{ category()!.description }}</p> }
+    </header>
+
+    <div class="toolbar">
+      <button class="filters-btn" type="button" (click)="filtersOpen.set(true)" aria-controls="filters">
+        <span class="material-symbols-outlined" aria-hidden="true">tune</span>
+        Filters @if (filterCount()) { ({{ filterCount() }}) }
+      </button>
+      <span class="count" aria-live="polite">
+        @if (status() === 'ready') {
+          {{ result()?.totalElements ?? 0 }} product{{ result()?.totalElements === 1 ? '' : 's' }}
+        }
+      </span>
+      <label class="sort">
+        <span>Sort by</span>
+        <select [value]="s.sort" (change)="setSort($any($event.target).value)">
+          @for (o of sortOptions; track o.value) {
+            <option [value]="o.value" [selected]="o.value === s.sort">{{ o.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (filterCount()) {
+      <div class="chips" aria-label="Active filters">
+        @for (code of s.sizes; track code) {
+          <button type="button" (click)="toggleSize(code)">Size {{ sizeName(code) }} <span aria-hidden="true">×</span></button>
+        }
+        @for (code of s.colors; track code) {
+          <button type="button" (click)="toggleColor(code)">{{ colorName(code) }} <span aria-hidden="true">×</span></button>
+        }
+        @if (s.minPrice != null || s.maxPrice != null) {
+          <button type="button" (click)="setPrice(s.minPrice, s.maxPrice)">
+            {{ s.minPrice != null ? (s.minPrice | currency: 'INR' : 'symbol' : '1.0-0') : '₹0' }} –
+            {{ s.maxPrice != null ? (s.maxPrice | currency: 'INR' : 'symbol' : '1.0-0') : 'any' }}
+            <span aria-hidden="true">×</span>
+          </button>
+        }
+        @if (s.inStock) { <button type="button" (click)="setFlag('inStock', false)">In stock <span aria-hidden="true">×</span></button> }
+        @if (s.onSale) { <button type="button" (click)="setFlag('onSale', false)">On sale <span aria-hidden="true">×</span></button> }
+        <button type="button" class="clear" (click)="clearFilters()">Clear all</button>
+      </div>
+    }
+
+    <div class="body">
+      <!-- Filters: sidebar on desktop, full-screen panel on mobile -->
+      @if (filtersOpen()) { <div class="scrim" (click)="filtersOpen.set(false)" aria-hidden="true"></div> }
+      <aside id="filters" class="filters" [class.open]="filtersOpen()" aria-label="Filters">
+        <div class="filters-head">
+          <h2>Filters</h2>
+          <button type="button" class="close" (click)="filtersOpen.set(false)" aria-label="Close filters">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        </div>
+
+        @if (showCategoryFacet() && f?.categories?.length) {
+          <section>
+            <h3>Category</h3>
+            <ul class="links">
+              @for (c of f!.categories; track c.code) {
+                <li>
+                  <a [routerLink]="c.code === 'CUSTOM_TSHIRTS' ? '/customize' : ['/shop', c.slug]"
+                     [queryParams]="c.code === 'CUSTOM_TSHIRTS' ? null : (s.q ? { q: s.q } : null)">
+                    {{ c.name }} <span>{{ c.count }}</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        <section>
+          <h3>Price</h3>
+          <div class="presets">
+            @for (p of pricePresets; track p.label) {
+              <button type="button" [class.on]="s.minPrice === p.min && s.maxPrice === p.max"
+                      [attr.aria-pressed]="s.minPrice === p.min && s.maxPrice === p.max"
+                      (click)="setPrice(p.min, p.max)">{{ p.label }}</button>
+            }
+          </div>
+          <form class="custom-price" (submit)="$event.preventDefault(); applyCustomPrice(minIn.value, maxIn.value)">
+            <input #minIn type="number" min="0" inputmode="numeric" [placeholder]="f?.minPrice != null ? 'Min ' + f!.minPrice : 'Min'"
+                   [value]="s.minPrice ?? ''" aria-label="Minimum price">
+            <span aria-hidden="true">–</span>
+            <input #maxIn type="number" min="0" inputmode="numeric" [placeholder]="f?.maxPrice != null ? 'Max ' + f!.maxPrice : 'Max'"
+                   [value]="s.maxPrice ?? ''" aria-label="Maximum price">
+            <button type="submit">Go</button>
+          </form>
+        </section>
+
+        @if (f?.sizes?.length) {
+          <section>
+            <h3>Size</h3>
+            <div class="sizes">
+              @for (size of f!.sizes; track size.code) {
+                <button type="button" [class.on]="s.sizes.includes(size.code)" [attr.aria-pressed]="s.sizes.includes(size.code)"
+                        (click)="toggleSize(size.code)" [title]="size.label + ' (' + size.count + ')'">
+                  {{ size.code.replace('W', '') }}
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        @if (f?.colors?.length) {
+          <section>
+            <h3>Colour</h3>
+            <div class="colors">
+              @for (c of f!.colors; track c.code) {
+                <button type="button" [class.on]="s.colors.includes(c.code)" [attr.aria-pressed]="s.colors.includes(c.code)"
+                        (click)="toggleColor(c.code)">
+                  <span class="swatch" [style.background]="c.hex"></span>{{ c.name }} <small>{{ c.count }}</small>
+                </button>
+              }
+            </div>
+          </section>
+        }
+
+        <section>
+          <h3>Availability</h3>
+          <label class="check"><input type="checkbox" [checked]="s.inStock" (change)="setFlag('inStock', $any($event.target).checked)"> In stock only</label>
+          <label class="check"><input type="checkbox" [checked]="s.onSale" (change)="setFlag('onSale', $any($event.target).checked)"> On sale</label>
+        </section>
+
+        <div class="filters-foot">
+          <button type="button" class="ghost" (click)="clearFilters()">Clear</button>
+          <button type="button" class="solid" (click)="filtersOpen.set(false)">Show {{ result()?.totalElements ?? 0 }} products</button>
+        </div>
+      </aside>
+
+      <section class="results" [attr.aria-busy]="status() === 'loading'">
+        @switch (status()) {
+          @case ('error') {
+            <div class="empty">
+              <p>Products could not be loaded right now.</p>
+              <button class="btn" type="button" (click)="goToPage(s.page)">Try again</button>
+            </div>
+          }
+          @default {
+            @if (result(); as r) {
+              @if (r.content.length === 0 && status() === 'ready') {
+                <div class="empty">
+                  <h2>No products match</h2>
+                  <p>Try removing a filter or searching for something else.</p>
+                  @if (filterCount()) { <button class="btn" type="button" (click)="clearFilters()">Clear filters</button> }
+                </div>
+              } @else {
+                <div class="grid" [class.dim]="status() === 'loading'">
+                  @for (p of r.content; track p.id; let i = $index) {
+                    <app-product-card [product]="p" [priority]="i < 4" />
+                  }
+                </div>
+                @if (r.totalPages > 1) {
+                  <nav class="pager" aria-label="Pages">
+                    <button type="button" (click)="goToPage(s.page - 1)" [disabled]="r.first" aria-label="Previous page">
+                      <span class="material-symbols-outlined">chevron_left</span>
+                    </button>
+                    @for (p of pages(); track $index) {
+                      @if (p === null) {
+                        <span class="gap">…</span>
+                      } @else {
+                        <button type="button" [class.on]="p === s.page" [attr.aria-current]="p === s.page ? 'page' : null"
+                                (click)="goToPage(p)">{{ p + 1 }}</button>
+                      }
+                    }
+                    <button type="button" (click)="goToPage(s.page + 1)" [disabled]="r.last" aria-label="Next page">
+                      <span class="material-symbols-outlined">chevron_right</span>
+                    </button>
+                  </nav>
+                  <p class="range">{{ rangeLabel() }}</p>
+                }
+              }
+            } @else {
+              <div class="grid">
+                @for (i of [1, 2, 3, 4, 5, 6]; track i) { <div class="skeleton"></div> }
+              </div>
+            }
+          }
+        }
+      </section>
+    </div>
+  }
+</div>

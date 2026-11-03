@@ -1,4 +1,5 @@
 @let p = product();
+<div class="wrap">
 <a class="product-card" [routerLink]="link()" [attr.aria-label]="p.name">
   <div class="media">
     <img [src]="p.imageUrl ?? ''" [alt]="p.name" [attr.loading]="priority() ? 'eager' : 'lazy'"
@@ -46,3 +47,10 @@
     }
   </div>
 </a>
+@if (showWishlist() && !p.customizable) {
+  <button type="button" class="heart" [class.saved]="saved()" (click)="wishlist.toggle(p.id)"
+          [attr.aria-pressed]="saved()" [attr.aria-label]="(saved() ? 'Remove ' : 'Save ') + p.name + (saved() ? ' from' : ' to') + ' wishlist'">
+    <span class="material-symbols-outlined" aria-hidden="true">favorite</span>
+  </button>
+}
+</div>

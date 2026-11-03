@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 6)
+Last updated: 2026-11-03 (Phase 7)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -13,8 +13,8 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Authentication (JWT access + rotating refresh cookie, BCrypt, roles, lockout, rate limits, password reset, first admin)
 - [x] Product Management (catalog APIs, admin APIs, image upload, stock; admin portal for products, categories and low stock)
 - [x] Angular Homepage (storefront shell, home page with all brief sections, static pages, customer sign-in/registration/password reset)
-- [ ] Product Listing
-- [ ] Product Details
+- [x] Product Listing (all products, category and search pages; URL-driven filters, sorting, pagination, facets, wishlist hearts)
+- [x] Product Details (colour-aware gallery, size/colour/quantity selection with live availability, size guide, add to bag, buy now, reviews, related products)
 - [ ] Customer Portal
 - [ ] Custom T-Shirt Designer
 - [ ] Dynamic Pricing
@@ -59,7 +59,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 4 | Authentication and security | Register, login, refresh, logout, forgot/reset password, JWT, BCrypt, roles, rate limit, admin bootstrap | Done |
 | 5 | Product management | Category/product CRUD, images, variants, inventory, search, filters, sort, pagination; Angular workspace and admin portal for catalog | Done |
 | 6 | Angular website design and homepage | Storefront shell, homepage sections, about/contact/policy pages, customer auth pages, home and engagement APIs, sample product illustrations | Done |
-| 7 | Product pages | Listing, category pages, filters, product details, wishlist | Pending |
+| 7 | Product pages | Listing, category and search pages, filters, product details, wishlist, guest bag | Done |
 | 8 | Customer portal | Dashboard, profile, password, addresses | Pending |
 | 9 | Custom T-Shirt designer | Fabric.js designer, uploads with backend validation, save/load designs | Pending |
 | 10 | Dynamic pricing | Pricing engine, estimate API, admin-editable charges, live price panel | Pending |
@@ -117,7 +117,12 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Contact messages are stored in `contact_messages` (admin inbox in Phase 16); a hidden honeypot field silently drops bot submissions.
 - One sign-in page serves customers and admins. Return URLs must be same-site paths (no open redirects).
 - `POST /api/auth/refresh` without a cookie returns 204, so anonymous visitors do not log errors on every page load.
-- Links to pages from later phases (listing, product details, search, designer, cart, account) open a clearly worded "coming soon" page.
+- Links to pages from later phases (designer, cart, account) open a clearly worded "coming soon" page.
+- Listing state (filters, sort, page) lives in the URL, so links, refresh and the back button work. 12 products per page.
+- Filter options come from `GET /api/products/facets`: only sizes and colours with stock, price range and category counts.
+- "Add to bag" and "Buy now" fill a guest bag stored in the browser (`localStorage`), shown as a count in the header. Prices there are for display only; Phase 11 adds the server cart, merges this bag on sign-in, and the server recalculates every price.
+- Wishlist needs sign-in (hearts on cards and product pages, `/wishlist` page). Hidden products drop out of the list but stay saved.
+- Customer-facing quantities are capped at the per-item limit, so exact stock is never shown; "Only N left" appears at or below the low-stock threshold.
 - Sample product images are generated illustrations (`frontend/scripts/generate-sample-images.mjs`), not photos.
 - Dev profile enables Flyway `out-of-order`, because dev sample data uses versions 900+ and new schema versions arrive after it.
 
@@ -135,8 +140,9 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~T8~~ | Sample products pointed at `/assets/products/*.jpg` images that did not exist | Resolved in Phase 6: generated sample illustrations for every sample product and colour. Replace with real photos before launch |
 | T9 | Text search uses LIKE, which is fine for a small catalog | Switch to the existing MySQL FULLTEXT index if the catalog grows into the thousands |
 | T10 | Uploaded images are stored as uploaded (not re-encoded) | Safe because content is validated and served with nosniff from random URLs. Re-encoding/thumbnails can come with Cloudinary in Phase 9 or 19 |
-| T11 | Fonts load from Google Fonts | Consider self-hosting Inter, Playfair Display and Material Symbols before launch (privacy, speed, no third-party dependency). Phase 19 |
-| T12 | Product cards link to pages that arrive in Phase 7 | Phase 7 replaces the "coming soon" pages for listing, details and search |
+| T11 | Fonts load from Google Fonts (local DNS hiccups showed up as console errors during tests) | Phase 19: self-host Inter and Playfair Display, and build a subset icon font with only the ~40 icons used. Measured on 2026-11-03: Google serves the icon font at ~0.95 MB; the full self-hostable icon package is ~13 MB unpacked, so copying it as-is would be slower |
+| ~~T12~~ | Product cards linked to pages that arrived in Phase 7 | Resolved in Phase 7: listing, search and product pages are live |
+| T14 | Guest bag lives only in this browser until Phase 11 | Phase 11 merges it into the server cart on sign-in |
 | T13 | A signed-in customer who opens `/admin` lands on the home page without a message | Acceptable; revisit with the account area in Phase 8 |
 
 ## Change log
@@ -149,4 +155,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-02 | 4 | Authentication and security, test data cleanup, UTC logs; 60 unit + 22 integration tests passing | `3557528` |
 | 2026-11-02 | 5 | Product management backend (71 unit + 29 integration tests) | `e554f74` |
 | 2026-11-02 | 5 | Angular 22 workspace and admin portal for products, categories, stock and images (24 frontend tests, browser end-to-end run) | `5881050` |
-| 2026-11-03 | 6 | Storefront design and home page, static pages, customer auth pages, home/offers/reviews/newsletter/contact APIs (73 unit + 36 integration backend tests, 41 frontend tests, browser runs) | see git log on `DEV` |
+| 2026-11-03 | 6 | Storefront design and home page, static pages, customer auth pages, home/offers/reviews/newsletter/contact APIs (73 unit + 36 integration backend tests, 41 frontend tests, browser runs) | `f1d9575` |
+| 2026-11-03 | 7 | Product listing, category and search pages with facets; product detail page; wishlist; guest bag (74 unit + 39 integration backend tests, 63 frontend tests, catalog browser run) | see git log on `DEV` |

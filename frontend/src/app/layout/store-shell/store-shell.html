@@ -37,6 +37,7 @@
             <a mat-menu-item routerLink="/admin">Admin portal</a>
           }
           <a mat-menu-item routerLink="/account">My account</a>
+          <a mat-menu-item routerLink="/wishlist">Wishlist</a>
           <button mat-menu-item type="button" (click)="logout()">Sign out</button>
         </mat-menu>
       } @else {
@@ -46,8 +47,14 @@
           <span class="material-symbols-outlined">person</span>
         </a>
       }
-      <a class="icon-btn" routerLink="/cart" aria-label="Shopping cart">
+      @if (auth.isLoggedIn()) {
+        <a class="icon-btn hide-sm" routerLink="/wishlist" aria-label="Wishlist">
+          <span class="material-symbols-outlined">favorite</span>
+        </a>
+      }
+      <a class="icon-btn bag" routerLink="/cart" [attr.aria-label]="'Shopping bag, ' + bagCount() + ' item' + (bagCount() === 1 ? '' : 's')">
         <span class="material-symbols-outlined">shopping_bag</span>
+        @if (bagCount() > 0) { <span class="count">{{ bagCount() > 99 ? '99+' : bagCount() }}</span> }
       </a>
     </div>
   </div>
@@ -76,6 +83,7 @@
   </nav>
   <div class="drawer-account">
     @if (auth.isLoggedIn()) {
+      <a routerLink="/wishlist">Wishlist</a>
       <a routerLink="/account">My account</a>
       @if (auth.isAdmin()) { <a routerLink="/admin">Admin portal</a> }
       <button type="button" (click)="logout()">Sign out</button>

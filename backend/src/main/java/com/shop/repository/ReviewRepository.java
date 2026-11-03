@@ -20,4 +20,13 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
             order by r.createdAt desc, r.id desc""")
     List<Review> findHighlights(@Param("minRating") int minRating, @Param("status") ProductStatus status,
             Pageable pageable);
+
+    /** Approved reviews of one product, newest first. */
+    @Query(value = """
+            select r from Review r join fetch r.user join fetch r.product p
+            where p.id = :productId and r.approved = true
+            order by r.createdAt desc, r.id desc""",
+            countQuery = "select count(r) from Review r where r.product.id = :productId and r.approved = true")
+    org.springframework.data.domain.Page<Review> findApprovedForProduct(@Param("productId") Long productId,
+            Pageable pageable);
 }

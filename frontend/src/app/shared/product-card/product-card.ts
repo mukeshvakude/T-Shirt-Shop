@@ -1,8 +1,9 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { ProductSummary } from '../../core/models/store.models';
+import { WishlistService } from '../../core/wishlist.service';
 import { ImgFallback } from '../img-fallback.directive';
 import { RatingStars } from '../rating-stars/rating-stars';
 
@@ -19,6 +20,11 @@ export class ProductCard {
   readonly product = input.required<ProductSummary>();
   /** Eager-load images for cards above the fold. */
   readonly priority = input(false);
+  /** Hide the heart where it makes no sense (e.g. customizable blanks). */
+  readonly showWishlist = input(true);
+
+  protected readonly wishlist = inject(WishlistService);
+  protected readonly saved = computed(() => this.wishlist.has(this.product().id));
 
   protected readonly link = computed(() =>
     this.product().customizable ? '/customize' : `/product/${this.product().slug}`,

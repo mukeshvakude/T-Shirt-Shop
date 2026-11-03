@@ -15,6 +15,9 @@
       @if (reason() === 'forbidden') {
         <p class="notice">You need an admin account to open that page.</p>
       }
+      @if (reason() === 'wishlist') {
+        <p class="notice">Sign in to save products to your wishlist.</p>
+      }
 
       <mat-form-field>
         <mat-label>Email</mat-label>

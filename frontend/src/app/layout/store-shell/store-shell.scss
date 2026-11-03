@@ -284,3 +284,20 @@ main { flex: 1; outline: none; }
   .footer-grid { grid-template-columns: 1fr 1fr; }
   .brand-col { grid-column: 1 / -1; }
 }
+
+.bag { position: relative; }
+.bag .count {
+  position: absolute;
+  top: 2px;
+  right: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+}

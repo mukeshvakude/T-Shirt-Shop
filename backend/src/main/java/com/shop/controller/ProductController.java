@@ -74,6 +74,22 @@ public class ProductController {
         return catalogService.search(criteria, page, size);
     }
 
+    @GetMapping("/facets")
+    @Operation(summary = "Filter options (price range, sizes, colours, categories) for a category or a search")
+    public com.shop.dto.product.FacetsResponse facets(
+            @RequestParam(required = false) @Pattern(regexp = "^[a-z0-9-]{1,100}$") String category,
+            @RequestParam(required = false) @Size(max = 100) String q) {
+        return catalogService.facets(category, q);
+    }
+
+    @GetMapping("/{slug}/reviews")
+    @Operation(summary = "Approved reviews of a product, newest first")
+    public PageResponse<com.shop.dto.home.ReviewHighlight> reviews(@PathVariable @Pattern(regexp = SLUG) String slug,
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "5") @Min(1) @Max(20) int size) {
+        return catalogService.reviews(slug, page, size);
+    }
+
     @GetMapping("/{slug}")
     @Operation(summary = "Product details with images, sizes, colours and availability")
     public ProductDetailResponse get(@PathVariable @Pattern(regexp = SLUG) String slug) {

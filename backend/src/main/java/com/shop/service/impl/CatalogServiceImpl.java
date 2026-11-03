@@ -1,5 +1,6 @@
 package com.shop.service.impl;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.shop.dto.PageResponse;
+import com.shop.dto.home.ReviewHighlight;
+import com.shop.dto.product.FacetsResponse;
 import com.shop.dto.product.ProductDetailResponse;
 import com.shop.dto.product.ProductSummaryResponse;
 import com.shop.entity.Inventory;
@@ -40,6 +43,7 @@ public class CatalogServiceImpl implements CatalogService {
     private final ProductImageRepository imageRepository;
     private final ProductMapper mapper;
     private final AppSettingService settings;
+    private final com.shop.repository.ReviewRepository reviewRepository;
 
     @Override
     public PageResponse<ProductSummaryResponse> search(ProductSearchCriteria criteria, int page, int size) {
@@ -73,6 +77,52 @@ public class CatalogServiceImpl implements CatalogService {
         List<ProductSummaryResponse> content = toSummaries(page.getContent());
         return new PageResponse<>(content, page.getNumber(), page.getSize(), page.getTotalElements(),
                 page.getTotalPages(), page.isFirst(), page.isLast());
+    }
+
+    @Override
+    public FacetsResponse facets(String categorySlug, String query) {
+        String slug = categorySlug == null || categorySlug.isBlank() ? null : categorySlug;
+        String pattern = likePattern(query);
+        Object[] range = productRepository.priceRange(slug, pattern).stream().findFirst().orElse(new Object[2]);
+        List<FacetsResponse.SizeFacet> sizes = productRepository.sizeFacets(slug, pattern).stream()
+                .map(r -> new FacetsResponse.SizeFacet((String) r[0], (String) r[1], (Long) r[2]))
+                .toList();
+        List<FacetsResponse.ColorFacet> colors = productRepository.colorFacets(slug, pattern).stream()
+                .map(r -> new FacetsResponse.ColorFacet((String) r[0], (String) r[1], (String) r[2], (Long) r[3]))
+                .toList();
+        List<FacetsResponse.CategoryFacet> categories = productRepository.categoryFacets(pattern).stream()
+                .map(r -> new FacetsResponse.CategoryFacet((String) r[0], (String) r[1], (String) r[2], (Long) r[3]))
+                .toList();
+        return new FacetsResponse((BigDecimal) range[0], (BigDecimal) range[1], sizes, colors, categories);
+    }
+
+    @Override
+    public PageResponse<ReviewHighlight> reviews(String slug, int page, int size) {
+        Product product = productRepository.findVisibleBySlug(slug, ProductStatus.ACTIVE)
+                .orElseThrow(() -> new ResourceNotFoundException("Product", slug));
+        return PageResponse.of(reviewRepository.findApprovedForProduct(product.getId(), PageRequest.of(page, size)),
+                EngagementServiceImpl::toHighlight);
+    }
+
+    @Override
+    public List<ProductSummaryResponse> summaries(List<Long> productIds) {
+        if (productIds.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, Product> byId = productRepository.findVisibleByIds(productIds).stream()
+                .collect(Collectors.toMap(Product::getId, p -> p));
+        List<Product> ordered = productIds.stream().map(byId::get).filter(java.util.Objects::nonNull).toList();
+        return toSummaries(ordered);
+    }
+
+    /** Lowercase LIKE pattern with wildcards escaped; null when there is no query. */
+    static String likePattern(String query) {
+        if (query == null || query.isBlank()) {
+            return null;
+        }
+        String q = query.trim().toLowerCase(java.util.Locale.ROOT);
+        q = q.length() > 100 ? q.substring(0, 100) : q;
+        return "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
     }
 
     /** Two batch queries (images, variants) for the whole page instead of two per product. */
