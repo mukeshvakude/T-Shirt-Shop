@@ -3,6 +3,7 @@ import { Routes } from '@angular/router';
 import { adminGuard, authGuard, guestGuard } from './core/auth/auth.guards';
 
 const comingSoon = () => import('./features/static-pages/coming-soon').then((m) => m.ComingSoon);
+const designer = () => import('./features/designer/designer').then((m) => m.Designer);
 const listing = () => import('./features/products/product-listing/product-listing').then((m) => m.ProductListing);
 const SHOP = 'T-Shirt Shop';
 
@@ -48,13 +49,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/products/wishlist-page/wishlist-page').then((m) => m.WishlistPage),
       },
 
-      // Pages delivered in later phases (designer: 9, cart: 11).
-      {
-        path: 'customize',
-        title: `Design your T-Shirt | ${SHOP}`,
-        loadComponent: comingSoon,
-        data: { title: 'The T-Shirt studio is almost ready', description: 'Upload artwork, add text and see the price update live. Our custom T-Shirt designer opens very soon.' },
-      },
+      // Custom T-Shirt designer (Phase 9)
+      { path: 'customize', title: `Design your T-Shirt | ${SHOP}`, loadComponent: designer },
+      { path: 'customize/:code', title: `Edit your design | ${SHOP}`, loadComponent: designer },
+
+      // Delivered in a later phase (cart: 11).
       {
         path: 'cart',
         title: `Your bag | ${SHOP}`,
@@ -83,6 +82,11 @@ export const routes: Routes = [
             path: 'profile',
             title: `Profile & security | ${SHOP}`,
             loadComponent: () => import('./features/account/profile/account-profile').then((m) => m.AccountProfile),
+          },
+          {
+            path: 'designs',
+            title: `My designs | ${SHOP}`,
+            loadComponent: () => import('./features/account/designs/account-designs').then((m) => m.AccountDesigns),
           },
           {
             path: 'addresses',
@@ -136,6 +140,11 @@ export const routes: Routes = [
         title: 'Categories | Admin',
         loadComponent: () =>
           import('./features/admin-categories/category-list/category-list').then((m) => m.CategoryList),
+      },
+      {
+        path: 'designs',
+        title: 'Custom designs | Admin',
+        loadComponent: () => import('./features/admin-designs/design-list').then((m) => m.DesignList),
       },
       {
         path: 'inventory',

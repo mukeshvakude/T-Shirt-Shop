@@ -75,7 +75,9 @@ src/app/
 | `/product/:slug` | Product page: colour-aware gallery, size and colour availability, quantity, size guide, add to bag, buy now, reviews, related products |
 | `/wishlist` | Saved products (sign-in required) |
 | `/account`, `/account/orders`, `/account/profile`, `/account/addresses` | Customer portal: dashboard, orders, profile and security, address book (sign-in required) |
-| `/customize`, `/cart` | "Coming soon" pages until Phases 9 and 11 |
+| `/account/designs` | Saved custom designs: open, edit, delete |
+| `/customize`, `/customize/:code` | Custom T-Shirt designer (Phase 9) |
+| `/cart` | "Coming soon" page until Phase 11 |
 
 The home page loads everything from `GET /api/home` and hides sections that have no content.
 
@@ -88,9 +90,26 @@ contain generated illustrations for the development catalog. Regenerate them wit
 ```bash
 # Puppeteer is not a project dependency; point PUPPETEER_DIR at any folder where it is installed.
 PUPPETEER_DIR=/path/to/folder/with/puppeteer node scripts/generate-sample-images.mjs
+# designer mockups only (front and back):
+MOCKUPS_ONLY=1 PUPPETEER_DIR=/path/to/folder/with/puppeteer node scripts/generate-sample-images.mjs
 ```
 
 Replace them with real product photography (upload through the admin portal) before launch.
+
+## Custom T-Shirt designer (Phase 9)
+
+`src/app/features/designer/` uses Fabric.js 7 (loaded only on this page).
+
+- Choose style, colour (out-of-stock colours and sizes are disabled), size, side and print area.
+- Upload PNG/JPG artwork, add text with 8 fonts, colour and size; move, resize, rotate, duplicate,
+  layer, centre and delete (the Delete key works too).
+- The white mockups in `public/assets/mockups` are tinted in the browser for each colour.
+  Regenerate only the mockups with `MOCKUPS_ONLY=1` (see Sample images).
+- Guest work is kept in `localStorage` and restored after sign-in. Saving sends the canvas JSON,
+  text list, used artwork ids and PNG previews; the server validates everything again.
+- `design-utils.ts` holds the pure helpers (unit tested); `design-renderer.ts` draws previews.
+
+Admins see all designs at `/admin/designs` and can download a ZIP for printing.
 
 ## Admin portal features (Phase 5)
 

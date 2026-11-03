@@ -21,30 +21,38 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Serves stored catalog images. Only product and category images are public;
- * customer design files are served by authenticated endpoints in Phase 9.
+ * Serves stored images. Product and category images are public and cached everywhere.
+ * Customer artwork and design previews live under random, unlisted URLs (capability links):
+ * they are only handed to the owner and to admins, and are marked private and not indexable.
  */
 @RestController
 @RequestMapping("/media")
 @RequiredArgsConstructor
-@Tag(name = "Media", description = "Public product and category images")
+@Tag(name = "Media", description = "Stored images")
 @SecurityRequirements
 public class MediaController {
 
     private final StorageService storageService;
 
-    @GetMapping("/{folder:products|categories}/{file}")
-    @Operation(summary = "Get a stored product or category image")
+    @GetMapping("/{folder:products|categories|designs|previews}/{file}")
+    @Operation(summary = "Get a stored image")
     public ResponseEntity<Resource> get(@PathVariable String folder, @PathVariable String file) {
         String key = folder + "/" + file;
         Resource resource = storageService.load(key)
                 .orElseThrow(() -> new ResourceNotFoundException("Image", key));
         MediaType type = file.endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
-        return ResponseEntity.ok()
+        boolean customerFile = folder.equals("designs") || folder.equals("previews");
+        ResponseEntity.BodyBuilder response = ResponseEntity.ok()
                 .contentType(type)
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable())
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline")
-                .header("X-Content-Type-Options", "nosniff")
-                .body(resource);
+                .header("X-Content-Type-Options", "nosniff");
+        if (customerFile) {
+            response.cacheControl(CacheControl.maxAge(Duration.ofDays(7)).cachePrivate().immutable())
+                    .header("X-Robots-Tag", "noindex, nofollow")
+                    .header("Referrer-Policy", "no-referrer");
+        } else {
+            response.cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePublic().immutable());
+        }
+        return response.body(resource);
     }
 }

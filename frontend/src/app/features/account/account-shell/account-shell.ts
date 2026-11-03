@@ -22,6 +22,8 @@ import { AuthService } from '../../../core/auth/auth.service';
             <span class="material-symbols-outlined">dashboard</span>Dashboard</a>
           <a routerLink="/account/orders" routerLinkActive="active">
             <span class="material-symbols-outlined">package_2</span>Orders</a>
+          <a routerLink="/account/designs" routerLinkActive="active">
+            <span class="material-symbols-outlined">draw</span>My designs</a>
           <a routerLink="/account/profile" routerLinkActive="active">
             <span class="material-symbols-outlined">person</span>Profile &amp; security</a>
           <a routerLink="/account/addresses" routerLinkActive="active">

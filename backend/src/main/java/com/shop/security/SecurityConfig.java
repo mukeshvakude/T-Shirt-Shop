@@ -32,6 +32,7 @@ public class SecurityConfig {
             "/api/home",
             "/api/offers",
             "/api/reviews/**",
+            "/api/designer/**",
     };
 
     /** Auth endpoints that must work without an access token. */

@@ -36,6 +36,7 @@ export class AdminShell {
   protected readonly nav: NavItem[] = [
     { path: '/admin/products', label: 'Products', icon: 'apparel' },
     { path: '/admin/categories', label: 'Categories', icon: 'category' },
+    { path: '/admin/designs', label: 'Custom designs', icon: 'draw' },
     { path: '/admin/inventory', label: 'Low stock', icon: 'inventory_2' },
   ];
 }

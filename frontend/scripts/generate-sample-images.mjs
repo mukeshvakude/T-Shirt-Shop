@@ -2,7 +2,7 @@
 // (Flyway V900 points at /assets/products/<slug>-<colour>.jpg) plus home page art
 // and blank designer mockups. Replace them with real photography before launch.
 //
-// Usage (needs Puppeteer once, it is not a project dependency):
+// Usage (needs Puppeteer once, it is not a project dependency). MOCKUPS_ONLY=1 renders only the designer mockups:
 //   PUPPETEER_DIR=/path/to/a/folder/with/node_modules/puppeteer node scripts/generate-sample-images.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -72,8 +72,24 @@ const shapes = {
   },
 };
 
+// Back views: a shallow neckline instead of the front opening (designer mockups).
+const backs = {
+  crew: { neck: 'C350,240 450,240 490,195', back: 'C350,212 450,212 490,195', trim: '<path d="M310,195 C350,212 450,212 490,195" fill="none" stroke="TRIM" stroke-width="12" stroke-linecap="round"/>' },
+  vneck: { neck: 'L400,290 L490,195', back: 'C350,212 450,212 490,195', trim: '<path d="M310,195 C350,212 450,212 490,195" fill="none" stroke="TRIM" stroke-width="12" stroke-linecap="round"/>' },
+  polo: {
+    neck: 'C360,215 440,215 480,190', back: 'C360,206 440,206 480,190',
+    trim: `<path d="M320,190 C360,206 440,206 480,190 L482,172 C440,190 360,190 318,172 Z" fill="BASE" stroke="TRIM" stroke-width="5" stroke-linejoin="round"/>
+           <path d="M205,445 L110,400" stroke="TRIM" stroke-width="10"/><path d="M595,445 L690,400" stroke="TRIM" stroke-width="10"/>`,
+  },
+  oversized: { neck: 'C355,235 445,235 485,190', back: 'C355,207 445,207 485,190', trim: '<path d="M315,190 C355,207 445,207 485,190" fill="none" stroke="TRIM" stroke-width="14" stroke-linecap="round"/>' },
+};
+
 function garment(shapeName, hex, options = {}) {
-  const shape = shapes[shapeName];
+  let shape = shapes[shapeName];
+  if (options.back) {
+    const b = backs[shapeName];
+    shape = { ...shape, body: shape.body.replace(b.neck, b.back), trim: b.trim };
+  }
   const light = isLight(hex);
   const trim = shade(hex, light ? -0.14 : 0.18);
   const stroke = light ? shade(hex, -0.2) : shade(hex, -0.35);
@@ -177,7 +193,8 @@ async function render(svg, file, { width = 800, height = 1000, png = false } = {
   count++;
 }
 
-for (const p of products) {
+const mockupsOnly = process.env.MOCKUPS_ONLY === '1';
+for (const p of mockupsOnly ? [] : products) {
   for (const color of p.colors) {
     await render(scene(garment(p.shape, COLORS[color], p)), path.join(root, 'products', `${p.slug}-${color.toLowerCase()}.jpg`));
   }
@@ -185,6 +202,12 @@ for (const p of products) {
 }
 for (const [name, shape] of Object.entries(mockups)) {
   await render(scene(garment(shape, COLORS.WHITE), { transparent: true }), path.join(root, 'mockups', `${name}-white-front.png`), { png: true });
+  await render(scene(garment(shape, COLORS.WHITE, { back: true }), { transparent: true }), path.join(root, 'mockups', `${name}-white-back.png`), { png: true });
+}
+if (mockupsOnly) {
+  await browser.close();
+  console.log(`Generated ${count} mockups in ${root}`);
+  process.exit(0);
 }
 
 // Home page art: hero trio and the custom T-Shirt promo.

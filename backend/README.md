@@ -91,10 +91,16 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 8)
+## Current endpoints (Phase 9)
 
 | Method | Path | Access |
 |--------|------|--------|
+| GET | `/api/designer/options` | Public (T-Shirt types, colours, sizes, print areas, fonts, stock, upload limits; 60 s cache) |
+| POST | `/api/designs/assets` | Signed in (multipart `file`, PNG/JPG checked by content, 40 per hour) |
+| GET, POST | `/api/designs` | Signed in (my designs; save a new design) |
+| GET, PUT, DELETE | `/api/designs/{code}` | Owner (or admin for GET); PUT and DELETE refused once the design is in an order |
+| GET | `/api/admin/designs`, `/{code}`, `/{code}/download` (ZIP) | `ROLE_ADMIN` |
+| GET | `/media/designs/{file}`, `/media/previews/{file}` | Unlisted random URLs, private cache, noindex |
 | GET | `/api/account/dashboard` | Signed in (profile, order counts, recent orders, wishlist and address summary) |
 | GET, PUT | `/api/account/profile` | Signed in (name, mobile) |
 | PUT | `/api/account/email`, `/api/account/password` | Signed in, current password required; password change renews the session |

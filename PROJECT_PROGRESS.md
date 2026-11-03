@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 8)
+Last updated: 2026-11-03 (Phase 9)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -16,7 +16,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Product Listing (all products, category and search pages; URL-driven filters, sorting, pagination, facets, wishlist hearts)
 - [x] Product Details (colour-aware gallery, size/colour/quantity selection with live availability, size guide, add to bag, buy now, reviews, related products)
 - [x] Customer Portal (dashboard with order stats and recent orders, profile, email and password changes, address book with one default, wishlist link)
-- [ ] Custom T-Shirt Designer
+- [x] Custom T-Shirt Designer (Fabric.js designer, front and back, print areas, artwork upload, text, previews, saved designs, admin view and ZIP download)
 - [ ] Dynamic Pricing
 - [ ] Shopping Cart
 - [ ] Checkout
@@ -61,7 +61,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 6 | Angular website design and homepage | Storefront shell, homepage sections, about/contact/policy pages, customer auth pages, home and engagement APIs, sample product illustrations | Done |
 | 7 | Product pages | Listing, category and search pages, filters, product details, wishlist, guest bag | Done |
 | 8 | Customer portal | Dashboard, profile, email and password change, addresses | Done |
-| 9 | Custom T-Shirt designer | Fabric.js designer, uploads with backend validation, save/load designs | Pending |
+| 9 | Custom T-Shirt designer | Fabric.js designer, uploads with backend validation, save/load designs | Done |
 | 10 | Dynamic pricing | Pricing engine, estimate API, admin-editable charges, live price panel | Pending |
 | 11 | Shopping cart | Server cart, guest cart merge, coupons, mixed normal + custom items | Pending |
 | 12 | Checkout | Checkout form, totals, pending order, stock reservation and expiry job, COD | Pending |
@@ -84,7 +84,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | B5 | Razorpay test keys | Phase 13 | Create test-mode Key ID, Key Secret and Webhook Secret, and put them in a local `.env`. Never paste the secret into chat or commit it |
 | B6 | SMTP credentials | Phase 17 | Provide a mail account (for example Gmail app password or a transactional provider) via `.env`. Until then password reset links are only logged (dev) |
 | B9 | Admin login email | Before launch | The local `.env` uses `admin@tshirtshop.local` with a generated password (copy kept in `C:\Users\ADMIN\tools\mysql-credentials.txt`). For production, set your real address and a new password |
-| B7 | Cloudinary account (optional) | Phase 9 | Only if cloud storage is preferred over secure local storage |
+| B7 | Cloudinary account (optional) | Phase 19 | Only if cloud storage is preferred over secure local storage. Phase 9 uses secure local storage for artwork and previews |
 | B8 | Business content | Before launch | Fill in `frontend/src/app/core/config/site.config.ts`: brand name, support email and phone, address, business hours, social links (empty values are hidden, nothing is invented). Replace the sample product illustrations with real photos. Have the Privacy, Terms and Returns texts reviewed for your business |
 
 ## Decisions made with sensible defaults
@@ -130,6 +130,16 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Changing the email marks it unverified; email verification itself arrives with notifications (Phase 17).
 - Up to 20 saved addresses. The first address becomes the default; deleting the default promotes the most recently used one. States are validated against the list of Indian states and union territories.
 - The dashboard reads order counts straight from the `orders` table until order management (Phase 15) adds full history, tracking, invoices and cancellation.
+- Designer (`/customize`, `/customize/:code`): one Fabric.js canvas edits one side at a time inside its print area; the other side is kept as JSON. Mockups are white PNGs tinted in the browser, so every colour works without extra images.
+- One print area per side: Front, Left Chest or Full Front on the front, Back or Full Back on the back. Changing the area rescales the design to fit.
+- Guests can design without an account; the work is kept in `localStorage` and restored after sign-in. Uploading artwork and saving need sign-in.
+- The server re-validates every save: style, in-stock variant, print areas, fonts, and the canvas JSON (only image and text objects, only the customer's own uploaded images, no external, data, blob or javascript URLs, no clip paths, max 50 elements per side). Prices are not taken from the browser.
+- Artwork: PNG or JPG checked by content, max 5 MB and 4000 px (admin-editable in `app_settings`), 40 uploads per hour per customer, up to 100 saved designs per customer.
+- The browser renders PNG previews (front always, back when used); the server validates them as images before storing.
+- Customer artwork and previews are served from random, unlisted URLs (capability links) with private caching, `noindex` and no referrer, instead of per-request authorisation, so plain `<img>` tags work. Only the owner and admins are given these URLs.
+- Designs that are part of an order are locked; opening one offers "Save as new design". Locking is set by checkout in Phase 12.
+- Admin `/admin/designs`: all designs, details for the print team, and a ZIP with `design.json`, previews and the original artwork.
+- Live price calculation for designs arrives with dynamic pricing (Phase 10); the designer shows the base T-Shirt price meanwhile.
 
 ## Known issues / technical debt
 
@@ -149,6 +159,8 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~T12~~ | Product cards linked to pages that arrived in Phase 7 | Resolved in Phase 7: listing, search and product pages are live |
 | T14 | Guest bag lives only in this browser until Phase 11 | Phase 11 merges it into the server cart on sign-in |
 | T13 | A signed-in customer who opens `/admin` lands on the home page without a message | Accepted: customers have no reason to open admin links; revisit if support requests show confusion |
+| T16 | Uploaded artwork that is never saved in a design stays on disk | Phase 19: a cleanup job for unattached uploads older than 7 days |
+| T17 | Designer fonts load from Google Fonts | Same plan as T11 (self-host in Phase 19) |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
 
 ## Change log
@@ -163,4 +175,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-02 | 5 | Angular 22 workspace and admin portal for products, categories, stock and images (24 frontend tests, browser end-to-end run) | `5881050` |
 | 2026-11-03 | 6 | Storefront design and home page, static pages, customer auth pages, home/offers/reviews/newsletter/contact APIs (73 unit + 36 integration backend tests, 41 frontend tests, browser runs) | `f1d9575` |
 | 2026-11-03 | 7 | Product listing, category and search pages with facets; product detail page; wishlist; guest bag (74 unit + 39 integration backend tests, 63 frontend tests, catalog browser run) | `4011fb8` |
-| 2026-11-03 | 8 | Customer portal: dashboard, profile, email and password change, address book (74 unit + 45 integration backend tests, 70 frontend tests, portal browser run) | see git log on `DEV` |
+| 2026-11-03 | 8 | Customer portal: dashboard, profile, email and password change, address book (74 unit + 45 integration backend tests, 70 frontend tests, portal browser run) | `1677275` |
+| 2026-11-03 | 9 | Custom T-Shirt designer, saved designs, admin designs with ZIP download, back-view mockups (79 unit + 50 integration backend tests, 79 frontend tests, designer browser run) | see git log on `DEV` |

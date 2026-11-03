@@ -1,0 +1,210 @@
+<section class="designer">
+  <header class="head">
+    <nav class="crumbs" aria-label="Breadcrumb"><a routerLink="/">Home</a><span>/</span><span>Custom T-Shirt</span></nav>
+    <div class="title-row">
+      <div>
+        <h1>Design your T-Shirt</h1>
+        <p class="muted">Upload artwork, add text and place it on the front or back. Everything is printed exactly where you put it.</p>
+      </div>
+      <div class="head-actions">
+        @if (code()) {
+          <span class="chip" title="Design code">{{ code() }}</span>
+        }
+        <button type="button" class="btn ghost" (click)="startOver()" [disabled]="!ready()">
+          <span class="material-symbols-outlined">restart_alt</span>{{ code() ? 'New design' : 'Start over' }}
+        </button>
+      </div>
+    </div>
+    @if (locked()) {
+      <p class="notice" role="status">
+        <span class="material-symbols-outlined">lock</span>
+        This design is part of an order, so it cannot be changed. Saving creates a copy you can edit.
+      </p>
+    }
+  </header>
+
+  @if (loadError(); as message) {
+    <div class="error-box" role="alert">
+      <span class="material-symbols-outlined">error</span>
+      <p>{{ message }}</p>
+      <a class="btn" routerLink="/customize">Start a new design</a>
+    </div>
+  }
+
+  <div class="workspace" [class.hidden]="loadError()">
+    <div class="stage-col">
+      <div class="side-tabs" role="tablist" aria-label="T-Shirt side">
+        @for (s of sides; track s) {
+          <button type="button" role="tab" [attr.aria-selected]="side() === s" [class.active]="side() === s" (click)="chooseSide(s)">
+            {{ s === 'FRONT' ? 'Front' : 'Back' }}
+            @if (counts()[s]) { <span class="count">{{ counts()[s] }}</span> }
+          </button>
+        }
+      </div>
+
+      <div class="stage" #stage>
+        <canvas #shirt class="shirt" aria-hidden="true"></canvas>
+        <div
+          class="area"
+          [style.left.%]="(area()?.x ?? 0.32) * 100"
+          [style.top.%]="(area()?.y ?? 0.26) * 100"
+          [style.width.%]="(area()?.w ?? 0.36) * 100"
+          [style.height.%]="(area()?.h ?? 0.36) * 100"
+          [attr.aria-label]="'Print area: ' + (area()?.label ?? '')"
+        >
+          <canvas #fabric></canvas>
+          @if (ready() && !counts()[side()]) {
+            <p class="area-hint">{{ area()?.label }}<br /><small>Add artwork or text</small></p>
+          }
+        </div>
+        @if (!ready() && !loadError()) {
+          <div class="loading"><mat-spinner diameter="36" /></div>
+        }
+      </div>
+
+      <div class="toolbar" [class.on]="selected() && !locked()" aria-label="Selected element">
+        <button type="button" (click)="duplicateSelected()" [disabled]="!selected() || locked()" matTooltip="Duplicate" aria-label="Duplicate">
+          <span class="material-symbols-outlined">content_copy</span></button>
+        <button type="button" (click)="layer('up')" [disabled]="!selected() || locked()" matTooltip="Bring forward" aria-label="Bring forward">
+          <span class="material-symbols-outlined">flip_to_front</span></button>
+        <button type="button" (click)="layer('down')" [disabled]="!selected() || locked()" matTooltip="Send backward" aria-label="Send backward">
+          <span class="material-symbols-outlined">flip_to_back</span></button>
+        <button type="button" (click)="centerSelected()" [disabled]="!selected() || locked()" matTooltip="Centre in print area" aria-label="Centre">
+          <span class="material-symbols-outlined">center_focus_strong</span></button>
+        <button type="button" class="danger" (click)="removeSelected()" [disabled]="!selected() || locked()" matTooltip="Delete" aria-label="Delete">
+          <span class="material-symbols-outlined">delete</span></button>
+      </div>
+      <p class="hint">Click an element to select it. Drag to move, use the corners to resize and the top handle to rotate. Double-click text to type on the shirt.</p>
+    </div>
+
+    <aside class="panel" aria-label="Design options">
+      @if (options(); as o) {
+        <section>
+          <h2><span>1</span>Style</h2>
+          <div class="chips">
+            @for (t of o.tshirtTypes; track t.code) {
+              <button type="button" class="chip-btn" [class.active]="type() === t.code" [attr.aria-pressed]="type() === t.code"
+                      [disabled]="locked()" (click)="chooseType(t.code)">{{ t.label }}</button>
+            }
+          </div>
+        </section>
+
+        <section>
+          <h2><span>2</span>Colour <small>{{ colorInfo()?.name }}</small></h2>
+          <div class="swatches">
+            @for (c of o.colors; track c.code) {
+              <button type="button" class="swatch" [style.background]="c.hex" [class.active]="color() === c.code"
+                      [class.out]="!colorEnabled(c.code)" [disabled]="locked() || !colorEnabled(c.code)"
+                      [attr.aria-pressed]="color() === c.code"
+                      [attr.aria-label]="c.name + (colorEnabled(c.code) ? '' : ', out of stock')"
+                      [matTooltip]="c.name + (colorEnabled(c.code) ? '' : ' (out of stock)')" (click)="chooseColor(c.code)"></button>
+            }
+          </div>
+        </section>
+
+        <section>
+          <h2><span>3</span>Size</h2>
+          <div class="chips sizes">
+            @for (s of o.sizes; track s.code) {
+              <button type="button" class="chip-btn" [class.active]="size() === s.code" [attr.aria-pressed]="size() === s.code"
+                      [disabled]="locked() || !sizeEnabled(s.code)" (click)="chooseSize(s.code)">{{ s.code }}</button>
+            }
+          </div>
+        </section>
+
+        <section>
+          <h2><span>4</span>Print area <small>{{ side() === 'FRONT' ? 'Front' : 'Back' }}</small></h2>
+          <div class="chips">
+            @for (p of sideAreas(); track p.code) {
+              <button type="button" class="chip-btn" [class.active]="area()?.code === p.code" [attr.aria-pressed]="area()?.code === p.code"
+                      [disabled]="locked()" (click)="chooseArea(p.code)">{{ p.label }}</button>
+            }
+          </div>
+        </section>
+
+        <section>
+          <h2><span>5</span>Artwork</h2>
+          <input #file type="file" class="visually-hidden" [accept]="accept()" (change)="upload($event)" />
+          <button type="button" class="btn outline wide" (click)="pickFile()" [disabled]="locked() || uploading() || !ready()">
+            @if (uploading()) { <mat-spinner diameter="18" /> Uploading… } @else {
+              <span class="material-symbols-outlined">upload</span>Upload image
+            }
+          </button>
+          <p class="fine">PNG or JPG up to {{ maxUploadMb() }} MB. Use a high-resolution image for a sharp print.</p>
+          @if (assets().length) {
+            <div class="thumbs">
+              @for (a of assets(); track a.id) {
+                <button type="button" (click)="reuse(a)" [disabled]="locked()" [matTooltip]="'Add ' + a.originalFilename + ' again'"
+                        [attr.aria-label]="'Add ' + a.originalFilename">
+                  <img [src]="a.url" [alt]="a.originalFilename" loading="lazy" />
+                </button>
+              }
+            </div>
+          }
+        </section>
+
+        <section>
+          <h2><span>6</span>Text</h2>
+          <button type="button" class="btn outline wide" (click)="addText()" [disabled]="locked() || !ready()">
+            <span class="material-symbols-outlined">title</span>Add text
+          </button>
+          @if (selected(); as s) {
+            @if (s.kind === 'text') {
+              <div class="text-tools">
+                <label>Text
+                  <input type="text" [value]="s.text" [maxLength]="o.limits.maxTextLength" [disabled]="locked()"
+                         (input)="updateText({ text: $any($event.target).value })" />
+                </label>
+                <label>Font
+                  <select [value]="s.font" [disabled]="locked()" (change)="updateText({ font: $any($event.target).value })">
+                    @for (f of o.fonts; track f.code) {
+                      <option [value]="f.family" [selected]="s.font === f.family" [style.font-family]="f.family">{{ f.label }}</option>
+                    }
+                  </select>
+                </label>
+                <div class="row">
+                  <label>Colour
+                    <input type="color" [value]="s.color" [disabled]="locked()" (input)="updateText({ color: $any($event.target).value })" />
+                  </label>
+                  <label>Size
+                    <input type="number" min="8" max="300" [value]="s.size" [disabled]="locked()"
+                           (change)="updateText({ size: +$any($event.target).value })" />
+                  </label>
+                </div>
+              </div>
+            }
+          }
+        </section>
+
+        <section class="finish">
+          <label class="field">Design name <small>(optional)</small>
+            <input type="text" maxlength="100" placeholder="e.g. Team outing 2026" [value]="name()" [disabled]="locked()"
+                   (input)="nameChanged($any($event.target).value)" />
+          </label>
+          <label class="check">
+            <input type="checkbox" [checked]="premium()" [disabled]="locked()" (change)="premiumChanged($any($event.target).checked)" />
+            <span>Premium print <small>Richer colours that last longer wash after wash</small></span>
+          </label>
+          <div class="price">
+            <span>T-Shirt from</span>
+            <strong>{{ typeInfo()?.basePrice | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          </div>
+          <p class="fine">Printing charges are added based on print areas and size. You will see the full price before you pay.</p>
+          @if (!inStock()) {
+            <p class="warn">This colour and size is out of stock.</p>
+          }
+          <button type="button" class="btn primary wide" (click)="save()" [disabled]="saving() || !ready()">
+            @if (saving()) { <mat-spinner diameter="18" /> Saving… } @else {
+              <span class="material-symbols-outlined">save</span>{{ locked() ? 'Save as new design' : code() ? 'Save changes' : 'Save design' }}
+            }
+          </button>
+          @if (!auth.isLoggedIn()) {
+            <p class="fine center">You will be asked to sign in. Your design stays on this device.</p>
+          } @else {
+            <a class="text-link center" routerLink="/account/designs">My saved designs</a>
+          }
+        </section>
+      }
+    </aside>
+  </div>
+</section>
