@@ -99,8 +99,20 @@ public class Order extends BaseEntity {
     @Column(name = "confirmed_at")
     private Instant confirmedAt;
 
+    @Column(name = "shipped_at")
+    private Instant shippedAt;
+
+    @Column(name = "delivered_at")
+    private Instant deliveredAt;
+
     @Column(name = "cancelled_at")
     private Instant cancelledAt;
+
+    @Column(name = "courier_name", length = 80)
+    private String courierName;
+
+    @Column(name = "tracking_number", length = 80)
+    private String trackingNumber;
 
     @Column(name = "cancel_reason", length = 300)
     private String cancelReason;

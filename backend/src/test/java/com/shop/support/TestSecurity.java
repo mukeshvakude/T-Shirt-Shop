@@ -32,6 +32,7 @@ public final class TestSecurity {
                 new AppProperties.Storage("local", "./uploads", 5_242_880, 4000),
                 new AppProperties.Stock(15),
                 null,
+                null,
                 true);
     }
 }

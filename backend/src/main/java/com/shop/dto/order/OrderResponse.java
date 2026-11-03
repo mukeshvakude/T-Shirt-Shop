@@ -27,7 +27,16 @@ public record OrderResponse(
         Address shippingAddress,
         String note,
         String cancelReason,
-        List<HistoryEntry> history) {
+        List<HistoryEntry> history,
+        Instant confirmedAt,
+        Instant shippedAt,
+        Instant deliveredAt,
+        Instant cancelledAt,
+        String courierName,
+        String trackingNumber,
+        /** The customer may still cancel (before the order is being prepared). */
+        boolean canCancel,
+        boolean invoiceAvailable) {
 
     public record Item(String name, String sku, String sizeCode, String colorCode, String colorName, String imageUrl,
             int quantity, BigDecimal unitBasePrice, BigDecimal unitCustomizationCharge, BigDecimal lineTotal,

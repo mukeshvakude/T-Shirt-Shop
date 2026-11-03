@@ -79,7 +79,8 @@ src/app/
 | `/customize`, `/customize/:code` | Custom T-Shirt designer (Phase 9) |
 | `/cart` | Shopping bag: products and custom T-Shirts, size/colour/quantity, coupons, totals (Phase 11) |
 | `/checkout` | Checkout: contact, saved or new address, payment method, order summary (sign-in required, Phase 12) |
-| `/order/:number` | Order confirmation and details: items, totals, address, status updates |
+| `/order/:number` | Order confirmation and details: delivery progress, courier and tracking, cancel (with reason), invoice PDF, status updates |
+| `/account/orders` | Order history (newest first, ten at a time) |
 
 The home page loads everything from `GET /api/home` and hides sections that have no content.
 

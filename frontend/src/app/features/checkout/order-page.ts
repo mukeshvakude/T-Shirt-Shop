@@ -1,5 +1,6 @@
 import { DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, computed, inject, input, signal } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -11,6 +12,7 @@ import { RazorpayCheckoutService } from '../../core/payment/razorpay-checkout.se
 import { ORDER_STATUS_LABELS, landmarkText } from '../../core/models/account.models';
 import { OrderDetail, PAYMENT_STATUS_LABELS } from '../../core/models/order.models';
 import { ImgFallback } from '../../shared/img-fallback.directive';
+import { CancelOrderDialog, CancelOrderData } from './cancel-order-dialog';
 import { InrPipe } from '../../shared/inr.pipe';
 
 /** Order confirmation and details: thank-you message, items, address, totals and status history. */
@@ -25,6 +27,8 @@ export class OrderPage implements OnInit, OnDestroy {
   private readonly razorpay = inject(RazorpayCheckoutService);
   private readonly notify = inject(NotifyService);
   protected readonly paying = signal(false);
+  protected readonly working = signal(false);
+  private readonly dialog = inject(MatDialog);
 
   /** Route parameter and query flag (component input binding). */
   readonly number = input.required<string>();
@@ -53,6 +57,64 @@ export class OrderPage implements OnInit, OnDestroy {
       this.error.set(apiErrorMessage(error, 'This order could not be found.'));
     }
     this.timer = setInterval(() => this.now.set(Date.now()), 30_000);
+  }
+
+  /** Delivery progress: each step with its time once reached. */
+  protected readonly steps = computed(() => {
+    const o = this.order();
+    if (!o) return [];
+    const at = (status: string) => o.history.find((h) => h.status === status)?.at ?? null;
+    const steps = [
+      { key: 'CONFIRMED', label: 'Confirmed', icon: 'task_alt', at: o.confirmedAt ?? at('CONFIRMED') },
+      { key: 'PROCESSING', label: 'Being prepared', icon: 'inventory_2', at: at('PROCESSING') },
+      { key: 'SHIPPED', label: 'Shipped', icon: 'local_shipping', at: o.shippedAt ?? at('SHIPPED') },
+      { key: 'OUT_FOR_DELIVERY', label: 'Out for delivery', icon: 'two_wheeler', at: at('OUT_FOR_DELIVERY') },
+      { key: 'DELIVERED', label: 'Delivered', icon: 'home', at: o.deliveredAt ?? at('DELIVERED') },
+    ];
+    return steps.map((s) => ({ ...s, current: s.key === o.status }));
+  });
+
+  async cancel(): Promise<void> {
+    const o = this.order();
+    if (!o || this.working()) return;
+    const data: CancelOrderData = { orderNumber: o.orderNumber, paidOnline: o.paymentStatus === 'SUCCESS' && o.paymentMethod === 'RAZORPAY' };
+    const result = await firstValueFrom(this.dialog.open(CancelOrderDialog, { data, width: '460px', maxWidth: '94vw' }).afterClosed());
+    if (!result) return;
+    this.working.set(true);
+    try {
+      const updated = await firstValueFrom(this.api.cancel(o.orderNumber, result.reason));
+      this.order.set(updated);
+      this.notify.success(updated.paymentStatus === 'REFUNDED' ? 'Order cancelled. Your refund has been started.' : 'Order cancelled.');
+    } catch (error) {
+      this.notify.error(error, 'The order could not be cancelled.');
+      this.order.set(await firstValueFrom(this.api.order(o.orderNumber)).catch(() => o));
+    } finally {
+      this.working.set(false);
+    }
+  }
+
+  async downloadInvoice(): Promise<void> {
+    const o = this.order();
+    if (!o || this.working()) return;
+    this.working.set(true);
+    try {
+      const blob = await firstValueFrom(this.api.invoice(o.orderNumber));
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'INV-' + o.orderNumber.slice(3) + '.pdf';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      this.notify.error(error, 'The invoice could not be downloaded.');
+    } finally {
+      this.working.set(false);
+    }
+  }
+
+  protected copyTracking(value: string | null): void {
+    if (!value) return;
+    void navigator.clipboard?.writeText(value).then(() => this.notify.success('Tracking number copied.'));
   }
 
   /** Pay (or try again) for an unpaid online order. */

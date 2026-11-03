@@ -87,6 +87,21 @@ public class StockService {
         return resolve(orderId, outcome, now);
     }
 
+    /** Puts stock that an order had already taken back on the shelf (cancelled before shipping). Returns the units returned. */
+    public int restock(Long orderId, Instant now) {
+        List<InventoryReservation> taken = reservations.findByOrderIdAndStatus(orderId, InventoryReservation.Status.COMMITTED);
+        taken.sort((a, b) -> Long.compare(a.getInventoryId(), b.getInventoryId()));
+        int units = 0;
+        for (InventoryReservation r : taken) {
+            Inventory inv = inventory.findByIdForUpdate(r.getInventoryId()).orElseThrow();
+            inv.setQuantityOnHand(inv.getQuantityOnHand() + r.getQuantity());
+            r.setStatus(InventoryReservation.Status.RELEASED);
+            r.setResolvedAt(now);
+            units += r.getQuantity();
+        }
+        return units;
+    }
+
     private int resolve(Long orderId, InventoryReservation.Status outcome, Instant now) {
         List<InventoryReservation> active = reservations.findByOrderIdAndStatus(orderId, InventoryReservation.Status.ACTIVE);
         active.sort((a, b) -> Long.compare(a.getInventoryId(), b.getInventoryId()));

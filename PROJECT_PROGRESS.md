@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 14)
+Last updated: 2026-11-03 (Phase 15)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -23,7 +23,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Razorpay Integration (Razorpay order creation, Standard Checkout in Angular, signature verification, retry, failed attempts; needs real test keys for a live run)
 - [x] Payment Verification (signature plus Razorpay fetch, amount/currency/order checks, capture of authorized payments, automatic refunds)
 - [x] Webhooks (signed, stored once per event id, retry-safe; reconciliation job every 5 minutes)
-- [ ] Order Management
+- [x] Order Management (order history, details with delivery progress and tracking, customer cancellation with stock return and refunds, admin status API, PDF invoices)
 - [ ] Admin Dashboard
 - [ ] Notifications
 - [ ] Testing
@@ -67,7 +67,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 12 | Checkout | Checkout form, totals, pending order, stock reservation and expiry job, COD | Done |
 | 13 | Razorpay integration | Create order, Standard Checkout in Angular, retry | Done (verified with a stubbed gateway; live test needs keys, B5) |
 | 14 | Payment verification and webhooks | Signature verify, gateway fetch, webhook idempotency, late payment refunds, reconciliation | Done |
-| 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Pending |
+| 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Done (admin screens follow in Phase 16) |
 | 16 | Admin portal | Dashboard metrics, orders, payments, refunds, customers, customization (catalog pages delivered in Phase 5) | Pending |
 | 17 | Notifications | Order confirmation, status update and password reset emails | Pending |
 | 18 | Testing | Backend unit and slice tests, frontend tests, payment test checklist, bug fixes | Pending |
@@ -172,6 +172,9 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Webhooks (`POST /api/payments/webhook`, public): HMAC-SHA256 of the raw body with `RAZORPAY_WEBHOOK_SECRET` must match `X-Razorpay-Signature`; events are stored in `payment_webhook_events` by `X-Razorpay-Event-Id` and handled once (PROCESSED or IGNORED); a processing error is stored as FAILED and answered with HTTP 500 so Razorpay delivers it again. Handled: payment.authorized, payment.captured, payment.failed, order.paid, refund.processed, refund.failed.
 - Reconciliation job every 5 minutes (first run 2 minutes after start): asks Razorpay about unconfirmed attempts created between 2 minutes and 48 hours ago (batches of 50) and retries failed refunds. It covers lost browser confirmations and webhooks that cannot reach a local development machine.
 - If Razorpay cannot be reached while the browser confirms, the customer is told the payment will be confirmed automatically and not to pay again; reconciliation completes it.
+- Phase 15: customers can cancel while the order is before `order.customer_cancel_until_status` (PROCESSING), so while PENDING or CONFIRMED. Cancelling returns held and already-taken stock to the shelf, gives back the coupon use and design locks, and refunds paid online orders in full through the Phase 14 refund logic.
+- Admin status changes (`PATCH /api/admin/orders/{number}/status`): CONFIRMED to PROCESSING, PROCESSING to SHIPPED (courier and tracking number required), SHIPPED to OUT_FOR_DELIVERY or DELIVERED, OUT_FOR_DELIVERY to DELIVERED; cancelling is possible until shipped. Every change is in the status history with who made it. Delivering a Cash on Delivery order records the cash as collected (a COD payment row and a COD_COLLECTED transaction).
+- Invoices are PDFs made with OpenPDF from the order snapshot, numbered INV-<date>-<number> after the order number, available once the order is confirmed. With `BUSINESS_GSTIN` set the title is "Tax invoice", otherwise "Invoice"; seller details come from `BUSINESS_*` settings and empty values are left out. Amounts print as "INR 1,047.00" (the standard PDF fonts have no rupee sign).
 - A personal UPI ID is not used as a payment destination in the code: payments go through Razorpay, which settles to the merchant bank account (B10).
 - "First order" coupons such as WELCOME10 rely on the per-customer limit of 1; there is no separate "no previous orders" rule.
 - Refresh-token reuse detection now allows a 10-second grace window: if a rotated token is replayed while its successor was never used (page reloaded during a refresh call), the session continues with a new token. Any other replay still revokes all sessions.
@@ -201,6 +204,8 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T20 | Online payment is shown as unavailable until real Razorpay test keys are configured | Owner action B5; the payment window is built and tested with a stub |
 | ~~T23~~ | Late payments were only flagged for review | Resolved in Phase 14: refunded automatically |
 | T24 | Webhooks cannot reach this development PC | Reconciliation confirms payments within 5 minutes locally. In production, register `https://<domain>/api/payments/webhook` in the Razorpay Dashboard (Phase 19) |
+| T26 | Invoice seller details are only the shop name until `BUSINESS_*` values (legal name, address, GSTIN, email, phone) are set in `.env` | Owner action before launch; a GST-registered business must set `BUSINESS_GSTIN` |
+| T27 | Invoices show GST-inclusive prices without a tax breakdown per rate | Add HSN codes and CGST/SGST/IGST split if the owner's accountant requires it |
 | T25 | Payments flagged `needs_review` (amount or currency mismatch) have no admin screen yet | Phase 16 admin payments page |
 | T21 | Order confirmation emails are not sent yet | Phase 17 (notifications) |
 | T22 | Address JSON must include `makeDefault`: Jackson 3 rejects missing primitive booleans by default | Clients send it; consider `Boolean` fields or relaxing FAIL_ON_NULL_FOR_PRIMITIVES in Phase 18 |
@@ -224,4 +229,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 11 | Shopping cart: server cart with products and custom designs, guest quote and merge, coupons, shipping, stock checks, bag page, designer "Add to bag" (84 unit + 62 integration backend tests, 85 frontend tests, cart browser run) | `442d403` |
 | 2026-11-03 | 12 | Checkout: checkout page, order placement with server totals, stock holds and expiry job, COD, order page (84 unit + 65 integration backend tests, 89 frontend tests, checkout browser run) | `ebf345a` |
 | 2026-11-03 | 13 | Razorpay integration: create order, Standard Checkout, signature verification, retry, failure reports, pay-after-hold handling (87 unit + 71 integration backend tests, 92 frontend tests) | `d749622` |
-| 2026-11-03 | 14 | Payment verification and webhooks: gateway re-check, capture, signed idempotent webhooks, automatic refunds, reconciliation job (87 unit + 77 integration backend tests, 92 frontend tests, live Razorpay test-mode checks) | see git log on `DEV` |
+| 2026-11-03 | 14 | Payment verification and webhooks: gateway re-check, capture, signed idempotent webhooks, automatic refunds, reconciliation job (87 unit + 77 integration backend tests, 92 frontend tests, live Razorpay test-mode checks) | `139860f` |
+| 2026-11-03 | 15 | Order management: history, tracking, cancellation with stock return and refunds, admin status API, cash collection, PDF invoices (87 unit + 82 integration backend tests, 95 frontend tests, orders browser run) | see git log on `DEV` |

@@ -53,6 +53,25 @@
       <div><small>Payment</small><strong>{{ o.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online' }} · {{ paymentLabels[o.paymentStatus] ?? o.paymentStatus }}</strong></div>
     </div>
 
+    @if (o.status !== 'CANCELLED' && !o.awaitingPayment) {
+      <section class="panel track" aria-label="Delivery progress">
+        <ol class="steps">
+          @for (s of steps(); track s.key) {
+            <li [class.done]="s.at" [class.current]="s.current">
+              <span class="dot"><span class="material-symbols-outlined">{{ s.at ? 'check' : s.icon }}</span></span>
+              <strong>{{ s.label }}</strong>
+              <small>{{ s.at ? (s.at | date: 'd MMM, h:mm a') : '' }}</small>
+            </li>
+          }
+        </ol>
+        @if (o.courierName) {
+          <p class="courier"><span class="material-symbols-outlined">local_shipping</span>
+            {{ o.courierName }} · Tracking number <strong>{{ o.trackingNumber }}</strong>
+            <button type="button" class="link" (click)="copyTracking(o.trackingNumber)">Copy</button></p>
+        }
+      </section>
+    }
+
     <div class="layout">
       <section class="panel">
         <h2>Items</h2>
@@ -106,6 +125,13 @@
           </ol>
         </section>
         <div class="actions">
+          @if (o.invoiceAvailable) {
+            <button type="button" class="btn outline" (click)="downloadInvoice()" [disabled]="working()">
+              <span class="material-symbols-outlined">download</span>Download invoice</button>
+          }
+          @if (o.canCancel) {
+            <button type="button" class="btn outline danger" (click)="cancel()" [disabled]="working()">Cancel order</button>
+          }
           <a class="btn" routerLink="/shop">Continue shopping</a>
           <a class="btn outline" routerLink="/account/orders">My orders</a>
         </div>

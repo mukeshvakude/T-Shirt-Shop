@@ -71,6 +71,13 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- PDF invoices (LGPL/MPL) -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>2.0.3</version>
+        </dependency>
+
         <!-- Boilerplate reduction and mapping -->
         <dependency>
             <groupId>org.projectlombok</groupId>

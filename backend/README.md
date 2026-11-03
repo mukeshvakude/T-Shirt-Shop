@@ -91,7 +91,7 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 14)
+## Current endpoints (Phase 15)
 
 | Method | Path | Access |
 |--------|------|--------|
@@ -101,7 +101,12 @@ an `X-Request-Id` header that matches the `requestId` in logs.
 | POST | `/api/payments/failed` | Signed in (records a failed attempt reported by Checkout.js) |
 | GET | `/api/checkout` | Signed in (validated cart, totals split, contact, saved addresses, payment options) |
 | POST | `/api/checkout/place-order` | Signed in (creates the order; COD confirmed, online orders wait for payment with a stock hold) |
-| GET | `/api/orders/{orderNumber}` | Signed in, own orders only |
+| GET | `/api/orders?page&size` | Signed in (my orders, newest first) |
+| GET | `/api/orders/{orderNumber}` | Signed in, own orders only (tracking, history, canCancel, invoiceAvailable) |
+| POST | `/api/orders/{orderNumber}/cancel` | Signed in (before the order is being prepared; paid online orders are refunded) |
+| GET | `/api/orders/{orderNumber}/invoice` | Signed in (PDF, confirmed orders) |
+| PATCH | `/api/admin/orders/{orderNumber}/status` | `ROLE_ADMIN` (PROCESSING, SHIPPED with courier and tracking, OUT_FOR_DELIVERY, DELIVERED, CANCELLED) |
+| GET | `/api/admin/orders/{orderNumber}/invoice` | `ROLE_ADMIN` (PDF) |
 | GET, DELETE | `/api/cart` | Signed in (cart with current prices, stock status, coupon, shipping, total; DELETE empties it) |
 | POST | `/api/cart/items` | Signed in (`sku` for a product, or `designCode` + optional `sizeCode` for a custom T-Shirt) |
 | PATCH, DELETE | `/api/cart/items/{id}` | Signed in (quantity, size, colour; remove) |

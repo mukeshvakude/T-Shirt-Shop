@@ -86,6 +86,29 @@ export interface OrderDetail {
   note: string | null;
   cancelReason: string | null;
   history: { status: string; at: string; note: string | null }[];
+  confirmedAt: string | null;
+  shippedAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
+  courierName: string | null;
+  trackingNumber: string | null;
+  /** The customer may still cancel (before the order is being prepared). */
+  canCancel: boolean;
+  invoiceAvailable: boolean;
+}
+
+/** One row of the order history. */
+export interface OrderSummary {
+  orderNumber: string;
+  placedAt: string;
+  status: string;
+  paymentStatus: string;
+  paymentMethod: PaymentMethod;
+  total: number;
+  itemCount: number;
+  firstItemName: string | null;
+  images: string[];
+  awaitingPayment: boolean;
 }
 
 export const PAYMENT_STATUS_LABELS: Record<string, string> = {

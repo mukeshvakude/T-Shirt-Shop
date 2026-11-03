@@ -22,6 +22,7 @@ public record AppProperties(
         @NotNull @Valid Storage storage,
         @NotNull @Valid Stock stock,
         @Valid Payments payments,
+        @Valid Business business,
         boolean apiDocsEnabled) {
 
     public record Cors(@NotEmpty List<String> allowedOrigins) {
@@ -32,6 +33,21 @@ public record AppProperties(
     }
 
     public record Stock(@Min(1) int reservationMinutes) {
+    }
+
+    /**
+     * Seller details printed on invoices. Empty values are left out; with a GSTIN the document is a
+     * "Tax invoice", otherwise an "Invoice".
+     */
+    public record Business(String name, String legalName, String address, String gstin, String email, String phone) {
+
+        public String displayName() {
+            return name == null || name.isBlank() ? "T-Shirt Shop" : name;
+        }
+
+        public boolean hasGstin() {
+            return gstin != null && !gstin.isBlank();
+        }
     }
 
     /**

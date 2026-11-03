@@ -22,7 +22,7 @@ class LocalStorageServiceTest {
         return new LocalStorageService(new AppProperties("http://localhost:4200",
                 new AppProperties.Cors(List.of("http://localhost:4200")),
                 new AppProperties.Storage("local", tempDir.toString(), 5_242_880, 4000),
-                new AppProperties.Stock(15), null, true));
+                new AppProperties.Stock(15), null, null, true));
     }
 
     @Test

@@ -89,6 +89,13 @@ app:
     max-image-dimension: 4000
   stock:
     reservation-minutes: ${STOCK_RESERVATION_MINUTES:15}
+  business:
+    name: ${BUSINESS_NAME:T-Shirt Shop}
+    legal-name: ${BUSINESS_LEGAL_NAME:}
+    address: ${BUSINESS_ADDRESS:}
+    gstin: ${BUSINESS_GSTIN:}
+    email: ${BUSINESS_EMAIL:}
+    phone: ${BUSINESS_PHONE:}
   payments:
     razorpay-key-id: ${RAZORPAY_KEY_ID:}
     razorpay-key-secret: ${RAZORPAY_KEY_SECRET:}

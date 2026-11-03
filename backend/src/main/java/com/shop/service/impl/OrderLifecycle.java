@@ -38,7 +38,9 @@ public class OrderLifecycle {
         if (order.getOrderStatus() == Order.Status.CANCELLED) {
             return;
         }
+        // Held stock goes back, and stock the order had already taken returns to the shelf (not shipped yet).
         stock.release(order.getId(), InventoryReservation.Status.RELEASED, now);
+        stock.restock(order.getId(), now);
         String from = order.getOrderStatus().name();
         order.setOrderStatus(Order.Status.CANCELLED);
         order.setCancelledAt(now);

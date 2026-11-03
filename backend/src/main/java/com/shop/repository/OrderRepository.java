@@ -17,6 +17,8 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
     boolean existsByOrderNumber(String orderNumber);
 
+    org.springframework.data.domain.Page<Order> findByUserIdOrderByPlacedAtDescIdDesc(Long userId, org.springframework.data.domain.Pageable pageable);
+
     @Query("select distinct o from Order o left join fetch o.items i left join fetch i.customDesign where o.orderNumber = :number")
     Optional<Order> findByNumberWithItems(@Param("number") String number);
 
