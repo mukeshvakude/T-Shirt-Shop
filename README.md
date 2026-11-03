@@ -5,10 +5,11 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 13 of 19 complete (architecture, database, backend
+> **Status:** Phases 1 to 14 of 19 complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
 > home page, product listing and details, customer portal, custom T-Shirt designer,
-> dynamic pricing, shopping cart, checkout with Cash on Delivery, Razorpay payments). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> dynamic pricing, shopping cart, checkout with Cash on Delivery, Razorpay payments
+> with verification, webhooks, automatic refunds and reconciliation). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -132,6 +133,14 @@ as `tshirt_app` (password in `.env` as `DB_PASSWORD`), schema `tshirt_shop`.
 
 4. Restart the backend. "Pay online" becomes available at checkout.
 5. Pay with Razorpay test methods, for example UPI ID `success@razorpay` (succeeds) or `failure@razorpay` (fails), or the test cards listed in the Razorpay docs. Test payments never move real money.
+
+**Webhooks.** In the Razorpay Dashboard, Account & Settings, Webhooks, add
+`https://<your-domain>/api/payments/webhook`. Use the value of `RAZORPAY_WEBHOOK_SECRET` from `.env` as the
+secret, and select `payment.authorized`, `payment.captured`, `payment.failed`, `order.paid`,
+`refund.processed` and `refund.failed`. Razorpay cannot reach a local PC; locally, the reconciliation job
+confirms payments within 5 minutes (or use a tunnel such as ngrok to test webhooks).
+
+The Key Secret and Webhook Secret stay on the backend and are never sent to Angular.
 
 Where the money goes: Razorpay settles payments to the bank account verified in your Razorpay
 account (Account & Settings, Bank account details). It is not set in this code. Live mode needs

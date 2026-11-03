@@ -12,13 +12,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.shop.entity.InventoryReservation;
 import com.shop.entity.Order;
-import com.shop.entity.OrderItem;
-import com.shop.entity.OrderStatusHistory;
-import com.shop.repository.CouponRedemptionRepository;
-import com.shop.repository.CouponRepository;
 import com.shop.repository.InventoryReservationRepository;
 import com.shop.repository.OrderRepository;
-import com.shop.repository.OrderStatusHistoryRepository;
+import com.shop.repository.PaymentRepository;
 import com.shop.service.AppSettingService;
 
 import lombok.RequiredArgsConstructor;
@@ -36,11 +32,9 @@ public class OrderExpiryService {
 
     private final OrderRepository orders;
     private final InventoryReservationRepository reservations;
-    private final OrderStatusHistoryRepository history;
-    private final CouponRepository coupons;
-    private final CouponRedemptionRepository redemptions;
-    private final com.shop.repository.PaymentRepository payments;
+    private final PaymentRepository payments;
     private final StockService stock;
+    private final OrderLifecycle lifecycle;
     private final AppSettingService settings;
     private final Clock clock;
 
@@ -70,8 +64,8 @@ public class OrderExpiryService {
         if (order.getPaymentStatus() == Order.PaymentStatus.CREATED || order.getPaymentStatus() == Order.PaymentStatus.PENDING) {
             order.setPaymentStatus(Order.PaymentStatus.CANCELLED);
         }
-        record(order, order.getOrderStatus().name(), now,
-                "Payment window ended; held items were released. The order can still be paid if stock allows.");
+        lifecycle.record(order, order.getOrderStatus().name(),
+                "Payment window ended; held items were released. The order can still be paid if stock allows.", null, now);
         log.info("Order {}: payment window ended, released {} stock hold(s)", order.getOrderNumber(), released);
     }
 
@@ -84,49 +78,13 @@ public class OrderExpiryService {
                 || order.getPaymentStatus() == Order.PaymentStatus.SUCCESS) {
             return;
         }
-        stock.release(orderId, InventoryReservation.Status.RELEASED, now);
-        String from = order.getOrderStatus().name();
-        order.setOrderStatus(Order.Status.CANCELLED);
         if (order.getPaymentStatus() != Order.PaymentStatus.FAILED) {
             order.setPaymentStatus(Order.PaymentStatus.CANCELLED);
         }
-        order.setCancelledAt(now);
         payments.findByOrderIdOrderByAttemptNoAsc(orderId).stream()
                 .filter(p -> p.getStatus() == Order.PaymentStatus.CREATED || p.getStatus() == Order.PaymentStatus.PENDING)
                 .forEach(p -> p.setStatus(Order.PaymentStatus.CANCELLED));
-        order.setCancelReason("Not paid within " + settings.getInt("order.unpaid_cancel_hours") + " hours");
-
-        redemptions.findByOrderId(orderId).ifPresent(redemption -> {
-            coupons.findByIdForUpdate(redemption.getCouponId())
-                    .ifPresent(c -> c.setUsedCount(Math.max(0, c.getUsedCount() - 1)));
-            redemptions.delete(redemption);
-        });
-        for (OrderItem item : order.getItems()) {
-            if (item.getCustomDesign() != null
-                    && orders.countOtherOpenOrdersWithDesign(item.getCustomDesign().getId(), orderId) == 0) {
-                item.getCustomDesign().setLocked(false);
-                item.getCustomDesign().setStatus(com.shop.entity.CustomDesign.Status.DRAFT);
-            }
-        }
-        recordChange(order, from, now, order.getCancelReason());
+        lifecycle.cancel(order, "Not paid within " + settings.getInt("order.unpaid_cancel_hours") + " hours", null, now);
         log.info("Order {} cancelled: not paid in time", order.getOrderNumber());
-    }
-
-    private void record(Order order, String status, Instant at, String note) {
-        recordChange(order, status, at, note, status);
-    }
-
-    private void recordChange(Order order, String from, Instant at, String note) {
-        recordChange(order, from, at, note, order.getOrderStatus().name());
-    }
-
-    private void recordChange(Order order, String from, Instant at, String note, String to) {
-        OrderStatusHistory h = new OrderStatusHistory();
-        h.setOrderId(order.getId());
-        h.setFromStatus(from);
-        h.setToStatus(to);
-        h.setNote(note);
-        h.setCreatedAt(at);
-        history.save(h);
     }
 }

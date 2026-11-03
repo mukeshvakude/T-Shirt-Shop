@@ -48,6 +48,7 @@ public class SecurityConfig {
             "/api/contact",
             "/api/pricing/design-estimate",
             "/api/cart/quote",
+            "/api/payments/webhook",
     };
 
     static final String[] API_DOCS = {

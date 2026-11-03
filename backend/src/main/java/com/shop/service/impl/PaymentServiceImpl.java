@@ -66,6 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
     private final StockService stock;
     private final OrderService orderService;
     private final RazorpayGateway gateway;
+    private final PaymentProcessor processor;
     private final AppSettingService settings;
     private final AppProperties properties;
     private final RateLimiter rateLimiter;
@@ -143,7 +144,7 @@ public class PaymentServiceImpl implements PaymentService {
                 .orElseThrow(() -> new BadRequestException("PAYMENT_MISMATCH", "This payment does not belong to the order."));
 
         // Same successful payment reported again (double click, reload): nothing more to do.
-        if (payment.getStatus() == Order.PaymentStatus.SUCCESS) {
+        if (payment.getStatus() == Order.PaymentStatus.SUCCESS || payment.getStatus() == Order.PaymentStatus.REFUNDED) {
             if (r.razorpayPaymentId().equals(payment.getRazorpayPaymentId())) {
                 return orderService.toResponse(order);
             }
@@ -160,48 +161,23 @@ public class PaymentServiceImpl implements PaymentService {
                     + "checked automatically; otherwise please try paying again.");
         }
 
-        payment.setStatus(Order.PaymentStatus.SUCCESS);
-        payment.setRazorpayPaymentId(r.razorpayPaymentId());
         payment.setRazorpaySignature(r.razorpaySignature().toLowerCase(java.util.Locale.ROOT));
-        payment.setPaidAt(now);
-        payment.setFailureCode(null);
-        payment.setFailureReason(null);
         transaction(payment, "VERIFY", r.razorpayPaymentId(), payment.getAmount(), "SIGNATURE_VALID", "CLIENT_VERIFY",
                 Map.of("razorpay_payment_id", r.razorpayPaymentId()), now);
-        order.setPaymentStatus(Order.PaymentStatus.SUCCESS);
 
-        if (order.getOrderStatus() == Order.Status.CANCELLED) {
-            payment.setNeedsReview(true);
-            record(order, "Payment received after the order was cancelled; a refund is needed");
-            log.warn("Order {} was paid after cancellation (payment {}); refund needed", order.getOrderNumber(), r.razorpayPaymentId());
-            return orderService.toResponse(order);
-        }
-        if (!confirmStock(order, now)) {
-            payment.setNeedsReview(true);
-            record(order, "Paid after the hold ended and an item sold out; the shop will refund or contact you");
-            log.warn("Order {} paid but stock is no longer available (payment {})", order.getOrderNumber(), r.razorpayPaymentId());
-            return orderService.toResponse(order);
-        }
-        order.setOrderStatus(Order.Status.CONFIRMED);
-        order.setConfirmedAt(now);
-        order.setReservationExpiresAt(null);
-        recordChange(order, Order.Status.PENDING.name(), "Paid online (Razorpay payment " + r.razorpayPaymentId() + ")");
-        log.info("Order {} paid online with {}", order.getOrderNumber(), r.razorpayPaymentId());
-        return orderService.toResponse(order);
-    }
-
-    /** Commits the active hold, or takes the stock now if the hold already ended. False when it sold out. */
-    private boolean confirmStock(Order order, Instant now) {
-        if (!reservations.findByOrderIdAndStatus(order.getId(), InventoryReservation.Status.ACTIVE).isEmpty()) {
-            stock.commit(order.getId(), now);
-            return true;
-        }
+        // The signature proves Razorpay issued these ids; the payment itself is read from Razorpay.
+        RazorpayGateway.GatewayPayment gp;
         try {
-            stock.hold(order.getId(), quantities(order), now, true, now);
-            return true;
-        } catch (ApiException ex) {
-            return false;
+            gp = gateway.fetchPayment(r.razorpayPaymentId());
+        } catch (PaymentGatewayException ex) {
+            throw new PaymentGatewayException("Your payment reached Razorpay but could not be confirmed yet. "
+                    + "It will be confirmed automatically within a few minutes; please do not pay again.");
         }
+        if (!r.razorpayOrderId().equals(gp.orderId())) {
+            throw new BadRequestException("PAYMENT_MISMATCH", "This payment does not belong to the order.");
+        }
+        processor.apply(order, payment, gp, "CLIENT_VERIFY", now);
+        return orderService.toResponse(order);
     }
 
     // ------------------------------------------------------------------ failures

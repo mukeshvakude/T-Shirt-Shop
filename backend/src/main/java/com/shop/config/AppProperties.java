@@ -38,7 +38,12 @@ public record AppProperties(
      * Razorpay credentials from the environment. The secret stays on the server; online payment is
      * offered only when real keys are configured (not the .env.example placeholders).
      */
-    public record Payments(String razorpayKeyId, String razorpayKeySecret, String razorpayApiBase) {
+    public record Payments(String razorpayKeyId, String razorpayKeySecret, String razorpayApiBase, String razorpayWebhookSecret) {
+
+        /** Webhooks are accepted only with a real secret (not the .env.example placeholder). */
+        public boolean webhookConfigured() {
+            return razorpayWebhookSecret != null && razorpayWebhookSecret.length() >= 16 && !"change-me".equals(razorpayWebhookSecret);
+        }
 
         public String apiBase() {
             return razorpayApiBase == null || razorpayApiBase.isBlank() ? "https://api.razorpay.com/v1" : razorpayApiBase;

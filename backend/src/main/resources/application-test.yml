@@ -37,3 +37,4 @@ app:
   payments:
     razorpay-key-id: rzp_test_ITONLYFAKEKEY01
     razorpay-key-secret: integration-tests-only
+    razorpay-webhook-secret: webhook-integration-tests-only

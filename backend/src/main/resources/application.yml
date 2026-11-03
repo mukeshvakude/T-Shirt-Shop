@@ -93,6 +93,7 @@ app:
     razorpay-key-id: ${RAZORPAY_KEY_ID:}
     razorpay-key-secret: ${RAZORPAY_KEY_SECRET:}
     razorpay-api-base: https://api.razorpay.com/v1
+    razorpay-webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:}
   api-docs-enabled: true
   jobs:
     enabled: true

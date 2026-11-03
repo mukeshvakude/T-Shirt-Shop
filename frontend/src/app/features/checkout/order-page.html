@@ -12,10 +12,14 @@
         @if (o.status === 'CANCELLED') {
           <h1>Order cancelled</h1>
           <p>{{ o.cancelReason || 'This order was cancelled.' }}</p>
-          @if (o.paymentStatus === 'SUCCESS') { <p>Your payment was received after the order was cancelled. It will be refunded to the same account.</p> }
+          @if (o.paymentStatus === 'REFUNDED') {
+            <p>Your payment of {{ o.total | inr }} has been refunded to the account you paid from. Banks usually show it within 5 to 7 working days.</p>
+          } @else if (o.paymentStatus === 'SUCCESS') {
+            <p>Your payment was received after the order was cancelled. It is being refunded to the account you paid from.</p>
+          }
         } @else if (o.status === 'PENDING' && o.paymentStatus === 'SUCCESS') {
-          <h1>Payment received, order on hold</h1>
-          <p>An item in your order sold out just before your payment arrived. We will refund the amount to the same account or contact you.</p>
+          <h1>Payment received, being checked</h1>
+          <p>We received your payment and are checking it. Your order will be confirmed shortly, or the amount refunded to the account you paid from.</p>
         } @else if (o.awaitingPayment) {
           <h1>Complete your payment</h1>
           <p>
