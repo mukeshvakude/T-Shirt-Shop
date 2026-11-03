@@ -57,7 +57,8 @@ describe('Login page', () => {
     expect(navigate).toHaveBeenCalledWith('/admin');
   });
 
-  it('shows the server message on failure and refuses non-admin accounts', async () => {
+  it('shows the server message on failure and sends customers back to the shop', async () => {
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigateByUrl').mockResolvedValue(true);
     const { fixture, el, type } = render();
     type('input[type=email]', 'asha@example.com');
     type('input[formcontrolname=password]', 'Wrong1234');
@@ -75,6 +76,6 @@ describe('Login page', () => {
       user: { id: 2, email: 'asha@example.com', fullName: 'Asha', emailVerified: false, roles: ['ROLE_CUSTOMER'], createdAt: '' },
     });
     fixture.detectChanges();
-    expect(el.querySelector('.error')?.textContent).toContain('does not have access');
+    expect(navigate).toHaveBeenCalledWith('/');
   });
 });

@@ -112,6 +112,8 @@ app:
       login-per-minute: 10
       register-per-hour: 10
       forgot-password-per-hour: 5
+      newsletter-per-hour: 10
+      contact-per-hour: 5
     admin:
       email: ${ADMIN_EMAIL:}
       password: ${ADMIN_PASSWORD:}

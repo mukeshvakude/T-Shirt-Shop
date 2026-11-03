@@ -19,6 +19,12 @@ public final class DatabaseCleaner {
     }
 
     public static void clean(JdbcTemplate jdbc) {
+        // Storefront engagement
+        jdbc.update("DELETE FROM reviews");
+        jdbc.update("DELETE FROM contact_messages");
+        jdbc.update("DELETE FROM newsletter_subscribers");
+        jdbc.update("DELETE FROM coupons");
+
         // Catalog created by tests
         jdbc.update("DELETE i FROM product_images i JOIN products p ON p.id = i.product_id WHERE p.slug NOT IN "
                 + SEEDED_PRODUCTS);

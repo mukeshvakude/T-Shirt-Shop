@@ -1,0 +1,134 @@
+<a class="skip-link" href="#main">Skip to content</a>
+
+@if (announcement(); as text) {
+  <div class="announcement" role="note">{{ text }}</div>
+}
+
+<header class="header">
+  <div class="bar">
+    <button class="icon-btn menu-btn" type="button" (click)="menuOpen.set(true)" aria-label="Open menu"
+            [attr.aria-expanded]="menuOpen()" aria-controls="mobile-menu">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+
+    <a routerLink="/" class="logo" [attr.aria-label]="site.brandName + ' home'">{{ site.wordmark }}</a>
+
+    <nav class="nav" aria-label="Shop categories">
+      @for (c of categories(); track c.id) {
+        <a [routerLink]="link(c)" routerLinkActive="active">{{ c.name }}</a>
+      }
+    </nav>
+
+    <form class="search" role="search" (submit)="$event.preventDefault(); search(q.value)">
+      <span class="material-symbols-outlined" aria-hidden="true">search</span>
+      <input #q type="search" name="q" placeholder="Search tees, shirts, chinos…" aria-label="Search products"
+             maxlength="100">
+    </form>
+
+    <div class="actions">
+      @if (auth.user(); as user) {
+        <button class="account" type="button" [matMenuTriggerFor]="accountMenu" aria-label="Account menu">
+          <span class="material-symbols-outlined">person</span>
+          <span class="label">Hi, {{ auth.firstName() }}</span>
+        </button>
+        <mat-menu #accountMenu="matMenu" xPosition="before">
+          <div class="menu-email">{{ user.email }}</div>
+          @if (auth.isAdmin()) {
+            <a mat-menu-item routerLink="/admin">Admin portal</a>
+          }
+          <a mat-menu-item routerLink="/account">My account</a>
+          <button mat-menu-item type="button" (click)="logout()">Sign out</button>
+        </mat-menu>
+      } @else {
+        <a class="text-link hide-sm" routerLink="/login" [queryParams]="{ returnUrl: returnUrl() }">Sign in</a>
+        <a class="pill hide-sm" routerLink="/register" [queryParams]="{ returnUrl: returnUrl() }">Register</a>
+        <a class="icon-btn show-sm" routerLink="/login" [queryParams]="{ returnUrl: returnUrl() }" aria-label="Sign in">
+          <span class="material-symbols-outlined">person</span>
+        </a>
+      }
+      <a class="icon-btn" routerLink="/cart" aria-label="Shopping cart">
+        <span class="material-symbols-outlined">shopping_bag</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile drawer -->
+@if (menuOpen()) {
+  <div class="scrim" (click)="menuOpen.set(false)" aria-hidden="true"></div>
+}
+<aside id="mobile-menu" class="drawer" [class.open]="menuOpen()" [attr.aria-hidden]="!menuOpen()"
+       [attr.inert]="menuOpen() ? null : ''">
+  <div class="drawer-head">
+    <span class="logo">{{ site.wordmark }}</span>
+    <button class="icon-btn" type="button" (click)="menuOpen.set(false)" aria-label="Close menu">
+      <span class="material-symbols-outlined">close</span>
+    </button>
+  </div>
+  <form class="search drawer-search" role="search" (submit)="$event.preventDefault(); search(mq.value)">
+    <span class="material-symbols-outlined" aria-hidden="true">search</span>
+    <input #mq type="search" placeholder="Search products" aria-label="Search products" maxlength="100">
+  </form>
+  <nav aria-label="Shop categories (mobile)">
+    @for (c of categories(); track c.id) {
+      <a [routerLink]="link(c)">{{ c.name }}<span class="material-symbols-outlined">chevron_right</span></a>
+    }
+  </nav>
+  <div class="drawer-account">
+    @if (auth.isLoggedIn()) {
+      <a routerLink="/account">My account</a>
+      @if (auth.isAdmin()) { <a routerLink="/admin">Admin portal</a> }
+      <button type="button" (click)="logout()">Sign out</button>
+    } @else {
+      <a class="pill" routerLink="/login" [queryParams]="{ returnUrl: returnUrl() }">Sign in</a>
+      <a class="pill outline" routerLink="/register" [queryParams]="{ returnUrl: returnUrl() }">Create account</a>
+    }
+  </div>
+</aside>
+
+<main id="main" tabindex="-1">
+  <router-outlet />
+</main>
+
+<footer class="footer">
+  <div class="footer-grid">
+    <div class="brand-col">
+      <span class="logo">{{ site.wordmark }}</span>
+      <p>{{ site.tagline }}</p>
+      @if (site.social.length) {
+        <div class="social">
+          @for (s of site.social; track s.url) {
+            <a [href]="s.url" target="_blank" rel="noopener">{{ s.label }}</a>
+          }
+        </div>
+      }
+    </div>
+
+    <div>
+      <h2>Shop</h2>
+      @for (c of categories(); track c.id) {
+        <a [routerLink]="link(c)">{{ c.name }}</a>
+      }
+    </div>
+
+    <div>
+      <h2>Help</h2>
+      <a routerLink="/contact">Contact us</a>
+      <a routerLink="/returns-policy">Returns &amp; refunds</a>
+      <a routerLink="/terms">Terms &amp; conditions</a>
+      <a routerLink="/privacy-policy">Privacy policy</a>
+    </div>
+
+    <div>
+      <h2>Company</h2>
+      <a routerLink="/about">About us</a>
+      @if (site.supportEmail) { <a [href]="'mailto:' + site.supportEmail">{{ site.supportEmail }}</a> }
+      @if (site.supportPhone) { <a [href]="'tel:' + site.supportPhone.replaceAll(' ', '')">{{ site.supportPhone }}</a> }
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <span>© {{ year }} {{ site.brandName }}. All rights reserved.</span>
+    <span class="pay">Secure payments with Razorpay · UPI · Cards · Net banking · Cash on Delivery</span>
+  </div>
+</footer>

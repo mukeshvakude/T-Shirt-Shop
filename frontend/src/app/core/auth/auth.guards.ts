@@ -16,8 +16,22 @@ export const adminGuard: CanActivateFn = (_route, state) => {
   return inject(Router).createUrlTree(['/login'], { queryParams });
 };
 
-/** Login page: admins who are already logged in go straight to the portal. */
+/** Pages for signed-in customers (account, orders): otherwise go to login and come back. */
+export const authGuard: CanActivateFn = (_route, state) => {
+  const auth = inject(AuthService);
+  return auth.isLoggedIn() ? true : inject(Router).createUrlTree(['/login'], { queryParams: { returnUrl: state.url } });
+};
+
+/** Login, register and password pages: signed-in users go to the portal (admins) or the shop. */
 export const guestGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
-  return auth.isAdmin() ? inject(Router).createUrlTree(['/admin']) : true;
+  if (!auth.isLoggedIn()) {
+    return true;
+  }
+  return inject(Router).createUrlTree([auth.isAdmin() ? '/admin' : '/']);
 };
+
+/** Only same-site paths are allowed as redirect targets (prevents open redirects). */
+export function safeReturnUrl(url: string | null | undefined, fallback: string): string {
+  return url && url.startsWith('/') && !url.startsWith('//') ? url : fallback;
+}

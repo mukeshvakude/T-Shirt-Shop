@@ -1,0 +1,189 @@
+<!-- Hero -->
+<section class="hero">
+  <img class="hero-art" src="/assets/home/hero.jpg" alt="" fetchpriority="high" width="1600" height="1000">
+  <div class="hero-copy">
+    <span class="eyebrow">New season essentials</span>
+    <h1>Wear it<br>your way.</h1>
+    <p>Premium cotton tees, sharp shirts and easy pants, plus T-Shirts you design yourself with a live preview.</p>
+    <div class="ctas">
+      @if (firstShopCategory(); as c) {
+        <a class="btn primary" [routerLink]="link(c)">Shop {{ c.name }}</a>
+      }
+      <a class="btn secondary" routerLink="/customize">Design your own</a>
+    </div>
+  </div>
+</section>
+
+<!-- Trust strip -->
+<section class="trust" aria-label="Why shop with us">
+  <div><span class="material-symbols-outlined">local_shipping</span>Fast delivery across India</div>
+  <div><span class="material-symbols-outlined">lock</span>Secure UPI, card &amp; net-banking payments</div>
+  <div><span class="material-symbols-outlined">payments</span>Cash on Delivery available</div>
+  <div><span class="material-symbols-outlined">autorenew</span>Easy returns on ready-made styles</div>
+</section>
+
+@if (loading()) {
+  <section class="section" aria-busy="true">
+    <div class="grid">
+      @for (s of skeletons; track $index) { <div class="skeleton"></div> }
+    </div>
+  </section>
+} @else if (failed()) {
+  <section class="section error-state" role="alert">
+    <p>We could not load the collection right now.</p>
+    <button class="btn primary" type="button" (click)="load()">Try again</button>
+  </section>
+} @else if (data(); as d) {
+
+  <!-- Shop by category -->
+  @if (tiles().length) {
+    <section class="section">
+      <header class="section-head"><h2>Shop by category</h2></header>
+      <div class="tiles">
+        @for (t of tiles(); track t.id) {
+          <a class="tile" [routerLink]="t.link">
+            <img [src]="t.image ?? ''" [alt]="t.name" loading="lazy" appImgFallback>
+            <span class="tile-label">{{ t.name }} <span class="material-symbols-outlined">arrow_forward</span></span>
+          </a>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- Featured -->
+  @if (d.featured.length) {
+    <section class="section">
+      <header class="section-head">
+        <h2>Featured</h2>
+        <p>Our most-loved essentials, picked by the team.</p>
+      </header>
+      <div class="grid">
+        @for (p of rows(d.featured); track p.id; let i = $index) { <app-product-card [product]="p" [priority]="i < 4" /> }
+      </div>
+    </section>
+  }
+
+  <!-- New arrivals -->
+  @if (d.newArrivals.length) {
+    <section class="section">
+      <header class="section-head"><h2>New arrivals</h2><p>Just landed this season.</p></header>
+      <div class="grid">
+        @for (p of rows(d.newArrivals); track p.id) { <app-product-card [product]="p" /> }
+      </div>
+    </section>
+  }
+
+  <!-- Custom T-Shirt promotion -->
+  @if (d.customTshirt.available) {
+    <section class="section">
+      <div class="promo">
+        <img src="/assets/home/custom-tshirt.jpg" alt="A white T-Shirt with a colourful custom print" loading="lazy">
+        <div class="promo-copy">
+          <span class="eyebrow">Custom T-Shirt studio</span>
+          <h2>Your design. Printed on premium cotton.</h2>
+          <p>Upload artwork, add your own text, pick colours and print placements, and see the price update live
+            before you order.</p>
+          <ul class="types">
+            @for (t of d.customTshirt.tshirtTypes; track t) { <li>{{ t }}</li> }
+          </ul>
+          <div class="promo-cta">
+            <a class="btn light" routerLink="/customize">Start designing</a>
+            @if (d.customTshirt.fromPrice) {
+              <span>From {{ d.customTshirt.fromPrice | currency: 'INR' : 'symbol' : '1.0-0' }}</span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+  }
+
+  <!-- Best sellers -->
+  @if (d.bestSellers.length) {
+    <section class="section">
+      <header class="section-head"><h2>Best sellers</h2><p>What everyone is wearing right now.</p></header>
+      <div class="grid">
+        @for (p of rows(d.bestSellers); track p.id) { <app-product-card [product]="p" /> }
+      </div>
+    </section>
+  }
+
+  <!-- Collections -->
+  @for (col of d.collections; track col.category.id) {
+    <section class="section collection">
+      <header class="section-head">
+        <div>
+          <h2>{{ col.category.name }}</h2>
+          @if (col.category.description) { <p>{{ col.category.description }}</p> }
+        </div>
+        <a class="view-all" [routerLink]="link(col.category)">
+          View all {{ col.productCount }} <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+      </header>
+      <div class="grid">
+        @for (p of col.products; track p.id) { <app-product-card [product]="p" /> }
+      </div>
+    </section>
+  }
+
+  <!-- Special offers -->
+  @if (d.offers.length || d.onSale.length) {
+    <section class="section offers">
+      <header class="section-head"><h2>Special offers</h2><p>Codes apply at checkout.</p></header>
+      @if (d.offers.length) {
+        <div class="coupons">
+          @for (o of d.offers; track o.code) {
+            <article class="coupon">
+              <div>
+                <strong>{{ o.headline }}</strong>
+                @if (o.description) { <p>{{ o.description }}</p> }
+                <small>
+                  @if (o.minOrderAmount > 0) { On orders above {{ o.minOrderAmount | currency: 'INR' : 'symbol' : '1.0-0' }} · }
+                  Valid till {{ o.validTo | date: 'd MMM y' }}
+                </small>
+              </div>
+              <button type="button" class="code" (click)="copy(o)" [attr.aria-label]="'Copy code ' + o.code">
+                {{ copied() === o.code ? 'Copied!' : o.code }}
+                <span class="material-symbols-outlined" aria-hidden="true">content_copy</span>
+              </button>
+            </article>
+          }
+        </div>
+      }
+      @if (d.onSale.length) {
+        <h3 class="sub">On sale now</h3>
+        <div class="grid">
+          @for (p of rows(d.onSale); track p.id) { <app-product-card [product]="p" /> }
+        </div>
+      }
+    </section>
+  }
+
+  <!-- Customer reviews -->
+  @if (d.reviews.length) {
+    <section class="section">
+      <header class="section-head"><h2>What customers say</h2></header>
+      <div class="reviews">
+        @for (r of d.reviews; track r.id) {
+          <figure class="review">
+            <app-rating-stars [rating]="r.rating" />
+            @if (r.title) { <h3>{{ r.title }}</h3> }
+            <blockquote>“{{ r.comment }}”</blockquote>
+            <figcaption>
+              <strong>{{ r.reviewerName }}</strong> on
+              <a [routerLink]="['/product', r.productSlug]">{{ r.productName }}</a>
+            </figcaption>
+          </figure>
+        }
+      </div>
+    </section>
+  }
+}
+
+<!-- Newsletter -->
+<section class="newsletter">
+  <div>
+    <h2>Join the list</h2>
+    <p>New drops, restocks and subscriber-only offers. No spam, unsubscribe any time.</p>
+  </div>
+  <app-newsletter-form />
+</section>

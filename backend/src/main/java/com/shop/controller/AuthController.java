@@ -67,9 +67,14 @@ public class AuthController {
 
     @PostMapping("/refresh")
     @SecurityRequirements
-    @Operation(summary = "Get a new access token using the refresh-token cookie (rotates the cookie)")
+    @Operation(summary = "Get a new access token using the refresh-token cookie (rotates it). 204 when there is no cookie")
     public ResponseEntity<AuthResponse> refresh(HttpServletRequest http) {
-        return withRefreshCookie(HttpStatus.OK, authService.refresh(readRefreshCookie(http), ClientInfo.from(http)));
+        String refreshToken = readRefreshCookie(http);
+        if (refreshToken == null || refreshToken.isBlank()) {
+            // No session cookie at all: an anonymous visitor, not an error.
+            return ResponseEntity.noContent().build();
+        }
+        return withRefreshCookie(HttpStatus.OK, authService.refresh(refreshToken, ClientInfo.from(http)));
     }
 
     @PostMapping("/logout")

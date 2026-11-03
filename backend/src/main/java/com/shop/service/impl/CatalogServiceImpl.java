@@ -45,7 +45,7 @@ public class CatalogServiceImpl implements CatalogService {
     public PageResponse<ProductSummaryResponse> search(ProductSearchCriteria criteria, int page, int size) {
         ProductSearchCriteria publicCriteria = new ProductSearchCriteria(criteria.query(), criteria.categoryId(),
                 criteria.categorySlug(), criteria.minPrice(), criteria.maxPrice(), criteria.sizeCodes(),
-                criteria.colorCodes(), criteria.featured(), criteria.newArrival(), criteria.inStockOnly(),
+                criteria.colorCodes(), criteria.featured(), criteria.newArrival(), criteria.onSale(), criteria.inStockOnly(),
                 Set.of(ProductStatus.ACTIVE), true, criteria.sort());
         Page<Product> result = productRepository.search(publicCriteria, PageRequest.of(page, size));
         return toSummaryPage(result);

@@ -39,7 +39,7 @@ public record SecurityProperties(
     }
 
     public record RateLimit(@Min(1) int loginPerMinute, @Min(1) int registerPerHour,
-            @Min(1) int forgotPasswordPerHour) {
+            @Min(1) int forgotPasswordPerHour, @Min(1) int newsletterPerHour, @Min(1) int contactPerHour) {
     }
 
     /** First admin account, created at start-up when no admin exists and both values are set. */

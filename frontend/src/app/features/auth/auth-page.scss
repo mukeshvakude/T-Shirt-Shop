@@ -1,0 +1,116 @@
+// Shared split-screen layout for sign-in, registration and password pages.
+.auth {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  background: #fff;
+}
+
+.brand {
+  background: #111 url('/assets/home/hero.jpg') right center / cover no-repeat;
+  background-blend-mode: luminosity;
+  position: relative;
+  color: #fff;
+  padding: 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 12px;
+  isolation: isolate;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(17, 17, 17, 0.55), rgba(17, 17, 17, 0.92));
+    z-index: -1;
+  }
+
+  .logo {
+    letter-spacing: 0.3em;
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: auto;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  h1 { color: #fff; font-size: 48px; }
+  p { margin: 0; opacity: 0.75; max-width: 380px; line-height: 1.6; }
+}
+
+.panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+form, .result {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  h2 { font-size: 30px; margin-bottom: 8px; }
+
+  button[type='submit'] {
+    height: 48px;
+    margin-top: 6px;
+  }
+
+  mat-spinner { margin: 0 auto; }
+}
+
+.result {
+  text-align: center;
+  align-items: center;
+
+  .material-symbols-outlined { font-size: 48px; }
+  p { color: #555; line-height: 1.6; margin: 0; }
+  a { color: #111; font-weight: 600; }
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #f4f4f4;
+  font-size: 14px;
+}
+
+.error {
+  margin: 0;
+  color: var(--shop-danger);
+  font-size: 14px;
+}
+
+.small-link {
+  align-self: flex-end;
+  font-size: 14px;
+  color: #111;
+  margin-top: -6px;
+}
+
+.switch {
+  text-align: center;
+  font-size: 14px;
+  color: var(--shop-muted);
+  margin: 8px 0 0;
+
+  a { color: #111; font-weight: 600; }
+}
+
+.consent {
+  font-size: 14px;
+  a { color: #111; }
+}
+
+.hint { font-size: 13px; color: var(--shop-muted); margin: -4px 0 0; }
+
+@media (max-width: 800px) {
+  .auth { grid-template-columns: 1fr; }
+  .brand { padding: 28px 24px; min-height: 170px; h1 { font-size: 32px; } }
+  .panel { padding: 28px 20px; align-items: flex-start; }
+}

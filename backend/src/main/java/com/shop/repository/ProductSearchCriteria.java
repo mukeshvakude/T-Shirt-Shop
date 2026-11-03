@@ -23,6 +23,7 @@ public record ProductSearchCriteria(
         List<String> colorCodes,
         Boolean featured,
         Boolean newArrival,
+        Boolean onSale,
         boolean inStockOnly,
         Set<ProductStatus> statuses,
         boolean activeCategoryOnly,

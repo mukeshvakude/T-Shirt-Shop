@@ -1,0 +1,48 @@
+@let p = product();
+<a class="product-card" [routerLink]="link()" [attr.aria-label]="p.name">
+  <div class="media">
+    <img [src]="p.imageUrl ?? ''" [alt]="p.name" [attr.loading]="priority() ? 'eager' : 'lazy'"
+         width="800" height="1000" appImgFallback>
+    <div class="badges">
+      @if (!p.inStock) {
+        <span class="badge muted">Sold out</span>
+      } @else if (p.discountPercent > 0) {
+        <span class="badge sale">−{{ p.discountPercent }}%</span>
+      }
+      @if (p.newArrival) { <span class="badge">New</span> }
+      @if (p.customizable) { <span class="badge">Customise</span> }
+    </div>
+  </div>
+
+  <div class="info">
+    <span class="category">{{ p.categoryName }}</span>
+    <h3 class="name">{{ p.name }}</h3>
+
+    <div class="price">
+      @if (p.customizable) { <span class="from">From</span> }
+      <strong>{{ p.price | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+      @if (p.discountPrice) {
+        <s>{{ p.basePrice | currency: 'INR' : 'symbol' : '1.0-0' }}</s>
+      }
+    </div>
+
+    <div class="meta">
+      @if (p.reviewCount > 0) {
+        <span class="rating">
+          <app-rating-stars [rating]="p.avgRating" [count]="p.reviewCount" />
+          <span class="count">({{ p.reviewCount }})</span>
+        </span>
+      }
+      @if (sizeSummary()) { <span class="sizes">{{ sizeSummary() }}</span> }
+    </div>
+
+    @if (swatches().length > 1) {
+      <div class="swatches" [attr.aria-label]="p.colors.length + ' colours'">
+        @for (c of swatches(); track c.code) {
+          <span class="swatch" [style.background]="c.hex" [title]="c.name"></span>
+        }
+        @if (moreColors() > 0) { <span class="more">+{{ moreColors() }}</span> }
+      </div>
+    }
+  </div>
+</a>

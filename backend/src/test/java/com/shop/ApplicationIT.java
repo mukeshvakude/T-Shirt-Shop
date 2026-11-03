@@ -55,7 +55,8 @@ class ApplicationIT {
 
     @Test
     void flywayAppliedOnlyProductionMigrations() {
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
+        assertThat(Integer.parseInt(flyway.info().current().getVersion().getVersion()))
+                .as("schema migrations only; dev data uses versions 900 and up").isBetween(3, 899);
         assertThat(flyway.info().pending()).isEmpty();
         Integer sampleProducts = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM products WHERE slug = 'essential-crew-neck-tee'", Integer.class);

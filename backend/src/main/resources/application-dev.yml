@@ -2,6 +2,8 @@
 spring:
   flyway:
     locations: classpath:db/migration,classpath:db/dev-data
+    # Dev data uses versions 900+, so new schema migrations (V3, V4, ...) arrive "out of order" here.
+    out-of-order: true
   jpa:
     show-sql: false
 

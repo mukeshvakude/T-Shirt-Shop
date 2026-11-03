@@ -99,6 +99,9 @@ public class ProductSearchRepositoryImpl implements ProductSearchRepository {
         if (c.newArrival() != null) {
             predicates.add(cb.equal(product.get("newArrival"), c.newArrival()));
         }
+        if (Boolean.TRUE.equals(c.onSale())) {
+            predicates.add(cb.isNotNull(product.get("discountPrice")));
+        }
 
         boolean filterVariants = notEmpty(c.sizeCodes()) || notEmpty(c.colorCodes()) || c.inStockOnly();
         if (filterVariants) {

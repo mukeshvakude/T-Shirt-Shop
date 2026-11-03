@@ -1,8 +1,8 @@
-<main class="login">
-  <section class="brand" aria-hidden="true">
-    <span class="logo">T—SHIRT SHOP</span>
-    <h1>Admin portal</h1>
-    <p>Manage your catalog, stock and images.</p>
+<main class="auth">
+  <section class="brand">
+    <a routerLink="/" class="logo">{{ site.wordmark }}</a>
+    <h1>Welcome back.</h1>
+    <p>Sign in to check out faster, track orders and save your custom designs.</p>
   </section>
 
   <section class="panel">
@@ -39,17 +39,17 @@
         }
       </mat-form-field>
 
+      <a class="small-link" routerLink="/forgot-password">Forgot your password?</a>
+
       @if (error()) {
         <p class="error" role="alert">{{ error() }}</p>
       }
 
       <button mat-flat-button type="submit" [disabled]="submitting()">
-        @if (submitting()) {
-          <mat-spinner diameter="18" />
-        } @else {
-          Sign in
-        }
+        @if (submitting()) { <mat-spinner diameter="18" /> } @else { Sign in }
       </button>
+
+      <p class="switch">New here? <a routerLink="/register" [queryParams]="{ returnUrl: returnUrl() }">Create an account</a></p>
     </form>
   </section>
 </main>

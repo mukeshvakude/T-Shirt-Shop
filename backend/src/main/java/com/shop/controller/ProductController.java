@@ -59,6 +59,8 @@ public class ProductController {
             @RequestParam(required = false) String colors,
             @RequestParam(required = false) Boolean featured,
             @RequestParam(required = false) Boolean newArrival,
+            @Parameter(description = "Only discounted products")
+            @RequestParam(required = false) Boolean onSale,
             @RequestParam(defaultValue = "false") boolean inStock,
             @Parameter(description = "NEWEST, PRICE_ASC, PRICE_DESC, POPULAR, RATING, NAME_ASC")
             @RequestParam(defaultValue = "NEWEST") String sort,
@@ -68,7 +70,7 @@ public class ProductController {
             throw new BadRequestException("INVALID_PRICE_RANGE", "minPrice must not be greater than maxPrice.");
         }
         ProductSearchCriteria criteria = new ProductSearchCriteria(q, null, category, minPrice, maxPrice,
-                codes(sizes), codes(colors), featured, newArrival, inStock, null, true, parseSort(sort));
+                codes(sizes), codes(colors), featured, newArrival, onSale, inStock, null, true, parseSort(sort));
         return catalogService.search(criteria, page, size);
     }
 

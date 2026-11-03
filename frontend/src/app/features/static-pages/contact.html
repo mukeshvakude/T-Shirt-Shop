@@ -1,0 +1,82 @@
+<section class="page-hero">
+  <span class="eyebrow">Contact us</span>
+  <h1>We are here to help.</h1>
+  <p>Questions about an order, sizing, bulk or team T-Shirts? Send us a message and we will reply by email.</p>
+</section>
+
+<div class="layout">
+  <section class="form-card">
+    @if (sent()) {
+      <div class="sent" role="status">
+        <span class="material-symbols-outlined">mark_email_read</span>
+        <h2>Message sent</h2>
+        <p>Thank you. We have received your message and will reply to {{ form.controls.email.value }}.</p>
+        <a routerLink="/">Continue shopping</a>
+      </div>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="row">
+          <mat-form-field>
+            <mat-label>Your name</mat-label>
+            <input matInput formControlName="name" autocomplete="name" required>
+            @if (form.controls.name.invalid) { <mat-error>Enter your name</mat-error> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Email</mat-label>
+            <input matInput type="email" formControlName="email" autocomplete="email" required>
+            @if (form.controls.email.invalid) { <mat-error>Enter a valid email address</mat-error> }
+          </mat-form-field>
+        </div>
+        <div class="row">
+          <mat-form-field>
+            <mat-label>Mobile number (optional)</mat-label>
+            <input matInput type="tel" formControlName="phone" autocomplete="tel-national" inputmode="numeric" maxlength="10">
+            @if (form.controls.phone.invalid) { <mat-error>Enter a 10-digit mobile number</mat-error> }
+          </mat-form-field>
+          <mat-form-field>
+            <mat-label>Subject</mat-label>
+            <input matInput formControlName="subject" maxlength="150" required>
+            @if (form.controls.subject.invalid) { <mat-error>Add a short subject</mat-error> }
+          </mat-form-field>
+        </div>
+        <mat-form-field>
+          <mat-label>Message</mat-label>
+          <textarea matInput formControlName="message" rows="6" maxlength="5000" required></textarea>
+          @if (form.controls.message.invalid) { <mat-error>Please write at least 10 characters</mat-error> }
+        </mat-form-field>
+
+        <!-- Honeypot: hidden from people, bots tend to fill it in. -->
+        <div class="hp" aria-hidden="true">
+          <label for="website">Website</label>
+          <input id="website" type="text" formControlName="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        @if (error()) { <p class="error" role="alert">{{ error() }}</p> }
+        <button mat-flat-button type="submit" [disabled]="sending()">{{ sending() ? 'Sending…' : 'Send message' }}</button>
+      </form>
+    }
+  </section>
+
+  <aside class="info">
+    <h2>Other ways to reach us</h2>
+    @if (site.supportEmail) {
+      <p><span class="material-symbols-outlined">mail</span><a [href]="'mailto:' + site.supportEmail">{{ site.supportEmail }}</a></p>
+    }
+    @if (site.supportPhone) {
+      <p><span class="material-symbols-outlined">call</span>{{ site.supportPhone }}</p>
+    }
+    @if (site.businessHours) {
+      <p><span class="material-symbols-outlined">schedule</span>{{ site.businessHours }}</p>
+    }
+    @if (site.address.length) {
+      <p><span class="material-symbols-outlined">location_on</span>
+        <span>@for (line of site.address; track $index) { {{ line }}<br> }</span></p>
+    }
+    <h3>Quick answers</h3>
+    <ul>
+      <li><a routerLink="/returns-policy">Returns, exchanges and refunds</a></li>
+      <li><a routerLink="/terms">Orders, payment and shipping terms</a></li>
+      <li><a routerLink="/privacy-policy">How we use your data</a></li>
+    </ul>
+  </aside>
+</div>

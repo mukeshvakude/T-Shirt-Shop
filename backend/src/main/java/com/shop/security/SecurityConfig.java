@@ -29,6 +29,9 @@ public class SecurityConfig {
             "/api/reference/**",
             "/api/products/**",
             "/media/**",
+            "/api/home",
+            "/api/offers",
+            "/api/reviews/**",
     };
 
     /** Auth endpoints that must work without an access token. */
@@ -39,6 +42,8 @@ public class SecurityConfig {
             "/api/auth/logout",
             "/api/auth/forgot-password",
             "/api/auth/reset-password",
+            "/api/newsletter",
+            "/api/contact",
     };
 
     static final String[] API_DOCS = {

@@ -139,7 +139,7 @@ Auth endpoints:
 |--------|------|--------|
 | POST | `/api/auth/register` | 201, access token in body, refresh cookie set |
 | POST | `/api/auth/login` | 200, same shape |
-| POST | `/api/auth/refresh` | 200, new access token, rotated cookie |
+| POST | `/api/auth/refresh` | 200, new access token, rotated cookie; 204 when there is no cookie (anonymous visitor) |
 | POST | `/api/auth/logout` | 204, token revoked, cookie cleared |
 | POST | `/api/auth/forgot-password` | 202 always |
 | POST | `/api/auth/reset-password` | 204, all sessions revoked |

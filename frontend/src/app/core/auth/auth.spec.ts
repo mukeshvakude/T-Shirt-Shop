@@ -100,6 +100,23 @@ describe('authentication', () => {
     }));
   });
 
+  it('treats a 204 from refresh as "no session" without errors', async () => {
+    const restored = auth.restoreSession();
+    httpMock.expectOne('/api/auth/refresh').flush(null, { status: 204, statusText: 'No Content' });
+    await restored;
+    expect(auth.isLoggedIn()).toBe(false);
+    expect(auth.token()).toBeNull();
+  });
+
+  it('sends signed-in customers away from guest pages to the shop', () => {
+    const route = {} as ActivatedRouteSnapshot;
+    const state = { url: '/login' } as RouterStateSnapshot;
+    expect(TestBed.runInInjectionContext(() => guestGuard(route, state))).toBe(true);
+    login(['ROLE_CUSTOMER']);
+    expect((TestBed.runInInjectionContext(() => guestGuard(route, state)) as UrlTree).toString()).toBe('/');
+    expect(auth.firstName()).toBe('Test');
+  });
+
   it('does not try to refresh when nobody is logged in', () => {
     let status = 0;
     http.get('/api/admin/products').subscribe({ error: (e) => (status = e.status) });

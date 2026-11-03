@@ -71,7 +71,7 @@ public class AdminProductController {
         }
         Set<ProductStatus> statuses = status != null ? Set.of(status) : null;
         ProductSearchCriteria criteria = new ProductSearchCriteria(q, categoryId, null, null, null, null, null,
-                null, null, false, statuses, false, productSort);
+                null, null, null, false, statuses, false, productSort);
         return service.list(criteria, page, size);
     }
 

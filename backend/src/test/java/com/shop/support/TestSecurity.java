@@ -21,7 +21,7 @@ public final class TestSecurity {
                 new SecurityProperties.RefreshCookie("tshirt_rt", "/api/auth", false, "Strict"),
                 Duration.ofMinutes(30),
                 new SecurityProperties.Login(5, Duration.ofMinutes(15)),
-                new SecurityProperties.RateLimit(1000, 1000, 1000),
+                new SecurityProperties.RateLimit(1000, 1000, 1000, 1000, 1000),
                 new SecurityProperties.Admin(null, null, null),
                 false);
     }

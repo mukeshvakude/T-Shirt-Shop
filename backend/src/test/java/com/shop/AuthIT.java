@@ -112,8 +112,10 @@ class AuthIT {
     }
 
     @Test
-    void refreshWithoutCookieIsRejected() throws Exception {
+    void refreshWithoutCookieMeansNoSession() throws Exception {
         mvc.perform(post("/api/auth/refresh"))
+                .andExpect(status().isNoContent());
+        mvc.perform(post("/api/auth/refresh").cookie(new Cookie(COOKIE, "forged-token")))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"));
     }

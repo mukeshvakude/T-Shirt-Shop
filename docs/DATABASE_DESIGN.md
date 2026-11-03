@@ -6,7 +6,9 @@ Status: **Implemented in Phase 2** as Flyway migrations and verified on MySQL 8.
 |------|----------|--------------|
 | `backend/src/main/resources/db/migration/V1__create_schema.sql` | All 31 tables, keys, indexes, CHECK constraints | All |
 | `backend/src/main/resources/db/migration/V2__seed_reference_data.sql` | Roles, categories, sizes, colours, T-Shirt types, print placements, fonts, charges, blank custom T-Shirts, settings | All |
+| `backend/src/main/resources/db/migration/V3__storefront_engagement.sql` | `coupons.is_public`, new `contact_messages` table (32 tables in total) | All |
 | `backend/src/main/resources/db/dev-data/V900__dev_sample_catalog.sql` | 13 sample products, 319 SKUs with stock, images, sample coupons | Dev only |
+| `backend/src/main/resources/db/dev-data/V901__dev_sample_reviews.sql` | Five disabled sample reviewers, approved and pending reviews, public sample coupons | Dev only |
 | `database/setup/01-create-database.sql` | Database and application user creation | Run once per server |
 | `database/verify-migrations.sh` | Applies all migrations to a scratch DB and runs 37 constraint checks | Dev / CI |
 
@@ -57,6 +59,7 @@ The brief's required tables are all present. Extra supporting tables are marked 
 | `reviews` | Product ratings | UK (`user_id`, `product_id`), rating 1 to 5, `approved` |
 | `wishlists` | Saved products | UK (`user_id`, `product_id`) |
 | `newsletter_subscribers` *(added)* | Footer newsletter form | UK `email` |
+| `contact_messages` *(added, V3)* | Contact Us submissions | `status` NEW/READ/REPLIED/CLOSED, optional FK `user_id` |
 | `app_settings` *(added)* | Shipping charge, free shipping threshold, reservation minutes | UK `setting_key` |
 
 ## 2. ER diagram

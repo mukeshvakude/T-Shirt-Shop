@@ -1,7 +1,8 @@
 # Frontend (Angular)
 
-Angular 22 single-page app. It currently contains the **admin portal** for
-product management. The storefront and customer portal are added in Phases 6 to 8.
+Angular 22 single-page app with the **storefront** (home page, content pages, customer
+sign-in and registration) and the **admin portal** for product management. Product listing
+and details arrive in Phase 7, the customer portal in Phase 8.
 
 ## Stack
 
@@ -61,6 +62,31 @@ src/app/
 - When an API call returns 401, the interceptor refreshes once and retries. Parallel requests share
   a single refresh. If the refresh fails, the user is sent to the login page.
 - `/admin/**` is protected by `adminGuard` (ROLE_ADMIN). The backend enforces the same rule.
+
+## Storefront (Phase 6)
+
+| Route | Page |
+|-------|------|
+| `/` | Home: hero, category tiles, featured, new arrivals, best sellers, T-Shirt/Shirt/Pants collections, custom T-Shirt promotion, special offers, customer reviews, newsletter |
+| `/about`, `/contact` | About us; contact form (stored server-side, honeypot against bots) |
+| `/privacy-policy`, `/terms`, `/returns-policy` | Policy pages (review the wording for your business) |
+| `/login`, `/register`, `/forgot-password`, `/reset-password` | Customer and admin sign-in, registration, password reset |
+| `/shop/:category`, `/product/:slug`, `/search`, `/customize`, `/cart`, `/account` | "Coming soon" pages until Phases 7, 8, 9 and 11 |
+
+The home page loads everything from `GET /api/home` and hides sections that have no content.
+
+**Shop details.** Edit `src/app/core/config/site.config.ts` for brand name, support email,
+phone, address, hours and social links. Empty values are simply not shown.
+
+**Sample images.** `public/assets/products`, `public/assets/home` and `public/assets/mockups`
+contain generated illustrations for the development catalog. Regenerate them with:
+
+```bash
+# Puppeteer is not a project dependency; point PUPPETEER_DIR at any folder where it is installed.
+PUPPETEER_DIR=/path/to/folder/with/puppeteer node scripts/generate-sample-images.mjs
+```
+
+Replace them with real product photography (upload through the admin portal) before launch.
 
 ## Admin portal features (Phase 5)
 
