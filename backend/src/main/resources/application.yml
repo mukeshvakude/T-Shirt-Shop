@@ -89,6 +89,9 @@ app:
     max-image-dimension: 4000
   stock:
     reservation-minutes: ${STOCK_RESERVATION_MINUTES:15}
+  payments:
+    razorpay-key-id: ${RAZORPAY_KEY_ID:}
+    razorpay-key-secret: ${RAZORPAY_KEY_SECRET:}
   api-docs-enabled: true
   jobs:
     enabled: true

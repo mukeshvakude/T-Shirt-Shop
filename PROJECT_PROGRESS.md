@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 11)
+Last updated: 2026-11-03 (Phase 12)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -19,7 +19,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Custom T-Shirt Designer (Fabric.js designer, front and back, print areas, artwork upload, text, previews, saved designs, admin view and ZIP download)
 - [x] Dynamic Pricing (server-side price engine, live price panel with quantity in the designer, admin pricing page for charges and shipping)
 - [x] Shopping Cart (server cart for products and custom designs, guest bag priced by the server and merged on sign-in, size/colour/quantity changes, coupons, shipping, stock checks)
-- [ ] Checkout
+- [x] Checkout (checkout page, server totals, pending online orders with a 15-minute stock hold and expiry job, Cash on Delivery, order confirmation page)
 - [ ] Razorpay Integration
 - [ ] Payment Verification
 - [ ] Webhooks
@@ -62,9 +62,9 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 7 | Product pages | Listing, category and search pages, filters, product details, wishlist, guest bag | Done |
 | 8 | Customer portal | Dashboard, profile, email and password change, addresses | Done |
 | 9 | Custom T-Shirt designer | Fabric.js designer, uploads with backend validation, save/load designs | Done |
-| 10 | Dynamic pricing | Pricing engine, estimate API, admin-editable charges, live price panel | Pending |
-| 11 | Shopping cart | Server cart, guest cart merge, coupons, mixed normal + custom items | Pending |
-| 12 | Checkout | Checkout form, totals, pending order, stock reservation and expiry job, COD | Pending |
+| 10 | Dynamic pricing | Pricing engine, estimate API, admin-editable charges, live price panel | Done |
+| 11 | Shopping cart | Server cart, guest cart merge, coupons, mixed normal + custom items | Done |
+| 12 | Checkout | Checkout form, totals, pending order, stock reservation and expiry job, COD | Done |
 | 13 | Razorpay integration | Create order, Standard Checkout in Angular, retry | Pending |
 | 14 | Payment verification and webhooks | Signature verify, gateway fetch, webhook idempotency, late payment refunds, reconciliation | Pending |
 | 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Pending |
@@ -153,6 +153,14 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Lines that cannot be bought now (out of stock, not enough stock, no longer sold) stay in the bag with a message, are left out of the totals, and block checkout until fixed. The checkout button re-checks the cart on the server first.
 - Coupons need sign-in. Checks: active, inside the validity window, total usage limit, per-customer limit (counted from placed orders), minimum order. PERCENT discounts are capped by `max_discount`. If the bag changes so the coupon no longer applies, the code stays with the reason shown and no discount.
 - Free shipping is decided on the item subtotal before the coupon discount (same rule as the designer hint).
+- Checkout (`/checkout`): contact details, a saved or new delivery address (optionally saved to the address book), payment method and the order summary split into items (base prices), customization charges, shipping, discount and total.
+- Placing an order locks the customer's cart row, prices the cart again on the server and compares the total with the one the customer saw (`expectedTotal`). A difference returns PRICE_CHANGED and the page reloads the summary; the sent total is never used as the price.
+- Stock is held under SELECT ... FOR UPDATE in SKU id order. Cash on Delivery orders are CONFIRMED with payment PENDING and take the stock at once (reservations COMMITTED). Online orders are PENDING with payment CREATED and hold the stock for `stock.reservation_minutes` (15, admin setting; the `STOCK_RESERVATION_MINUTES` environment value is not used).
+- The order stores snapshots: product name, SKU, size, colour, image, unit base price, unit customization charge, line total and a JSON price breakdown (design code, print areas, charges). Contact details and the address are stored as given.
+- The coupon is re-checked under a row lock when the order is placed, a `coupon_redemptions` row is written and `used_count` increases. Custom designs in the order are locked (status ORDERED). The cart is emptied when the order is placed; an unpaid online order is paid later from its order page.
+- `OrderExpiryJob` runs every minute: expired holds of unpaid online orders are released (payment CANCELLED, the order stays open), and orders still unpaid after `order.unpaid_cancel_hours` (24) are cancelled, giving back the coupon use and unlocking designs not used by another open order.
+- COD is offered only when `cod.enabled` and the total is at most `cod.max_order_value` (INR 5000). Online payment is offered only when real Razorpay keys are configured (not the .env.example placeholders); the payment window itself arrives in Phase 13.
+- Order numbers look like TS-20261103-702653 (date in India and six random digits).
 - "First order" coupons such as WELCOME10 rely on the per-customer limit of 1; there is no separate "no previous orders" rule.
 - Refresh-token reuse detection now allows a 10-second grace window: if a rotated token is replayed while its successor was never used (page reloaded during a refresh call), the session continues with a new token. Any other replay still revokes all sessions.
 
@@ -177,7 +185,10 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T16 | Uploaded artwork that is never saved in a design stays on disk | Phase 19: a cleanup job for unattached uploads older than 7 days |
 | T17 | Designer fonts load from Google Fonts | Same plan as T11 (self-host in Phase 19) |
 | T18 | The blank T-Shirt price per style comes from its custom product, so changing it means editing that product in the admin portal | Fine for now; a "base price" field on the Pricing page can be added if the owner prefers one place |
-| T19 | `/checkout` shows a "coming soon" page until Phase 12 | Phase 12 builds checkout on the validated cart |
+| ~~T19~~ | `/checkout` showed a "coming soon" page | Resolved in Phase 12 |
+| T20 | Online payment is shown as unavailable until real Razorpay test keys are configured and Phase 13 adds the payment window | Owner action B5, then Phase 13 |
+| T21 | Order confirmation emails are not sent yet | Phase 17 (notifications) |
+| T22 | Address JSON must include `makeDefault`: Jackson 3 rejects missing primitive booleans by default | Clients send it; consider `Boolean` fields or relaxing FAIL_ON_NULL_FOR_PRIMITIVES in Phase 18 |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
 
 ## Change log
@@ -195,4 +206,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 8 | Customer portal: dashboard, profile, email and password change, address book (74 unit + 45 integration backend tests, 70 frontend tests, portal browser run) | `1677275` |
 | 2026-11-03 | 9 | Custom T-Shirt designer, saved designs, admin designs with ZIP download, back-view mockups (79 unit + 50 integration backend tests, 79 frontend tests, designer browser run) | `e5747ea` |
 | 2026-11-03 | 10 | Dynamic pricing: price engine and estimate API, live price panel with quantity, admin pricing page, refresh-token grace window (84 unit + 56 integration backend tests, 81 frontend tests, pricing browser run) | `5a75cab` |
-| 2026-11-03 | 11 | Shopping cart: server cart with products and custom designs, guest quote and merge, coupons, shipping, stock checks, bag page, designer "Add to bag" (84 unit + 62 integration backend tests, 85 frontend tests, cart browser run) | see git log on `DEV` |
+| 2026-11-03 | 11 | Shopping cart: server cart with products and custom designs, guest quote and merge, coupons, shipping, stock checks, bag page, designer "Add to bag" (84 unit + 62 integration backend tests, 85 frontend tests, cart browser run) | `442d403` |
+| 2026-11-03 | 12 | Checkout: checkout page, order placement with server totals, stock holds and expiry job, COD, order page (84 unit + 65 integration backend tests, 89 frontend tests, checkout browser run) | see git log on `DEV` |

@@ -1,6 +1,8 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+import { InrPipe } from '../../../shared/inr.pipe';
 
 import { AccountApi } from '../../../core/api/account.api';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -8,7 +10,7 @@ import { Dashboard, ORDER_STATUS_LABELS, landmarkText } from '../../../core/mode
 
 @Component({
   selector: 'app-account-dashboard',
-  imports: [RouterLink, CurrencyPipe, DatePipe],
+  imports: [RouterLink, DatePipe, InrPipe],
   templateUrl: './account-dashboard.html',
   styleUrl: '../account-pages.scss',
 })

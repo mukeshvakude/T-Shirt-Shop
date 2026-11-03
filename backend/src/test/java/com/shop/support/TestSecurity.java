@@ -31,6 +31,7 @@ public final class TestSecurity {
                 new AppProperties.Cors(java.util.List.of("http://localhost:4200")),
                 new AppProperties.Storage("local", "./uploads", 5_242_880, 4000),
                 new AppProperties.Stock(15),
+                null,
                 true);
     }
 }

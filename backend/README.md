@@ -91,10 +91,13 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 11)
+## Current endpoints (Phase 12)
 
 | Method | Path | Access |
 |--------|------|--------|
+| GET | `/api/checkout` | Signed in (validated cart, totals split, contact, saved addresses, payment options) |
+| POST | `/api/checkout/place-order` | Signed in (creates the order; COD confirmed, online orders wait for payment with a stock hold) |
+| GET | `/api/orders/{orderNumber}` | Signed in, own orders only |
 | GET, DELETE | `/api/cart` | Signed in (cart with current prices, stock status, coupon, shipping, total; DELETE empties it) |
 | POST | `/api/cart/items` | Signed in (`sku` for a product, or `designCode` + optional `sizeCode` for a custom T-Shirt) |
 | PATCH, DELETE | `/api/cart/items/{id}` | Signed in (quantity, size, colour; remove) |

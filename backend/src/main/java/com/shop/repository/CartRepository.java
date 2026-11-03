@@ -10,6 +10,11 @@ import com.shop.entity.Cart;
 
 public interface CartRepository extends JpaRepository<Cart, Long> {
 
+    /** Locks the customer cart row so two checkouts cannot place the same bag twice. */
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Cart c where c.userId = :userId")
+    Optional<Cart> findByUserIdForUpdate(@Param("userId") Long userId);
+
     @Query("""
             select distinct c from Cart c
             left join fetch c.items i

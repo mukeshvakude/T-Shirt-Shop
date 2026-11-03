@@ -14,6 +14,10 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
 
     Optional<Coupon> findByCode(String code);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select c from Coupon c where c.id = :id")
+    Optional<Coupon> findByIdForUpdate(@Param("id") Long id);
+
     /** How often this customer has used the coupon on placed orders. */
     @Query(value = "select count(*) from coupon_redemptions where coupon_id = :couponId and user_id = :userId", nativeQuery = true)
     long countRedemptions(@Param("couponId") Long couponId, @Param("userId") Long userId);

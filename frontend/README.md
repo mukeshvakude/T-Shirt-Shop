@@ -78,7 +78,8 @@ src/app/
 | `/account/designs` | Saved custom designs: open, edit, delete |
 | `/customize`, `/customize/:code` | Custom T-Shirt designer (Phase 9) |
 | `/cart` | Shopping bag: products and custom T-Shirts, size/colour/quantity, coupons, totals (Phase 11) |
-| `/checkout` | "Coming soon" page until Phase 12 (sign-in required) |
+| `/checkout` | Checkout: contact, saved or new address, payment method, order summary (sign-in required, Phase 12) |
+| `/order/:number` | Order confirmation and details: items, totals, address, status updates |
 
 The home page loads everything from `GET /api/home` and hides sections that have no content.
 
@@ -111,6 +112,16 @@ Replace them with real product photography (upload through the admin portal) bef
 - `design-utils.ts` holds the pure helpers (unit tested); `design-renderer.ts` draws previews.
 
 Admins see all designs at `/admin/designs` and can download a ZIP for printing.
+
+## Checkout (Phase 12)
+
+- `features/checkout/checkout-page` loads `GET /api/checkout` (validated cart, totals, contact, addresses,
+  payment options) and posts `POST /api/checkout/place-order` with the choices and the total shown.
+  The server recalculates everything; on PRICE_CHANGED or stock problems the page reloads the summary.
+- The receiver name and phone follow the contact details until the customer edits them.
+- `features/checkout/order-page` shows the confirmation and order details, with a countdown while an
+  online order is waiting for payment.
+- Amounts use the `inr` pipe (`shared/inr.pipe.ts`): `₹898` for whole rupees, `₹857.20` otherwise.
 
 ## Shopping bag (Phase 11)
 

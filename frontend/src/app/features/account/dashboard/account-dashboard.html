@@ -37,7 +37,7 @@
                 <td class="strong">{{ o.orderNumber }}</td>
                 <td>{{ o.placedAt | date: 'd MMM y' }}</td>
                 <td>{{ o.itemCount }}</td>
-                <td>{{ o.grandTotal | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                <td>{{ o.grandTotal | inr }}</td>
                 <td><span class="pill" [attr.data-status]="o.orderStatus">{{ statusLabels[o.orderStatus] ?? o.orderStatus }}</span></td>
               </tr>
             }

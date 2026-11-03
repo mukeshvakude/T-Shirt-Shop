@@ -2,7 +2,6 @@ import { Routes } from '@angular/router';
 
 import { adminGuard, authGuard, guestGuard } from './core/auth/auth.guards';
 
-const comingSoon = () => import('./features/static-pages/coming-soon').then((m) => m.ComingSoon);
 const designer = () => import('./features/designer/designer').then((m) => m.Designer);
 const listing = () => import('./features/products/product-listing/product-listing').then((m) => m.ProductListing);
 const SHOP = 'T-Shirt Shop';
@@ -56,13 +55,18 @@ export const routes: Routes = [
       // Shopping bag (Phase 11)
       { path: 'cart', title: `Your bag | ${SHOP}`, loadComponent: () => import('./features/cart/cart-page').then((m) => m.CartPage) },
 
-      // Delivered in the next phase (checkout: 12).
+      // Checkout and order confirmation (Phase 12)
       {
         path: 'checkout',
         canActivate: [authGuard],
         title: `Checkout | ${SHOP}`,
-        loadComponent: comingSoon,
-        data: { title: 'Checkout is almost ready', description: 'Your bag is saved to your account. Address, payment with Razorpay and Cash on Delivery open in the next update.' },
+        loadComponent: () => import('./features/checkout/checkout-page').then((m) => m.CheckoutPage),
+      },
+      {
+        path: 'order/:number',
+        canActivate: [authGuard],
+        title: `Your order | ${SHOP}`,
+        loadComponent: () => import('./features/checkout/order-page').then((m) => m.OrderPage),
       },
 
       // Customer portal (Phase 8)

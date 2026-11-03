@@ -33,3 +33,7 @@ app:
     enabled: false
   storage:
     local-dir: ./target/test-uploads
+  # Fake test-mode key so the online payment path can be exercised; never a real credential.
+  payments:
+    razorpay-key-id: rzp_test_ITONLYFAKEKEY01
+    razorpay-key-secret: integration-tests-only

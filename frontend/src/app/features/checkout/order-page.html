@@ -1,0 +1,103 @@
+<section class="order">
+  @if (error(); as e) {
+    <div class="empty" role="alert">
+      <span class="material-symbols-outlined">receipt_long</span>
+      <p>{{ e }}</p>
+      <a class="btn" routerLink="/account/orders">My orders</a>
+    </div>
+  } @else if (order(); as o) {
+    <header class="hero" [class.wait]="o.awaitingPayment" [class.cancelled]="o.status === 'CANCELLED'">
+      <span class="material-symbols-outlined icon">{{ o.status === 'CANCELLED' ? 'cancel' : o.awaitingPayment ? 'schedule' : 'check_circle' }}</span>
+      <div>
+        @if (o.status === 'CANCELLED') {
+          <h1>Order cancelled</h1>
+          <p>{{ o.cancelReason || 'This order was cancelled.' }}</p>
+        } @else if (o.awaitingPayment) {
+          <h1>Complete your payment</h1>
+          <p>
+            Your order is created and waiting for payment.
+            @if (minutesLeft(); as m) { Items are held for you for {{ m }} more minute{{ m === 1 ? '' : 's' }}. }
+            @else { The hold on your items has ended; they will be held again if still in stock when you pay. }
+          </p>
+          <p class="small">Online payment is not open yet. You will be able to pay for this order here.</p>
+        } @else {
+          <h1>{{ placed() ? 'Thank you, your order is placed!' : 'Order ' + o.orderNumber }}</h1>
+          <p>
+            @if (o.paymentMethod === 'COD') {
+              Please keep {{ o.total | inr }} ready to pay in cash when it arrives.
+            }
+            You can follow it any time in <a routerLink="/account/orders">My orders</a>.
+          </p>
+        }
+      </div>
+    </header>
+
+    <div class="meta">
+      <div><small>Order number</small><strong>{{ o.orderNumber }}</strong></div>
+      <div><small>Placed on</small><strong>{{ o.placedAt | date: 'd MMM y, h:mm a' }}</strong></div>
+      <div><small>Status</small><strong>{{ statusLabels[o.status] ?? o.status }}</strong></div>
+      <div><small>Payment</small><strong>{{ o.paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online' }} · {{ paymentLabels[o.paymentStatus] ?? o.paymentStatus }}</strong></div>
+    </div>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Items</h2>
+        <ul class="items">
+          @for (i of o.items; track $index) {
+            <li>
+              <img appImgFallback [src]="i.imageUrl" [alt]="i.name" />
+              <div class="what">
+                <strong>{{ i.name }}</strong>
+                <small>{{ i.colorName }} · Size {{ i.sizeCode }} · Qty {{ i.quantity }}</small>
+                @if (i.designCode) {
+                  <small>Custom design {{ i.designName || i.designCode }}</small>
+                  <small>{{ i.unitBasePrice | inr }} T-Shirt
+                    @for (c of i.charges; track c.code) { + {{ c.label }} {{ c.amount | inr }} }</small>
+                } @else {
+                  <small>{{ i.unitBasePrice | inr }} each</small>
+                }
+              </div>
+              <span class="amt">{{ i.lineTotal | inr }}</span>
+            </li>
+          }
+        </ul>
+        <div class="totals">
+          <div><span>Items</span><span>{{ o.itemsTotal | inr }}</span></div>
+          @if (o.customizationTotal > 0) { <div><span>Customization charges</span><span>{{ o.customizationTotal | inr }}</span></div> }
+          <div><span>Shipping</span><span>{{ o.shipping === 0 ? 'Free' : (o.shipping | inr) }}</span></div>
+          @if (o.discount > 0) { <div class="discount"><span>Discount ({{ o.couponCode }})</span><span>−{{ o.discount | inr }}</span></div> }
+          <div class="total"><span>Total</span><strong>{{ o.total | inr }}</strong></div>
+        </div>
+      </section>
+
+      <aside class="side">
+        <section class="panel">
+          <h2>Delivery address</h2>
+          <p class="addr">
+            <strong>{{ o.shippingAddress.fullName }}</strong><br />
+            {{ o.shippingAddress.line1 }}@if (o.shippingAddress.line2) {, {{ o.shippingAddress.line2 }}}<br />
+            @if (o.shippingAddress.landmark) { {{ landmarkText(o.shippingAddress.landmark) }}<br /> }
+            {{ o.shippingAddress.city }}, {{ o.shippingAddress.state }} {{ o.shippingAddress.pincode }}<br />
+            Phone {{ o.shippingAddress.phone }}
+          </p>
+          @if (o.note) { <p class="small"><strong>Note:</strong> {{ o.note }}</p> }
+        </section>
+        <section class="panel">
+          <h2>Order updates</h2>
+          <ol class="timeline">
+            @for (h of o.history; track $index) {
+              <li><strong>{{ statusLabels[h.status] ?? h.status }}</strong><small>{{ h.at | date: 'd MMM, h:mm a' }}</small>
+                @if (h.note) { <span>{{ h.note }}</span> }</li>
+            }
+          </ol>
+        </section>
+        <div class="actions">
+          <a class="btn" routerLink="/shop">Continue shopping</a>
+          <a class="btn outline" routerLink="/account/orders">My orders</a>
+        </div>
+      </aside>
+    </div>
+  } @else {
+    <div class="center"><mat-spinner diameter="36" /></div>
+  }
+</section>

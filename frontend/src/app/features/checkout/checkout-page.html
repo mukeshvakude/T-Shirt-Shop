@@ -1,0 +1,175 @@
+<section class="checkout">
+  <header class="head">
+    <a routerLink="/cart" class="back"><span class="material-symbols-outlined">arrow_back</span>Back to bag</a>
+    <h1>Checkout</h1>
+  </header>
+
+  @if (loading() && !summary()) {
+    <div class="center"><mat-spinner diameter="36" /></div>
+  } @else if (loadError(); as message) {
+    <div class="box error-box" role="alert">
+      <p>{{ message }}</p>
+      <button type="button" class="btn" (click)="load()">Try again</button>
+    </div>
+  } @else if (summary(); as s) {
+    @if (!s.cart.canCheckout) {
+      <div class="box warn-box" role="alert">
+        <span class="material-symbols-outlined">warning</span>
+        <p>Some items in your bag are no longer available in the quantity you chose.
+          <a routerLink="/cart">Review your bag</a> to continue.</p>
+      </div>
+    }
+    <div class="layout">
+      <div class="steps">
+        <!-- 1. Contact -->
+        <section class="step" [formGroup]="contact">
+          <h2><span>1</span>Contact details</h2>
+          <div class="grid two">
+            <label>Full name
+              <input formControlName="name" autocomplete="name" [class.bad]="invalid('contact', 'name')" />
+              @if (invalid('contact', 'name')) { <small class="err">Enter your full name.</small> }
+            </label>
+            <label>Mobile number
+              <input formControlName="phone" inputmode="numeric" maxlength="10" autocomplete="tel-national" placeholder="10-digit mobile"
+                     [class.bad]="invalid('contact', 'phone')" />
+              @if (invalid('contact', 'phone')) { <small class="err">Enter a 10-digit Indian mobile number.</small> }
+            </label>
+            <label class="wide">Email
+              <input formControlName="email" type="email" autocomplete="email" [class.bad]="invalid('contact', 'email')" />
+              @if (invalid('contact', 'email')) { <small class="err">Enter a valid email address.</small> }
+              <small class="hint">We send your order confirmation here.</small>
+            </label>
+          </div>
+        </section>
+
+        <!-- 2. Address -->
+        <section class="step">
+          <h2><span>2</span>Delivery address</h2>
+          @if (s.addresses.length) {
+            <div class="saved" role="radiogroup" aria-label="Saved addresses">
+              @for (a of s.addresses; track a.id) {
+                <button type="button" role="radio" class="addr" [class.on]="addressMode() === 'saved' && selectedAddress() === a.id"
+                        [attr.aria-checked]="addressMode() === 'saved' && selectedAddress() === a.id" (click)="chooseSaved(a.id)">
+                  <strong>{{ a.fullName }} @if (a.label) { <em>{{ a.label }}</em> } @if (a.isDefault) { <em>Default</em> }</strong>
+                  <span>{{ a.line1 }}@if (a.line2) {, {{ a.line2 }}}</span>
+                  @if (a.landmark) { <span>{{ landmarkText(a.landmark) }}</span> }
+                  <span>{{ a.city }}, {{ a.state }} {{ a.pincode }}</span>
+                  <span class="muted">{{ a.phone }}</span>
+                </button>
+              }
+              <button type="button" role="radio" class="addr new" [class.on]="addressMode() === 'new'"
+                      [attr.aria-checked]="addressMode() === 'new'" (click)="useNewAddress()">
+                <span class="material-symbols-outlined">add_location_alt</span>Deliver to a new address
+              </button>
+            </div>
+          }
+          @if (addressMode() === 'new' || !s.addresses.length) {
+            <div class="grid two" [formGroup]="address">
+              <label>Full name
+                <input formControlName="fullName" autocomplete="shipping name" [class.bad]="invalid('address', 'fullName')" />
+                @if (invalid('address', 'fullName')) { <small class="err">Enter the receiver's name.</small> }
+              </label>
+              <label>Mobile number
+                <input formControlName="phone" inputmode="numeric" maxlength="10" [class.bad]="invalid('address', 'phone')" />
+                @if (invalid('address', 'phone')) { <small class="err">Enter a 10-digit mobile number.</small> }
+              </label>
+              <label class="wide">Address line 1
+                <input formControlName="line1" autocomplete="shipping address-line1" placeholder="House / flat no., building, street"
+                       [class.bad]="invalid('address', 'line1')" />
+                @if (invalid('address', 'line1')) { <small class="err">Enter the street address.</small> }
+              </label>
+              <label class="wide">Address line 2 <small class="muted">(optional)</small>
+                <input formControlName="line2" autocomplete="shipping address-line2" placeholder="Area, locality" />
+              </label>
+              <label>Landmark <small class="muted">(optional)</small>
+                <input formControlName="landmark" placeholder="e.g. Near City Mall" />
+              </label>
+              <label>City
+                <input formControlName="city" autocomplete="shipping address-level2" [class.bad]="invalid('address', 'city')" />
+                @if (invalid('address', 'city')) { <small class="err">Enter the city.</small> }
+              </label>
+              <label>State
+                <select formControlName="state" [class.bad]="invalid('address', 'state')">
+                  <option value="" disabled>Choose a state</option>
+                  @for (st of states(); track st) { <option [value]="st">{{ st }}</option> }
+                </select>
+                @if (invalid('address', 'state')) { <small class="err">Choose a state.</small> }
+              </label>
+              <label>Pincode
+                <input formControlName="pincode" inputmode="numeric" maxlength="6" autocomplete="shipping postal-code"
+                       [class.bad]="invalid('address', 'pincode')" />
+                @if (invalid('address', 'pincode')) { <small class="err">Enter a 6-digit pincode.</small> }
+              </label>
+              <label class="check wide"><input type="checkbox" formControlName="save" /> Save this address to my account</label>
+            </div>
+          }
+        </section>
+
+        <!-- 3. Payment -->
+        <section class="step">
+          <h2><span>3</span>Payment</h2>
+          <div class="pay" role="radiogroup" aria-label="Payment method">
+            @for (o of options(); track o.method) {
+              <label class="option" [class.on]="payment.value === o.method" [class.off]="!o.available">
+                <input type="radio" name="payment" [value]="o.method" [formControl]="payment" [attr.disabled]="o.available ? null : true" />
+                <span class="material-symbols-outlined">{{ o.method === 'COD' ? 'payments' : 'credit_card' }}</span>
+                <span class="text">
+                  <strong>{{ o.method === 'COD' ? 'Cash on Delivery' : 'Pay online' }}</strong>
+                  <small>{{ o.available
+                    ? (o.method === 'COD' ? 'Pay in cash when your order arrives.' : 'UPI, cards, net banking and wallets through Razorpay.')
+                    : o.message }}</small>
+                </span>
+              </label>
+            }
+          </div>
+          @if (payment.value === 'RAZORPAY') {
+            <p class="hint">Your items are held for {{ s.reservationMinutes }} minutes while you pay.</p>
+          }
+          <label class="note">Delivery note <small class="muted">(optional)</small>
+            <textarea [formControl]="note" rows="2" maxlength="500" placeholder="Anything the delivery partner should know"></textarea>
+          </label>
+        </section>
+      </div>
+
+      <!-- Summary -->
+      <aside class="summary" aria-label="Order summary">
+        <h2>Order summary</h2>
+        <ul class="lines">
+          @for (i of items(); track i.key) {
+            <li>
+              <div class="img"><img appImgFallback [src]="i.imageUrl" [alt]="i.name" /><span class="q">{{ i.quantity }}</span></div>
+              <div class="what">
+                <strong>{{ i.name }}</strong>
+                <small>{{ i.colorName }} · {{ i.sizeLabel }}</small>
+                @if (i.design; as d) {
+                  <small>Custom: {{ d.placements.map(label).join(' + ') }}{{ d.premiumPrint ? ' · Premium print' : '' }}</small>
+                  <small>{{ d.basePrice | inr }} + {{ i.unitPrice - d.basePrice | inr }} customization</small>
+                }
+              </div>
+              <span class="amt">{{ i.lineTotal | inr }}</span>
+            </li>
+          }
+        </ul>
+        <div class="line"><span>Items</span><span>{{ s.totals.itemsTotal | inr }}</span></div>
+        @if (s.totals.customizationTotal > 0) {
+          <div class="line"><span>Customization charges</span><span>{{ s.totals.customizationTotal | inr }}</span></div>
+        }
+        <div class="line"><span>Shipping</span><span>{{ s.totals.shipping === 0 ? 'Free' : (s.totals.shipping | inr) }}</span></div>
+        @if (s.totals.discount > 0) {
+          <div class="line discount"><span>Discount ({{ s.cart.coupon?.code }})</span><span>−{{ s.totals.discount | inr }}</span></div>
+        }
+        <div class="line total"><span>Total</span><strong>{{ s.totals.total | inr }}</strong></div>
+        <p class="muted small">Inclusive of all taxes.</p>
+
+        @if (problem(); as p) { <p class="err block" role="alert">{{ p }}</p> }
+        <button type="button" class="btn primary wide" (click)="placeOrder()" [disabled]="placing() || loading() || !s.cart.canCheckout">
+          @if (placing()) { <mat-spinner diameter="18" /> Placing order… } @else {
+            {{ payment.value === 'RAZORPAY' ? 'Continue to payment' : 'Place order' }} · {{ s.totals.total | inr }}
+          }
+        </button>
+        <p class="muted small center">By placing the order you agree to our <a routerLink="/terms">terms</a> and
+          <a routerLink="/returns-policy">returns policy</a>.</p>
+      </aside>
+    </div>
+  }
+</section>

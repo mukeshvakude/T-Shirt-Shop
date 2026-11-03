@@ -1,6 +1,8 @@
-import { CurrencyPipe, DatePipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
+
+import { InrPipe } from '../../../shared/inr.pipe';
 
 import { AccountApi } from '../../../core/api/account.api';
 import { ORDER_STATUS_LABELS, RecentOrder } from '../../../core/models/account.models';
@@ -11,7 +13,7 @@ import { ORDER_STATUS_LABELS, RecentOrder } from '../../../core/models/account.m
  */
 @Component({
   selector: 'app-account-orders',
-  imports: [RouterLink, CurrencyPipe, DatePipe],
+  imports: [RouterLink, DatePipe, InrPipe],
   styleUrl: '../account-pages.scss',
   template: `
     <header class="page-head">
@@ -34,10 +36,10 @@ import { ORDER_STATUS_LABELS, RecentOrder } from '../../../core/models/account.m
             <tbody>
               @for (o of orders(); track o.orderNumber) {
                 <tr>
-                  <td class="strong">{{ o.orderNumber }}</td>
+                  <td class="strong"><a [routerLink]="['/order', o.orderNumber]">{{ o.orderNumber }}</a></td>
                   <td>{{ o.placedAt | date: 'd MMM y' }}</td>
                   <td>{{ o.itemCount }}</td>
-                  <td>{{ o.grandTotal | currency: 'INR' : 'symbol' : '1.0-2' }}</td>
+                  <td>{{ o.grandTotal | inr }}</td>
                   <td><span class="pill" [attr.data-status]="o.orderStatus">{{ labels[o.orderStatus] ?? o.orderStatus }}</span></td>
                 </tr>
               }
