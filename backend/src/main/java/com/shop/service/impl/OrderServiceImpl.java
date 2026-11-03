@@ -57,6 +57,11 @@ public class OrderServiceImpl implements OrderService {
             Order.Status.SHIPPED, EnumSet.of(Order.Status.OUT_FOR_DELIVERY, Order.Status.DELIVERED),
             Order.Status.OUT_FOR_DELIVERY, EnumSet.of(Order.Status.DELIVERED));
 
+    /** Statuses an admin may move an order to next. */
+    static Set<Order.Status> nextStatuses(Order.Status from) {
+        return NEXT.getOrDefault(from, Set.of());
+    }
+
     private final OrderRepository orders;
     private final OrderStatusHistoryRepository history;
     private final ProductColorRepository colors;

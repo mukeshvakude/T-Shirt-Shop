@@ -34,6 +34,11 @@ export class AdminShell {
   );
 
   protected readonly nav: NavItem[] = [
+    { path: '/admin/dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { path: '/admin/orders', label: 'Orders', icon: 'package_2' },
+    { path: '/admin/payments', label: 'Payments', icon: 'payments' },
+    { path: '/admin/customers', label: 'Customers', icon: 'group' },
+    { path: '/admin/messages', label: 'Messages', icon: 'mail' },
     { path: '/admin/products', label: 'Products', icon: 'apparel' },
     { path: '/admin/categories', label: 'Categories', icon: 'category' },
     { path: '/admin/designs', label: 'Custom designs', icon: 'draw' },

@@ -127,7 +127,37 @@ export const routes: Routes = [
     canActivate: [adminGuard],
     loadComponent: () => import('./layout/admin-shell/admin-shell').then((m) => m.AdminShell),
     children: [
-      { path: '', pathMatch: 'full', redirectTo: 'products' },
+      { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
+      {
+        path: 'dashboard',
+        title: 'Dashboard | Admin',
+        loadComponent: () => import('./features/admin-dashboard/dashboard').then((m) => m.AdminDashboard),
+      },
+      {
+        path: 'orders',
+        title: 'Orders | Admin',
+        loadComponent: () => import('./features/admin-orders/order-list').then((m) => m.AdminOrderList),
+      },
+      {
+        path: 'orders/:number',
+        title: 'Order | Admin',
+        loadComponent: () => import('./features/admin-orders/order-detail').then((m) => m.AdminOrderDetailPage),
+      },
+      {
+        path: 'payments',
+        title: 'Payments | Admin',
+        loadComponent: () => import('./features/admin-payments/payment-list').then((m) => m.AdminPaymentList),
+      },
+      {
+        path: 'customers',
+        title: 'Customers | Admin',
+        loadComponent: () => import('./features/admin-customers/customer-list').then((m) => m.AdminCustomerList),
+      },
+      {
+        path: 'messages',
+        title: 'Messages | Admin',
+        loadComponent: () => import('./features/admin-messages/message-list').then((m) => m.AdminMessageList),
+      },
       {
         path: 'products',
         title: 'Products | Admin',

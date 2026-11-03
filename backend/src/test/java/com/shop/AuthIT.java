@@ -159,9 +159,8 @@ class AuthIT {
         mvc.perform(get("/api/admin/dashboard").header("Authorization", "Bearer " + customer))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code").value("FORBIDDEN"));
-        // Passes authorization; 404 because admin endpoints arrive in Phase 16.
         mvc.perform(get("/api/admin/dashboard").header("Authorization", "Bearer " + admin))
-                .andExpect(status().isNotFound());
+                .andExpect(status().isOk());
     }
 
     @Test

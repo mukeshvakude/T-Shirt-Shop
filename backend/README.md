@@ -91,7 +91,7 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 15)
+## Current endpoints (Phase 16)
 
 | Method | Path | Access |
 |--------|------|--------|
@@ -105,6 +105,12 @@ an `X-Request-Id` header that matches the `requestId` in logs.
 | GET | `/api/orders/{orderNumber}` | Signed in, own orders only (tracking, history, canCancel, invoiceAvailable) |
 | POST | `/api/orders/{orderNumber}/cancel` | Signed in (before the order is being prepared; paid online orders are refunded) |
 | GET | `/api/orders/{orderNumber}/invoice` | Signed in (PDF, confirmed orders) |
+| GET | `/api/admin/dashboard` | `ROLE_ADMIN` (sales, work waiting, sales per day, top products, latest orders) |
+| GET | `/api/admin/orders?status&q&needsReview&page`, `/api/admin/orders/{orderNumber}` | `ROLE_ADMIN` |
+| GET | `/api/admin/payments?status&q&needsReview&page`, `/api/admin/payments/{id}` | `ROLE_ADMIN` (with gateway log) |
+| POST | `/api/admin/payments/{id}/refund`, `/api/admin/payments/{id}/reviewed` | `ROLE_ADMIN` |
+| GET, PATCH | `/api/admin/customers[?q&page]`, `/api/admin/customers/{id}` | `ROLE_ADMIN` (PATCH enables or blocks) |
+| GET, PATCH | `/api/admin/messages[?status&page]`, `/api/admin/messages/{id}` | `ROLE_ADMIN` |
 | PATCH | `/api/admin/orders/{orderNumber}/status` | `ROLE_ADMIN` (PROCESSING, SHIPPED with courier and tracking, OUT_FOR_DELIVERY, DELIVERED, CANCELLED) |
 | GET | `/api/admin/orders/{orderNumber}/invoice` | `ROLE_ADMIN` (PDF) |
 | GET, DELETE | `/api/cart` | Signed in (cart with current prices, stock status, coupon, shipping, total; DELETE empties it) |
