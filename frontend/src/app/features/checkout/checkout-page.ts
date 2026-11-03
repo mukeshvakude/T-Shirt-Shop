@@ -13,6 +13,7 @@ import { landmarkText } from '../../core/models/account.models';
 import { codeLabel } from '../../core/models/design.models';
 import { CheckoutSummary, PaymentMethod, PlaceOrderRequest } from '../../core/models/order.models';
 import { NotifyService } from '../../core/notify.service';
+import { PaymentOutcome, RazorpayCheckoutService } from '../../core/payment/razorpay-checkout.service';
 import { ImgFallback } from '../../shared/img-fallback.directive';
 import { InrPipe } from '../../shared/inr.pipe';
 
@@ -37,6 +38,7 @@ export class CheckoutPage implements OnInit {
   private readonly cart = inject(CartService);
   private readonly notify = inject(NotifyService);
   private readonly router = inject(Router);
+  private readonly razorpay = inject(RazorpayCheckoutService);
   private readonly fb = inject(FormBuilder).nonNullable;
 
   protected readonly summary = signal<CheckoutSummary | null>(null);
@@ -173,6 +175,16 @@ export class CheckoutPage implements OnInit {
     try {
       const order = await firstValueFrom(this.api.placeOrder(body));
       void this.cart.refresh().catch(() => undefined);
+      if (order.paymentMethod === 'RAZORPAY') {
+        // The order exists now; open the payment window. Whatever happens, the order page follows.
+        const result: PaymentOutcome = await this.razorpay.pay(order.orderNumber)
+          .catch((error: unknown): PaymentOutcome => ({ outcome: 'error', error }));
+        if (result.outcome === 'dismissed') {
+          this.notify.success('Your order is saved. You can complete the payment from the order page.');
+        } else if (result.outcome === 'error') {
+          this.notify.error(result.error, 'The payment could not be completed. You can try again from the order page.');
+        }
+      }
       void this.router.navigate(['/order', order.orderNumber], { queryParams: { placed: 1 }, replaceUrl: true });
     } catch (error) {
       const code = apiErrorCode(error);

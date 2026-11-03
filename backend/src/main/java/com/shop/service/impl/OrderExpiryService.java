@@ -39,6 +39,7 @@ public class OrderExpiryService {
     private final OrderStatusHistoryRepository history;
     private final CouponRepository coupons;
     private final CouponRedemptionRepository redemptions;
+    private final com.shop.repository.PaymentRepository payments;
     private final StockService stock;
     private final AppSettingService settings;
     private final Clock clock;
@@ -90,6 +91,9 @@ public class OrderExpiryService {
             order.setPaymentStatus(Order.PaymentStatus.CANCELLED);
         }
         order.setCancelledAt(now);
+        payments.findByOrderIdOrderByAttemptNoAsc(orderId).stream()
+                .filter(p -> p.getStatus() == Order.PaymentStatus.CREATED || p.getStatus() == Order.PaymentStatus.PENDING)
+                .forEach(p -> p.setStatus(Order.PaymentStatus.CANCELLED));
         order.setCancelReason("Not paid within " + settings.getInt("order.unpaid_cancel_hours") + " hours");
 
         redemptions.findByOrderId(orderId).ifPresent(redemption -> {

@@ -6,6 +6,8 @@ import { firstValueFrom } from 'rxjs';
 
 import { apiErrorMessage } from '../../core/api/api-error';
 import { CheckoutApi } from '../../core/api/checkout.api';
+import { NotifyService } from '../../core/notify.service';
+import { RazorpayCheckoutService } from '../../core/payment/razorpay-checkout.service';
 import { ORDER_STATUS_LABELS, landmarkText } from '../../core/models/account.models';
 import { OrderDetail, PAYMENT_STATUS_LABELS } from '../../core/models/order.models';
 import { ImgFallback } from '../../shared/img-fallback.directive';
@@ -20,6 +22,9 @@ import { InrPipe } from '../../shared/inr.pipe';
 })
 export class OrderPage implements OnInit, OnDestroy {
   private readonly api = inject(CheckoutApi);
+  private readonly razorpay = inject(RazorpayCheckoutService);
+  private readonly notify = inject(NotifyService);
+  protected readonly paying = signal(false);
 
   /** Route parameter and query flag (component input binding). */
   readonly number = input.required<string>();
@@ -48,6 +53,28 @@ export class OrderPage implements OnInit, OnDestroy {
       this.error.set(apiErrorMessage(error, 'This order could not be found.'));
     }
     this.timer = setInterval(() => this.now.set(Date.now()), 30_000);
+  }
+
+  /** Pay (or try again) for an unpaid online order. */
+  async pay(): Promise<void> {
+    const o = this.order();
+    if (!o || this.paying()) return;
+    this.paying.set(true);
+    try {
+      const result = await this.razorpay.pay(o.orderNumber);
+      if (result.outcome === 'paid') {
+        this.order.set(result.order);
+        this.notify.success(result.order.status === 'CONFIRMED' ? 'Payment received. Thank you!' : 'Payment received.');
+      } else {
+        if (result.outcome === 'error') this.notify.error(result.error, 'The payment could not be completed. Please try again.');
+        else this.notify.success('Payment not completed. You can try again any time before the order expires.');
+        this.order.set(await firstValueFrom(this.api.order(o.orderNumber)));
+      }
+    } catch (error) {
+      this.notify.error(error, 'The payment window could not be opened. Please try again.');
+    } finally {
+      this.paying.set(false);
+    }
   }
 
   ngOnDestroy(): void {

@@ -38,7 +38,11 @@ public record AppProperties(
      * Razorpay credentials from the environment. The secret stays on the server; online payment is
      * offered only when real keys are configured (not the .env.example placeholders).
      */
-    public record Payments(String razorpayKeyId, String razorpayKeySecret) {
+    public record Payments(String razorpayKeyId, String razorpayKeySecret, String razorpayApiBase) {
+
+        public String apiBase() {
+            return razorpayApiBase == null || razorpayApiBase.isBlank() ? "https://api.razorpay.com/v1" : razorpayApiBase;
+        }
 
         public boolean razorpayConfigured() {
             return razorpayKeyId != null && razorpayKeyId.matches("^rzp_(test|live)_[A-Za-z0-9]{8,}$")

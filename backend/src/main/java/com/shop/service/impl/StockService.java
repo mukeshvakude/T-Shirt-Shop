@@ -24,7 +24,8 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
-@Transactional(propagation = Propagation.MANDATORY)
+// noRollbackFor: a sold-out answer is a normal result; callers decide whether to roll back.
+@Transactional(propagation = Propagation.MANDATORY, noRollbackFor = ConflictException.class)
 public class StockService {
 
     private final InventoryRepository inventory;
@@ -38,16 +39,23 @@ public class StockService {
      * @throws ConflictException OUT_OF_STOCK when any SKU no longer has enough stock (nothing is held)
      */
     public void hold(Long orderId, Map<Long, Integer> quantities, Instant expiresAt, boolean commitNow, Instant now) {
+        // Lock and check every SKU first, so a sold-out item never leaves other SKUs half-held.
+        Map<Inventory, Integer> locked = new java.util.LinkedHashMap<>();
         for (Map.Entry<Long, Integer> e : new TreeMap<>(quantities).entrySet()) {
             Inventory inv = inventory.findByIdForUpdate(e.getKey())
                     .orElseThrow(() -> new ResourceNotFoundException("Stock item", e.getKey()));
             int qty = e.getValue();
+            locked.put(inv, qty);
             if (!inv.isActive() || inv.getAvailable() < qty) {
                 String what = inv.getProduct().getName() + " (" + inv.getSize().getCode() + ", " + inv.getColor().getName() + ")";
                 throw new ConflictException("OUT_OF_STOCK", inv.getAvailable() == 0 || !inv.isActive()
                         ? what + " just sold out. Please update your bag."
                         : "Only " + inv.getAvailable() + " left of " + what + ". Please update your bag.");
             }
+        }
+        for (Map.Entry<Inventory, Integer> e : locked.entrySet()) {
+            Inventory inv = e.getKey();
+            int qty = e.getValue();
             InventoryReservation r = new InventoryReservation();
             r.setInventoryId(inv.getId());
             r.setOrderId(orderId);

@@ -40,6 +40,7 @@
   span { color: #444; } }
 
 .actions { display: grid; gap: 10px; }
+.hero .btn.pay { margin: 12px 0 6px; gap: 8px; padding: 13px 24px; font-size: 15px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; padding: 12px 20px;
   font: 600 14px Inter, sans-serif; border: 1px solid #111; background: #111; color: #fff; text-decoration: none;
   &.outline { background: #fff; color: #111; } }

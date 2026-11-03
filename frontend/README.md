@@ -113,6 +113,15 @@ Replace them with real product photography (upload through the admin portal) bef
 
 Admins see all designs at `/admin/designs` and can download a ZIP for printing.
 
+## Online payment (Phase 13)
+
+- `core/payment/razorpay-checkout.service.ts` loads `https://checkout.razorpay.com/v1/checkout.js` once,
+  asks the server to start payment (`POST /api/payments/create-order`), opens Razorpay Checkout with the
+  server's Razorpay order and public Key ID, and sends the result to `POST /api/payments/verify`.
+  Failed attempts are reported to `POST /api/payments/failed`.
+- Placing an online order opens the payment window straight away; unpaid orders show "Pay now" on the
+  order page (also the retry).
+
 ## Checkout (Phase 12)
 
 - `features/checkout/checkout-page` loads `GET /api/checkout` (validated cart, totals, contact, addresses,

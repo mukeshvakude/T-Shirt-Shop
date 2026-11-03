@@ -5,10 +5,10 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 12 of 19 complete (architecture, database, backend
+> **Status:** Phases 1 to 13 of 19 complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
 > home page, product listing and details, customer portal, custom T-Shirt designer,
-> dynamic pricing, shopping cart, checkout with Cash on Delivery). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> dynamic pricing, shopping cart, checkout with Cash on Delivery, Razorpay payments). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -121,11 +121,21 @@ as `tshirt_app` (password in `.env` as `DB_PASSWORD`), schema `tshirt_shop`.
 ## Razorpay test setup
 
 1. Sign in to the Razorpay Dashboard and switch to **Test Mode**.
-2. Generate a Key ID and Key Secret under Account & Settings, API Keys.
-3. Add a webhook pointing to `https://<public-url>/api/payments/webhook` with a webhook secret. Subscribe to `payment.captured`, `payment.failed`, `order.paid` and `refund.processed`. For local testing, expose the backend with a tunnel such as ngrok.
-4. Put `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET` and `RAZORPAY_WEBHOOK_SECRET` in `.env`.
+2. Account & Settings, API Keys: generate a test key. Copy the Key ID (`rzp_test_...`) and Key Secret.
+3. Put them in the repository `.env` (never commit it, never paste the secret anywhere else):
 
-The Key Secret and Webhook Secret stay on the backend and are never sent to Angular.
+   ```
+   RAZORPAY_KEY_ID=rzp_test_...
+   RAZORPAY_KEY_SECRET=...
+   RAZORPAY_WEBHOOK_SECRET=...   # used from Phase 14
+   ```
+
+4. Restart the backend. "Pay online" becomes available at checkout.
+5. Pay with Razorpay test methods, for example UPI ID `success@razorpay` (succeeds) or `failure@razorpay` (fails), or the test cards listed in the Razorpay docs. Test payments never move real money.
+
+Where the money goes: Razorpay settles payments to the bank account verified in your Razorpay
+account (Account & Settings, Bank account details). It is not set in this code. Live mode needs
+completed KYC and live keys (`rzp_live_...`).
 
 ## Environment variables
 

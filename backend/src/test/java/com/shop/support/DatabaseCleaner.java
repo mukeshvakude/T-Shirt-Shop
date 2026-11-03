@@ -23,6 +23,8 @@ public final class DatabaseCleaner {
         jdbc.update("DELETE FROM cart_items");
         jdbc.update("DELETE FROM carts");
         jdbc.update("DELETE FROM design_assets");
+        jdbc.update("DELETE FROM payment_transactions");
+        jdbc.update("DELETE FROM payments");
         jdbc.update("DELETE FROM inventory_reservations");
         jdbc.update("DELETE FROM coupon_redemptions");
         jdbc.update("DELETE FROM order_status_history");

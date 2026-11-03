@@ -27,6 +27,23 @@ public final class SecureTokens {
     }
 
     /** Lowercase hex SHA-256, 64 characters. */
+    /** Lower-case hex HMAC-SHA256, as used by Razorpay payment and webhook signatures. */
+    public static String hmacSha256Hex(String secret, String message) {
+        try {
+            javax.crypto.Mac mac = javax.crypto.Mac.getInstance("HmacSHA256");
+            mac.init(new javax.crypto.spec.SecretKeySpec(secret.getBytes(java.nio.charset.StandardCharsets.UTF_8), "HmacSHA256"));
+            return java.util.HexFormat.of().formatHex(mac.doFinal(message.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+        } catch (java.security.GeneralSecurityException ex) {
+            throw new IllegalStateException("HMAC-SHA256 not available", ex);
+        }
+    }
+
+    /** Constant-time comparison of two hex strings (avoids timing leaks when checking signatures). */
+    public static boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return false;
+        return java.security.MessageDigest.isEqual(a.getBytes(java.nio.charset.StandardCharsets.UTF_8), b.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+    }
+
     public static String sha256Hex(String value) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");

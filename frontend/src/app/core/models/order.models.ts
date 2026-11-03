@@ -96,3 +96,23 @@ export const PAYMENT_STATUS_LABELS: Record<string, string> = {
   CANCELLED: 'Not paid',
   REFUNDED: 'Refunded',
 };
+
+/** Razorpay Standard Checkout options from the server. The Key Secret is never sent to the browser. */
+export interface PaymentStart {
+  keyId: string;
+  razorpayOrderId: string;
+  /** In paise, set by the server from the order total. */
+  amount: number;
+  currency: string;
+  orderNumber: string;
+  description: string;
+  prefill: { name: string; email: string; contact: string };
+  holdUntil: string | null;
+}
+
+export interface VerifyPaymentRequest {
+  orderNumber: string;
+  razorpayOrderId: string;
+  razorpayPaymentId: string;
+  razorpaySignature: string;
+}

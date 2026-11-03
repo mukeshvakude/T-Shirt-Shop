@@ -6,12 +6,16 @@
       <a class="btn" routerLink="/account/orders">My orders</a>
     </div>
   } @else if (order(); as o) {
-    <header class="hero" [class.wait]="o.awaitingPayment" [class.cancelled]="o.status === 'CANCELLED'">
+    <header class="hero" [class.wait]="o.awaitingPayment || (o.status === 'PENDING' && o.paymentStatus === 'SUCCESS')" [class.cancelled]="o.status === 'CANCELLED'">
       <span class="material-symbols-outlined icon">{{ o.status === 'CANCELLED' ? 'cancel' : o.awaitingPayment ? 'schedule' : 'check_circle' }}</span>
       <div>
         @if (o.status === 'CANCELLED') {
           <h1>Order cancelled</h1>
           <p>{{ o.cancelReason || 'This order was cancelled.' }}</p>
+          @if (o.paymentStatus === 'SUCCESS') { <p>Your payment was received after the order was cancelled. It will be refunded to the same account.</p> }
+        } @else if (o.status === 'PENDING' && o.paymentStatus === 'SUCCESS') {
+          <h1>Payment received, order on hold</h1>
+          <p>An item in your order sold out just before your payment arrived. We will refund the amount to the same account or contact you.</p>
         } @else if (o.awaitingPayment) {
           <h1>Complete your payment</h1>
           <p>
@@ -19,12 +23,18 @@
             @if (minutesLeft(); as m) { Items are held for you for {{ m }} more minute{{ m === 1 ? '' : 's' }}. }
             @else { The hold on your items has ended; they will be held again if still in stock when you pay. }
           </p>
-          <p class="small">Online payment is not open yet. You will be able to pay for this order here.</p>
+          @if (o.paymentStatus === 'FAILED') { <p class="small">Your last payment attempt did not go through. No money was taken for it.</p> }
+          <button type="button" class="btn pay" (click)="pay()" [disabled]="paying()">
+            @if (paying()) { <mat-spinner diameter="18" /> } Pay {{ o.total | inr }} now
+          </button>
+          <p class="small">UPI, cards, net banking and wallets through Razorpay. The amount is set by the shop.</p>
         } @else {
-          <h1>{{ placed() ? 'Thank you, your order is placed!' : 'Order ' + o.orderNumber }}</h1>
+          <h1>{{ placed() || o.paymentStatus === 'SUCCESS' ? 'Thank you, your order is placed!' : 'Order ' + o.orderNumber }}</h1>
           <p>
             @if (o.paymentMethod === 'COD') {
               Please keep {{ o.total | inr }} ready to pay in cash when it arrives.
+            } @else if (o.paymentStatus === 'SUCCESS') {
+              We have received your payment of {{ o.total | inr }}.
             }
             You can follow it any time in <a routerLink="/account/orders">My orders</a>.
           </p>

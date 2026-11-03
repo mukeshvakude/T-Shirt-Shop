@@ -91,10 +91,13 @@ Every error is an RFC 7807 problem detail with extra fields:
 Validation errors add an `errors` array of `{ "field", "message" }`. Each response carries
 an `X-Request-Id` header that matches the `requestId` in logs.
 
-## Current endpoints (Phase 12)
+## Current endpoints (Phase 13)
 
 | Method | Path | Access |
 |--------|------|--------|
+| POST | `/api/payments/create-order` | Signed in (start or retry Razorpay payment for my unpaid online order; returns the public Key ID and Razorpay order) |
+| POST | `/api/payments/verify` | Signed in (Razorpay signature checked with the Key Secret; confirms the order) |
+| POST | `/api/payments/failed` | Signed in (records a failed attempt reported by Checkout.js) |
 | GET | `/api/checkout` | Signed in (validated cart, totals split, contact, saved addresses, payment options) |
 | POST | `/api/checkout/place-order` | Signed in (creates the order; COD confirmed, online orders wait for payment with a stock hold) |
 | GET | `/api/orders/{orderNumber}` | Signed in, own orders only |

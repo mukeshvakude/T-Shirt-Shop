@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 12)
+Last updated: 2026-11-03 (Phase 13)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -20,7 +20,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Dynamic Pricing (server-side price engine, live price panel with quantity in the designer, admin pricing page for charges and shipping)
 - [x] Shopping Cart (server cart for products and custom designs, guest bag priced by the server and merged on sign-in, size/colour/quantity changes, coupons, shipping, stock checks)
 - [x] Checkout (checkout page, server totals, pending online orders with a 15-minute stock hold and expiry job, Cash on Delivery, order confirmation page)
-- [ ] Razorpay Integration
+- [x] Razorpay Integration (Razorpay order creation, Standard Checkout in Angular, signature verification, retry, failed attempts; needs real test keys for a live run)
 - [ ] Payment Verification
 - [ ] Webhooks
 - [ ] Order Management
@@ -65,7 +65,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 10 | Dynamic pricing | Pricing engine, estimate API, admin-editable charges, live price panel | Done |
 | 11 | Shopping cart | Server cart, guest cart merge, coupons, mixed normal + custom items | Done |
 | 12 | Checkout | Checkout form, totals, pending order, stock reservation and expiry job, COD | Done |
-| 13 | Razorpay integration | Create order, Standard Checkout in Angular, retry | Pending |
+| 13 | Razorpay integration | Create order, Standard Checkout in Angular, retry | Done (verified with a stubbed gateway; live test needs keys, B5) |
 | 14 | Payment verification and webhooks | Signature verify, gateway fetch, webhook idempotency, late payment refunds, reconciliation | Pending |
 | 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Pending |
 | 16 | Admin portal | Dashboard metrics, orders, payments, refunds, customers, customization (catalog pages delivered in Phase 5) | Pending |
@@ -81,7 +81,8 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~B2~~ | Maven: the project will use the Maven wrapper | - | None |
 | ~~B3~~ | Resolved 2026-11-02: portable Node.js 24.22.2 LTS, on user PATH | - | None |
 | ~~B4~~ | Resolved 2026-11-02: portable MySQL 8.4.13 LTS on 127.0.0.1:3306, databases `tshirt_shop` and `tshirt_shop_test`, user `tshirt_app` | - | Not a Windows service. For autostart at logon, copy `C:\Users\ADMIN\tools\start-mysql-hidden.vbs` into the Startup folder (Win+R, then `shell:startup`). Otherwise run `start-mysql.cmd` after a reboot |
-| B5 | Razorpay test keys | Phase 13 | Create test-mode Key ID, Key Secret and Webhook Secret, and put them in a local `.env`. Never paste the secret into chat or commit it |
+| B5 | Razorpay test keys | Now (Phase 13 is built) | Create test-mode Key ID, Key Secret and Webhook Secret in the Razorpay Dashboard and put them in the local `.env` (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`), then restart the backend. Never paste the secret into chat or commit it |
+| B10 | Settlement bank account | Before live payments | Razorpay pays out to the bank account verified in the Razorpay Dashboard (Account & Settings, Bank account details), not to an address set in the code. On 2026-11-03 the owner named a PhonePe UPI ID for payouts: add the bank account linked to that UPI ID in the dashboard during KYC. Test-mode payments never move real money |
 | B6 | SMTP credentials | Phase 17 | Provide a mail account (for example Gmail app password or a transactional provider) via `.env`. Until then password reset links are only logged (dev) |
 | B9 | Admin login email | Before launch | The local `.env` uses `admin@tshirtshop.local` with a generated password (copy kept in `C:\Users\ADMIN\tools\mysql-credentials.txt`). For production, set your real address and a new password |
 | B7 | Cloudinary account (optional) | Phase 19 | Only if cloud storage is preferred over secure local storage. Phase 9 uses secure local storage for artwork and previews |
@@ -161,6 +162,12 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - `OrderExpiryJob` runs every minute: expired holds of unpaid online orders are released (payment CANCELLED, the order stays open), and orders still unpaid after `order.unpaid_cancel_hours` (24) are cancelled, giving back the coupon use and unlocking designs not used by another open order.
 - COD is offered only when `cod.enabled` and the total is at most `cod.max_order_value` (INR 5000). Online payment is offered only when real Razorpay keys are configured (not the .env.example placeholders); the payment window itself arrives in Phase 13.
 - Order numbers look like TS-20261103-702653 (date in India and six random digits).
+- Online payment (Phase 13) uses Razorpay Standard Checkout. `POST /api/payments/create-order` creates (or reuses) a Razorpay order whose amount is the order total in paise, set on the server; the browser receives the public Key ID only. The same endpoint is the retry: a failed attempt gets a new Razorpay order, and an ended stock hold is placed again first (OUT_OF_STOCK if it sold out).
+- `POST /api/payments/verify` confirms a payment only when HMAC-SHA256(razorpay_order_id + "|" + razorpay_payment_id, Key Secret) matches the signature (constant-time compare). Valid payments commit the stock hold; if the hold had ended the stock is taken then; if an item sold out meanwhile the payment is flagged `needs_review` and the order stays on hold (automatic refund in Phase 14). Verifying the same payment twice is harmless.
+- Rejected signatures are logged in `payment_transactions` and do not change the order. Failed attempts reported by Checkout.js are recorded but never mark anything paid.
+- The Razorpay API is called with Spring `RestClient` (Basic auth, 5 s connect and 15 s read timeouts) behind a `RazorpayGateway` interface instead of the Razorpay Java SDK: fewer dependencies and a simple stub for tests. Gateway problems return 502 PAYMENT_GATEWAY_ERROR with a friendly message.
+- Starting payment is limited to 15 times per hour per customer.
+- A personal UPI ID is not used as a payment destination in the code: payments go through Razorpay, which settles to the merchant bank account (B10).
 - "First order" coupons such as WELCOME10 rely on the per-customer limit of 1; there is no separate "no previous orders" rule.
 - Refresh-token reuse detection now allows a 10-second grace window: if a rotated token is replayed while its successor was never used (page reloaded during a refresh call), the session continues with a new token. Any other replay still revokes all sessions.
 
@@ -186,7 +193,8 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T17 | Designer fonts load from Google Fonts | Same plan as T11 (self-host in Phase 19) |
 | T18 | The blank T-Shirt price per style comes from its custom product, so changing it means editing that product in the admin portal | Fine for now; a "base price" field on the Pricing page can be added if the owner prefers one place |
 | ~~T19~~ | `/checkout` showed a "coming soon" page | Resolved in Phase 12 |
-| T20 | Online payment is shown as unavailable until real Razorpay test keys are configured and Phase 13 adds the payment window | Owner action B5, then Phase 13 |
+| T20 | Online payment is shown as unavailable until real Razorpay test keys are configured | Owner action B5; the payment window is built and tested with a stub |
+| T23 | A payment made after an item sold out, or after the order was cancelled, is flagged for review but not refunded automatically yet | Phase 14 adds automatic refunds, webhooks and reconciliation |
 | T21 | Order confirmation emails are not sent yet | Phase 17 (notifications) |
 | T22 | Address JSON must include `makeDefault`: Jackson 3 rejects missing primitive booleans by default | Clients send it; consider `Boolean` fields or relaxing FAIL_ON_NULL_FOR_PRIMITIVES in Phase 18 |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
@@ -207,4 +215,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 9 | Custom T-Shirt designer, saved designs, admin designs with ZIP download, back-view mockups (79 unit + 50 integration backend tests, 79 frontend tests, designer browser run) | `e5747ea` |
 | 2026-11-03 | 10 | Dynamic pricing: price engine and estimate API, live price panel with quantity, admin pricing page, refresh-token grace window (84 unit + 56 integration backend tests, 81 frontend tests, pricing browser run) | `5a75cab` |
 | 2026-11-03 | 11 | Shopping cart: server cart with products and custom designs, guest quote and merge, coupons, shipping, stock checks, bag page, designer "Add to bag" (84 unit + 62 integration backend tests, 85 frontend tests, cart browser run) | `442d403` |
-| 2026-11-03 | 12 | Checkout: checkout page, order placement with server totals, stock holds and expiry job, COD, order page (84 unit + 65 integration backend tests, 89 frontend tests, checkout browser run) | see git log on `DEV` |
+| 2026-11-03 | 12 | Checkout: checkout page, order placement with server totals, stock holds and expiry job, COD, order page (84 unit + 65 integration backend tests, 89 frontend tests, checkout browser run) | `ebf345a` |
+| 2026-11-03 | 13 | Razorpay integration: create order, Standard Checkout, signature verification, retry, failure reports, pay-after-hold handling (87 unit + 71 integration backend tests, 92 frontend tests) | see git log on `DEV` |
