@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -8,6 +8,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { DesignApi } from '../../core/api/design.api';
 import { Design, DesignSummary, codeLabel } from '../../core/models/design.models';
+import { PriceLine } from '../../core/models/pricing.models';
 import { NotifyService } from '../../core/notify.service';
 
 /** Downloads the print package (design.json, previews, original artwork) as CODE.zip. */
@@ -33,7 +34,7 @@ function downloadZip(api: DesignApi, notify: NotifyService, code: string, busy: 
 /** Full design for the print team: previews, print areas, text and original artwork. */
 @Component({
   selector: 'app-design-detail-dialog',
-  imports: [MatDialogModule, MatButtonModule, MatProgressSpinnerModule, DatePipe],
+  imports: [MatDialogModule, MatButtonModule, MatProgressSpinnerModule, DatePipe, CurrencyPipe],
   template: `
     <h2 mat-dialog-title>{{ design.name || 'Untitled design' }} <small>{{ design.code }}</small></h2>
     <mat-dialog-content>
@@ -50,6 +51,11 @@ function downloadZip(api: DesignApi, notify: NotifyService, code: string, busy: 
         <dt>Colour / size</dt><dd>{{ label(design.colorCode) }} / {{ design.sizeCode }}</dd>
         <dt>Print areas</dt><dd>{{ placements }}</dd>
         <dt>Print</dt><dd>{{ design.premiumPrint ? 'Premium' : 'Standard' }}</dd>
+        @if (design.price; as p) {
+          <dt>Current price</dt>
+          <dd>{{ p.unitPrice | currency: 'INR' : 'symbol' : '1.0-2' }} per T-Shirt
+            <small class="muted">({{ p.basePrice | currency: 'INR' : 'symbol' : '1.0-0' }} T-Shirt{{ breakdown(p.charges) }})</small></dd>
+        }
         <dt>Status</dt><dd>{{ label(design.status) }}{{ design.locked ? ' (in an order)' : '' }}</dd>
         <dt>Updated</dt><dd>{{ design.updatedAt | date: 'd MMM y, h:mm a' }}</dd>
       </dl>
@@ -116,6 +122,10 @@ export class DesignDetailDialog {
 
   protected download(): void {
     downloadZip(this.api, this.notify, this.design.code, (on) => this.busy.set(on));
+  }
+
+  protected breakdown(lines: PriceLine[]): string {
+    return lines.map((l) => ` + ${l.label} ${l.amount}`).join('');
   }
 }
 

@@ -66,6 +66,24 @@
   &.active { border-color: #111; background: #111; color: #fff; }
   &:disabled:not(.active) { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; } }
 .sizes .chip-btn { min-width: 48px; }
+.chip-btn .extra { font-size: 11px; font-weight: 600; margin-left: 4px; opacity: 0.7; }
+.fine.top { margin: -4px 0 10px; }
+.check em { font-style: normal; font-weight: 600; color: var(--shop-muted); margin-left: 4px; }
+
+.price-panel { margin-top: 16px; padding: 16px; border-radius: 14px; background: #faf9f6; transition: opacity 0.15s;
+  &.busy { opacity: 0.6; }
+  .line { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; padding: 4px 0; }
+  s { color: var(--shop-muted); margin-right: 6px; font-size: 13px; }
+  .unit { border-top: 1px solid var(--shop-line); margin-top: 6px; padding-top: 10px; font-weight: 600; }
+  .total { border-top: 1px solid var(--shop-line); margin-top: 8px; padding-top: 12px; align-items: baseline;
+    strong { font-size: 24px; } }
+  .qty-row { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; font-size: 14px; }
+  .qty { display: inline-flex; align-items: center; border: 1px solid var(--shop-line); border-radius: 999px; background: #fff;
+    button { width: 34px; height: 34px; border: 0; background: none; cursor: pointer; display: grid; place-items: center;
+      &:disabled { opacity: 0.35; cursor: default; }
+      .material-symbols-outlined { font-size: 18px; } }
+    input { width: 40px; border: 0; text-align: center; font: 600 15px Inter, sans-serif; background: none; -moz-appearance: textfield;
+      &::-webkit-outer-spin-button, &::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; } } } }
 
 .swatches { display: flex; flex-wrap: wrap; gap: 10px; }
 .swatch { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgb(0 0 0 / 18%); cursor: pointer; position: relative;
@@ -105,8 +123,6 @@
 .check { display: flex; gap: 10px; align-items: flex-start; margin: 14px 0 4px; font-size: 14px; font-weight: 600; cursor: pointer;
   input { margin-top: 3px; width: 18px; height: 18px; accent-color: #111; }
   small { display: block; font-weight: 400; color: var(--shop-muted); } }
-.price { display: flex; justify-content: space-between; align-items: baseline; margin-top: 14px;
-  strong { font-size: 24px; } }
 .finish .btn.primary { margin-top: 14px; }
 
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }

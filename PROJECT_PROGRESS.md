@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 9)
+Last updated: 2026-11-03 (Phase 10)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -17,7 +17,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Product Details (colour-aware gallery, size/colour/quantity selection with live availability, size guide, add to bag, buy now, reviews, related products)
 - [x] Customer Portal (dashboard with order stats and recent orders, profile, email and password changes, address book with one default, wishlist link)
 - [x] Custom T-Shirt Designer (Fabric.js designer, front and back, print areas, artwork upload, text, previews, saved designs, admin view and ZIP download)
-- [ ] Dynamic Pricing
+- [x] Dynamic Pricing (server-side price engine, live price panel with quantity in the designer, admin pricing page for charges and shipping)
 - [ ] Shopping Cart
 - [ ] Checkout
 - [ ] Razorpay Integration
@@ -139,7 +139,14 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Customer artwork and previews are served from random, unlisted URLs (capability links) with private caching, `noindex` and no referrer, instead of per-request authorisation, so plain `<img>` tags work. Only the owner and admins are given these URLs.
 - Designs that are part of an order are locked; opening one offers "Save as new design". Locking is set by checkout in Phase 12.
 - Admin `/admin/designs`: all designs, details for the print team, and a ZIP with `design.json`, previews and the original artwork.
-- Live price calculation for designs arrives with dynamic pricing (Phase 10); the designer shows the base T-Shirt price meanwhile.
+- Custom T-Shirt price = selling price of the blank T-Shirt for the chosen style + active charges: style, each print area used, custom text (once per design), premium print, size and colour. Missing or inactive charges count as zero.
+- Prices include GST ("Inclusive of all taxes"); no separate tax line. Amounts are rounded to paise.
+- The browser only sends choices (style, colour, size, print areas used, whether there is text, premium, quantity) to `POST /api/pricing/design-estimate`; it never sends prices. Requests are debounced and a newer one cancels an older one.
+- Print charges apply only to sides that carry a design. Quantity is limited by `cart.max_quantity_per_item` (20).
+- The shipping estimate in the designer is for that item alone; the cart and checkout (Phases 11 and 12) will calculate shipping for the whole order.
+- Saved designs return their current price (`price` in `GET /api/designs/{code}`), so a price change applies to designs saved earlier. Orders will store a price snapshot (`order_items.price_breakdown`) in Phase 12.
+- Admin `/admin/pricing`: every chargeable choice is listed, also those without a charge; saving creates or updates the charge. Shipping charge and free-shipping threshold are editable there too. Changes apply to the next calculation (the public price list is not cached).
+- Refresh-token reuse detection now allows a 10-second grace window: if a rotated token is replayed while its successor was never used (page reloaded during a refresh call), the session continues with a new token. Any other replay still revokes all sessions.
 
 ## Known issues / technical debt
 
@@ -161,6 +168,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T13 | A signed-in customer who opens `/admin` lands on the home page without a message | Accepted: customers have no reason to open admin links; revisit if support requests show confusion |
 | T16 | Uploaded artwork that is never saved in a design stays on disk | Phase 19: a cleanup job for unattached uploads older than 7 days |
 | T17 | Designer fonts load from Google Fonts | Same plan as T11 (self-host in Phase 19) |
+| T18 | The blank T-Shirt price per style comes from its custom product, so changing it means editing that product in the admin portal | Fine for now; a "base price" field on the Pricing page can be added if the owner prefers one place |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
 
 ## Change log
@@ -176,4 +184,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 6 | Storefront design and home page, static pages, customer auth pages, home/offers/reviews/newsletter/contact APIs (73 unit + 36 integration backend tests, 41 frontend tests, browser runs) | `f1d9575` |
 | 2026-11-03 | 7 | Product listing, category and search pages with facets; product detail page; wishlist; guest bag (74 unit + 39 integration backend tests, 63 frontend tests, catalog browser run) | `4011fb8` |
 | 2026-11-03 | 8 | Customer portal: dashboard, profile, email and password change, address book (74 unit + 45 integration backend tests, 70 frontend tests, portal browser run) | `1677275` |
-| 2026-11-03 | 9 | Custom T-Shirt designer, saved designs, admin designs with ZIP download, back-view mockups (79 unit + 50 integration backend tests, 79 frontend tests, designer browser run) | see git log on `DEV` |
+| 2026-11-03 | 9 | Custom T-Shirt designer, saved designs, admin designs with ZIP download, back-view mockups (79 unit + 50 integration backend tests, 79 frontend tests, designer browser run) | `e5747ea` |
+| 2026-11-03 | 10 | Dynamic pricing: price engine and estimate API, live price panel with quantity, admin pricing page, refresh-token grace window (84 unit + 56 integration backend tests, 81 frontend tests, pricing browser run) | see git log on `DEV` |

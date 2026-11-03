@@ -33,6 +33,7 @@ public class SecurityConfig {
             "/api/offers",
             "/api/reviews/**",
             "/api/designer/**",
+            "/api/pricing/charges",
     };
 
     /** Auth endpoints that must work without an access token. */
@@ -45,6 +46,7 @@ public class SecurityConfig {
             "/api/auth/reset-password",
             "/api/newsletter",
             "/api/contact",
+            "/api/pricing/design-estimate",
     };
 
     static final String[] API_DOCS = {

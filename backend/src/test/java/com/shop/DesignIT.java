@@ -115,6 +115,8 @@ class DesignIT {
                 .andExpect(jsonPath("$.front.objects", hasSize(2)))
                 .andExpect(jsonPath("$.assets", hasSize(1)))
                 .andExpect(jsonPath("$.productSlug").value("custom-round-neck-t-shirt"))
+                // 299 base + 50 front print + 30 custom text
+                .andExpect(jsonPath("$.price.unitPrice").value(379.00))
                 .andReturn();
         String code = field(created, "code");
 

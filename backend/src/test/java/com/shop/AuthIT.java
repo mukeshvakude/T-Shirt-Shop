@@ -103,12 +103,28 @@ class AuthIT {
                 .andReturn();
         Cookie second = refreshCookie(refreshed);
         assertThat(second.getValue()).isNotEqualTo(first.getValue());
+        // The successor is used, so a later replay of the first token cannot be a lost response.
+        Cookie third = refreshCookie(mvc.perform(post("/api/auth/refresh").cookie(second)).andExpect(status().isOk()).andReturn());
 
         mvc.perform(post("/api/auth/refresh").cookie(first))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("INVALID_REFRESH_TOKEN"));
-        mvc.perform(post("/api/auth/refresh").cookie(second))
+        mvc.perform(post("/api/auth/refresh").cookie(third))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void replayRightAfterALostRefreshResponseKeepsTheSession() throws Exception {
+        Cookie first = refreshCookie(register("ravi@example.com", "Secret123").andReturn());
+        // The browser sends the refresh but never stores the new cookie (page reloaded mid-request).
+        Cookie lost = refreshCookie(mvc.perform(post("/api/auth/refresh").cookie(first)).andExpect(status().isOk()).andReturn());
+
+        Cookie next = refreshCookie(mvc.perform(post("/api/auth/refresh").cookie(first))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.email").value("ravi@example.com"))
+                .andReturn());
+        mvc.perform(post("/api/auth/refresh").cookie(lost)).andExpect(status().isUnauthorized());
+        mvc.perform(post("/api/auth/refresh").cookie(next)).andExpect(status().isOk());
     }
 
     @Test

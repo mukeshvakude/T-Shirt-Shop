@@ -1,5 +1,7 @@
 package com.shop.dto.design;
 
+import com.shop.dto.pricing.PriceQuote;
+
 import java.time.Instant;
 import java.util.List;
 
@@ -23,6 +25,7 @@ public record DesignResponse(
         String status,
         boolean locked,
         String productSlug,
+        PriceQuote price,
         Instant createdAt,
         Instant updatedAt) {
 }

@@ -61,6 +61,7 @@ import com.shop.repository.UserRepository;
 import com.shop.security.RateLimiter;
 import com.shop.service.AppSettingService;
 import com.shop.service.DesignService;
+import com.shop.service.PricingService;
 import com.shop.service.StorageService;
 import com.shop.util.DesignCanvasValidator;
 import com.shop.util.ImageValidator;
@@ -93,6 +94,8 @@ public class DesignServiceImpl implements DesignService {
     private final AppSettingService settings;
     private final RateLimiter rateLimiter;
     private final JsonMapper json;
+    private final DesignRules rules;
+    private final PricingService pricing;
 
     // ------------------------------------------------------------------ options
 
@@ -309,43 +312,13 @@ public class DesignServiceImpl implements DesignService {
     }
 
     private Validated validate(Long userId, DesignRequest r) {
-        CustomizationOption type = active(CustomizationOption.TSHIRT_TYPE).stream()
-                .filter(o -> o.getCode().equals(r.tshirtType()))
-                .findFirst()
-                .orElseThrow(() -> new BadRequestException("UNKNOWN_TSHIRT_TYPE", "Choose a T-Shirt type."));
-        String slug = text(metadata(type), "baseProductSlug");
-        Product product = (slug == null ? Optional.<Product>empty() : products.findVisibleBySlug(slug, ProductStatus.ACTIVE))
-                .filter(Product::isCustomizable)
-                .orElseThrow(() -> new BusinessRuleException("TSHIRT_TYPE_UNAVAILABLE",
-                        "This T-Shirt type is not available right now."));
-        boolean variantExists = inventory.findActiveForProducts(List.of(product.getId())).stream()
-                .anyMatch(i -> i.getColor().getCode().equals(r.colorCode()) && i.getSize().getCode().equals(r.sizeCode()));
-        if (!variantExists) {
-            throw new BadRequestException("VARIANT_UNAVAILABLE",
-                    "That colour and size combination is not offered for " + type.getLabel() + ".");
-        }
+        CustomizationOption type = rules.type(r.tshirtType());
+        Product product = rules.baseProduct(type);
+        rules.requireVariant(product, r.colorCode(), r.sizeCode(), type.getLabel());
 
         // Placements: known, one per side, no excluded combinations.
-        Map<String, CustomizationOption> placementOptions = active(CustomizationOption.PRINT_PLACEMENT).stream()
-                .collect(Collectors.toMap(CustomizationOption::getCode, o -> o));
         List<String> placements = r.placements().stream().distinct().toList();
-        Set<String> sides = new HashSet<>();
-        for (String code : placements) {
-            CustomizationOption option = placementOptions.get(code);
-            if (option == null) {
-                throw new BadRequestException("UNKNOWN_PLACEMENT", "Unknown print placement " + code + ".");
-            }
-            JsonNode meta = metadata(option);
-            if (!sides.add(text(meta, "side"))) {
-                throw new BadRequestException("PLACEMENT_CONFLICT", "Choose one print placement per side.");
-            }
-            for (JsonNode excluded : meta.path("excludes")) {
-                if (placements.contains(excluded.stringValue())) {
-                    throw new BadRequestException("PLACEMENT_CONFLICT",
-                            option.getLabel() + " cannot be combined with " + excluded.stringValue() + ".");
-                }
-            }
-        }
+        Set<String> sides = rules.checkPlacements(placements);
 
         // Assets must belong to the customer.
         List<DesignAsset> owned = r.assetIds().isEmpty() ? List.of()
@@ -432,7 +405,7 @@ public class DesignServiceImpl implements DesignService {
         return new DesignResponse(d.getDesignCode(), d.getName(), d.getTshirtType(), d.getColorCode(), d.getSizeCode(),
                 placementList(d), readTree(d.getCanvasFront()), readTree(d.getCanvasBack()), readTree(d.getTextItems()),
                 d.isPremiumDesign(), mediaUrl(d.getPreviewFrontKey()), mediaUrl(d.getPreviewBackKey()), used,
-                d.getStatus().name(), d.isLocked(), d.getBaseProduct().getSlug(), d.getCreatedAt(), d.getUpdatedAt());
+                d.getStatus().name(), d.isLocked(), d.getBaseProduct().getSlug(), pricing.quote(d), d.getCreatedAt(), d.getUpdatedAt());
     }
 
     private DesignSummary toSummary(CustomDesign d, User owner) {

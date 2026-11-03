@@ -1,5 +1,6 @@
-/** Custom T-Shirt designer (Phase 9). Mirrors com.shop.dto.design. */
+import { PriceQuote } from './pricing.models';
 
+/** Custom T-Shirt designer (Phase 9). Mirrors com.shop.dto.design. */
 export type DesignSide = 'FRONT' | 'BACK';
 
 export interface TshirtType {
@@ -117,6 +118,7 @@ export interface Design {
   status: string;
   locked: boolean;
   productSlug: string;
+  price: PriceQuote | null;
   createdAt: string;
   updatedAt: string;
 }

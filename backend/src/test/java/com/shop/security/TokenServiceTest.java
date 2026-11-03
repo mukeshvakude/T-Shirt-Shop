@@ -98,6 +98,47 @@ class TokenServiceTest {
     }
 
     @Test
+    void replayRightAfterRotationWithUnusedSuccessorContinuesTheSession() {
+        stubSave();
+        stored("raw-1", clock.instant().minusSeconds(3), 99L, clock.instant().plus(Duration.ofDays(1)));
+        RefreshToken successor = successor(99L, null);
+
+        TokenService.Rotation rotation = service.rotate("raw-1", CLIENT);
+
+        assertThat(rotation.user()).isSameAs(user);
+        assertThat(rotation.refreshToken().value()).isNotEqualTo("raw-1");
+        assertThat(successor.getRevokedAt()).isEqualTo(clock.instant());
+        verify(repository, never()).revokeAllForUser(anyLong(), any());
+    }
+
+    @Test
+    void replayAfterTheGraceWindowIsTreatedAsTheft() {
+        stored("raw-1", clock.instant().minus(TokenService.REUSE_GRACE).minusSeconds(1), 99L,
+                clock.instant().plus(Duration.ofDays(1)));
+
+        assertThatThrownBy(() -> service.rotate("raw-1", CLIENT)).isInstanceOf(AuthException.class);
+        verify(repository).revokeAllForUser(7L, clock.instant());
+    }
+
+    @Test
+    void replayAfterTheSuccessorWasUsedIsTreatedAsTheft() {
+        stored("raw-1", clock.instant().minusSeconds(2), 99L, clock.instant().plus(Duration.ofDays(1)));
+        successor(99L, clock.instant().minusSeconds(1));
+
+        assertThatThrownBy(() -> service.rotate("raw-1", CLIENT)).isInstanceOf(AuthException.class);
+        verify(repository).revokeAllForUser(7L, clock.instant());
+    }
+
+    private RefreshToken successor(Long id, Instant revokedAt) {
+        RefreshToken next = new RefreshToken();
+        next.setUser(user);
+        next.setRevokedAt(revokedAt);
+        next.setExpiresAt(clock.instant().plus(Duration.ofDays(7)));
+        when(repository.findById(id)).thenReturn(Optional.of(next));
+        return next;
+    }
+
+    @Test
     void loggedOutTokenIsInvalidWithoutRevokingOtherSessions() {
         stored("raw-1", clock.instant().minusSeconds(5), null, clock.instant().plus(Duration.ofDays(1)));
 

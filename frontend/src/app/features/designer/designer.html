@@ -84,7 +84,9 @@
           <div class="chips">
             @for (t of o.tshirtTypes; track t.code) {
               <button type="button" class="chip-btn" [class.active]="type() === t.code" [attr.aria-pressed]="type() === t.code"
-                      [disabled]="locked()" (click)="chooseType(t.code)">{{ t.label }}</button>
+                      [disabled]="locked()" (click)="chooseType(t.code)">{{ t.label }}
+                @if (charge('TSHIRT_TYPE', t.code); as c) { <small class="extra">+{{ c | currency: 'INR' : 'symbol' : '1.0-0' }}</small> }
+              </button>
             }
           </div>
         </section>
@@ -107,17 +109,22 @@
           <div class="chips sizes">
             @for (s of o.sizes; track s.code) {
               <button type="button" class="chip-btn" [class.active]="size() === s.code" [attr.aria-pressed]="size() === s.code"
-                      [disabled]="locked() || !sizeEnabled(s.code)" (click)="chooseSize(s.code)">{{ s.code }}</button>
+                      [disabled]="locked() || !sizeEnabled(s.code)" (click)="chooseSize(s.code)">{{ s.code }}
+                @if (charge('SIZE', s.code); as c) { <small class="extra">+{{ c | currency: 'INR' : 'symbol' : '1.0-0' }}</small> }
+              </button>
             }
           </div>
         </section>
 
         <section>
           <h2><span>4</span>Print area <small>{{ side() === 'FRONT' ? 'Front' : 'Back' }}</small></h2>
+          <p class="fine top">Print charges apply only to sides with a design.</p>
           <div class="chips">
             @for (p of sideAreas(); track p.code) {
               <button type="button" class="chip-btn" [class.active]="area()?.code === p.code" [attr.aria-pressed]="area()?.code === p.code"
-                      [disabled]="locked()" (click)="chooseArea(p.code)">{{ p.label }}</button>
+                      [disabled]="locked()" (click)="chooseArea(p.code)">{{ p.label }}
+                @if (charge('PRINT_PLACEMENT', p.code); as c) { <small class="extra">+{{ c | currency: 'INR' : 'symbol' : '1.0-0' }}</small> }
+              </button>
             }
           </div>
         </section>
@@ -144,7 +151,9 @@
         </section>
 
         <section>
-          <h2><span>6</span>Text</h2>
+          <h2><span>6</span>Text
+            @if (charge('TEXT', 'CUSTOM_TEXT'); as c) { <small>+{{ c | currency: 'INR' : 'symbol' : '1.0-0' }} once</small> }
+          </h2>
           <button type="button" class="btn outline wide" (click)="addText()" [disabled]="locked() || !ready()">
             <span class="material-symbols-outlined">title</span>Add text
           </button>
@@ -183,13 +192,48 @@
           </label>
           <label class="check">
             <input type="checkbox" [checked]="premium()" [disabled]="locked()" (change)="premiumChanged($any($event.target).checked)" />
-            <span>Premium print <small>Richer colours that last longer wash after wash</small></span>
+            <span>Premium print
+              @if (charge('DESIGN', 'PREMIUM_DESIGN'); as c) { <em>+{{ c | currency: 'INR' : 'symbol' : '1.0-0' }}</em> }
+              <small>Richer colours that last longer wash after wash</small></span>
           </label>
-          <div class="price">
-            <span>T-Shirt from</span>
-            <strong>{{ typeInfo()?.basePrice | currency: 'INR' : 'symbol' : '1.0-0' }}</strong>
+          <div class="price-panel" [class.busy]="quoting()" aria-live="polite" aria-label="Price">
+            @if (quote(); as q) {
+              <div class="line">
+                <span>{{ typeInfo()?.label }} T-Shirt</span>
+                <span>
+                  @if (q.baseMrp > q.basePrice) { <s>{{ q.baseMrp | currency: 'INR' : 'symbol' : '1.0-2' }}</s> }
+                  {{ q.basePrice | currency: 'INR' : 'symbol' : '1.0-2' }}
+                </span>
+              </div>
+              @for (l of q.charges; track l.type + l.code) {
+                <div class="line"><span>{{ l.label }}</span><span>+{{ l.amount | currency: 'INR' : 'symbol' : '1.0-2' }}</span></div>
+              }
+              <div class="line unit"><span>Price per T-Shirt</span><span>{{ q.unitPrice | currency: 'INR' : 'symbol' : '1.0-2' }}</span></div>
+              <div class="qty-row">
+                <span>Quantity</span>
+                <div class="qty">
+                  <button type="button" (click)="setQuantity(quantity() - 1)" [disabled]="quantity() <= 1" aria-label="Decrease quantity">
+                    <span class="material-symbols-outlined">remove</span></button>
+                  <input type="number" min="1" [max]="maxQuantity()" [value]="quantity()" aria-label="Quantity"
+                         (change)="setQuantity(+$any($event.target).value)" />
+                  <button type="button" (click)="setQuantity(quantity() + 1)" [disabled]="quantity() >= maxQuantity()" aria-label="Increase quantity">
+                    <span class="material-symbols-outlined">add</span></button>
+                </div>
+              </div>
+              <div class="line total"><span>Total</span><strong>{{ q.subtotal | currency: 'INR' : 'symbol' : '1.0-2' }}</strong></div>
+              <p class="fine">
+                Inclusive of all taxes.
+                @if (q.shippingEstimate === 0) { Free shipping. } @else {
+                  Shipping {{ q.shippingEstimate | currency: 'INR' : 'symbol' : '1.0-0' }}; add
+                  {{ q.amountToFreeShipping | currency: 'INR' : 'symbol' : '1.0-0' }} more for free shipping.
+                }
+              </p>
+            } @else if (priceError(); as message) {
+              <p class="warn">{{ message }}</p>
+            } @else {
+              <p class="fine">Calculating price…</p>
+            }
           </div>
-          <p class="fine">Printing charges are added based on print areas and size. You will see the full price before you pay.</p>
           @if (!inStock()) {
             <p class="warn">This colour and size is out of stock.</p>
           }

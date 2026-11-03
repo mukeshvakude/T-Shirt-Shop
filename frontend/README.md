@@ -111,6 +111,15 @@ Replace them with real product photography (upload through the admin portal) bef
 
 Admins see all designs at `/admin/designs` and can download a ZIP for printing.
 
+## Dynamic pricing (Phase 10)
+
+- The designer's price panel shows the blank T-Shirt price, every extra charge, the price per
+  T-Shirt, a quantity selector, the total and a shipping hint. Style, size, print area and premium
+  options show their extra charge.
+- Every figure comes from `POST /api/pricing/design-estimate` (debounced, latest request wins).
+  The browser never calculates or sends prices.
+- Admins edit charges and shipping at `/admin/pricing`.
+
 ## Admin portal features (Phase 5)
 
 | Page | What it does |

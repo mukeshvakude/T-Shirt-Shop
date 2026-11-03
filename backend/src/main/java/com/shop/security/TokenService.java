@@ -1,6 +1,7 @@
 package com.shop.security;
 
 import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -33,6 +34,12 @@ import lombok.RequiredArgsConstructor;
 public class TokenService {
 
     private static final Logger log = LoggerFactory.getLogger(TokenService.class);
+
+    /**
+     * A rotated token replayed this soon after rotation, while its successor was never used, is
+     * treated as a lost response (page reloaded or closed during the refresh call), not theft.
+     */
+    static final Duration REUSE_GRACE = Duration.ofSeconds(10);
 
     private final JwtEncoder jwtEncoder;
     private final SecurityProperties properties;
@@ -80,6 +87,17 @@ public class TokenService {
         User user = current.getUser();
 
         if (current.getRevokedAt() != null) {
+            if (current.getReplacedBy() != null && current.getRevokedAt().isAfter(now.minus(REUSE_GRACE))) {
+                RefreshToken successor = refreshTokenRepository.findById(current.getReplacedBy()).orElse(null);
+                if (successor != null && successor.isActiveAt(now) && user.isEnabled()) {
+                    // The browser never stored the successor cookie: retire it and continue the session.
+                    Saved next = save(user, client);
+                    successor.setRevokedAt(now);
+                    log.info("Refresh token replayed within {} s of rotation for user {}; session continued",
+                            REUSE_GRACE.toSeconds(), user.getId());
+                    return new Rotation(user, next.token());
+                }
+            }
             if (current.getReplacedBy() != null) {
                 // A token that was already rotated is being replayed: likely stolen.
                 int revoked = refreshTokenRepository.revokeAllForUser(user.getId(), now);

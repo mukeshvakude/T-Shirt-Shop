@@ -147,6 +147,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin-designs/design-list').then((m) => m.DesignList),
       },
       {
+        path: 'pricing',
+        title: 'Pricing | Admin',
+        loadComponent: () => import('./features/admin-pricing/pricing-page').then((m) => m.PricingPage),
+      },
+      {
         path: 'inventory',
         title: 'Low stock | Admin',
         loadComponent: () => import('./features/admin-inventory/low-stock/low-stock').then((m) => m.LowStock),

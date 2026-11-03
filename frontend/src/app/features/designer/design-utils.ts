@@ -62,6 +62,11 @@ function samePath(src: string, origin: string): string {
   }
 }
 
+/** A text object with visible text (custom text is charged once per design). */
+export function isTextObject(o: Record<string, unknown>): boolean {
+  return TEXT_TYPES.has(String(o['type'] ?? '').toLowerCase()) && String(o['text'] ?? '').trim().length > 0;
+}
+
 export function hasObjects(json: CanvasJson | null | undefined): boolean {
   return !!json && Array.isArray(json.objects) && json.objects.length > 0;
 }

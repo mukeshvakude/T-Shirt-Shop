@@ -5,9 +5,10 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 9 of 19 complete (architecture, database, backend
+> **Status:** Phases 1 to 10 of 19 complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
-> home page, product listing and details, customer portal, custom T-Shirt designer). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> home page, product listing and details, customer portal, custom T-Shirt designer,
+> dynamic pricing). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 

@@ -12,11 +12,14 @@ import {
 } from '@angular/core';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Canvas, FabricImage, FabricObject, IText, Point } from 'fabric';
-import { firstValueFrom } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, firstValueFrom, of, switchMap, tap } from 'rxjs';
 
 import { DesignApi } from '../../core/api/design.api';
+import { apiErrorMessage } from '../../core/api/api-error';
+import { PricingApi } from '../../core/api/pricing.api';
 import { AuthService } from '../../core/auth/auth.service';
 import {
   CanvasJson,
@@ -27,6 +30,7 @@ import {
   DesignerOptions,
   PrintPlacement,
 } from '../../core/models/design.models';
+import { ChargeType, PriceEstimateRequest, PriceQuote, PricingInfo } from '../../core/models/pricing.models';
 import { NotifyService } from '../../core/notify.service';
 import { drawTintedShirt, loadImage, renderPreview } from './design-renderer';
 import {
@@ -37,6 +41,7 @@ import {
   clearDraft,
   colorAvailable,
   hasObjects,
+  isTextObject,
   isDark,
   isInStock,
   mockupUrl,
@@ -72,6 +77,7 @@ const FONT_CSS = 'designer-fonts';
 })
 export class Designer implements AfterViewInit {
   private readonly api = inject(DesignApi);
+  private readonly pricingApi = inject(PricingApi);
   protected readonly auth = inject(AuthService);
   private readonly notify = inject(NotifyService);
   private readonly route = inject(ActivatedRoute);
@@ -103,6 +109,11 @@ export class Designer implements AfterViewInit {
   protected readonly uploading = signal(false);
   protected readonly saving = signal(false);
   protected readonly dirty = signal(false);
+  protected readonly texts = signal<Record<DesignSide, number>>({ FRONT: 0, BACK: 0 });
+  protected readonly quantity = signal(1);
+  protected readonly pricing = signal<PricingInfo | null>(null);
+  protected readonly quoting = signal(false);
+  protected readonly priceError = signal<string | null>(null);
 
   protected readonly sides = SIDES;
   protected readonly typeInfo = computed(() => this.options()?.tshirtTypes.find((t) => t.code === this.type()) ?? null);
@@ -116,6 +127,46 @@ export class Designer implements AfterViewInit {
   protected readonly accept = computed(() => (this.options()?.limits.allowedTypes ?? ['image/png', 'image/jpeg']).join(','));
   protected readonly maxUploadMb = computed(() => Math.round((this.options()?.limits.maxUploadBytes ?? 5242880) / 1048576));
 
+  protected readonly maxQuantity = computed(() => this.pricing()?.maxQuantityPerItem ?? 20);
+
+  /** Everything that changes the price; the server calculates it (never the browser). */
+  protected readonly priceRequest = computed<PriceEstimateRequest | null>(() => {
+    if (!this.ready() || !this.type() || !this.color() || !this.size()) return null;
+    const counts = this.counts();
+    const areas = this.areas();
+    const texts = this.texts();
+    return {
+      tshirtType: this.type(),
+      colorCode: this.color(),
+      sizeCode: this.size(),
+      placements: SIDES.filter((s) => counts[s] > 0).map((s) => areas[s]),
+      hasText: texts.FRONT + texts.BACK > 0,
+      premiumPrint: this.premium(),
+      quantity: this.quantity(),
+    };
+  });
+
+  protected readonly quote = toSignal<PriceQuote | null>(
+    toObservable(this.priceRequest).pipe(
+      debounceTime(200),
+      distinctUntilChanged((a, b) => JSON.stringify(a) === JSON.stringify(b)),
+      tap((request) => this.quoting.set(!!request)),
+      switchMap((request) =>
+        !request
+          ? of(null)
+          : this.pricingApi.estimate(request).pipe(
+              tap(() => this.priceError.set(null)),
+              catchError((error: unknown) => {
+                this.priceError.set(apiErrorMessage(error, 'The price could not be calculated. Please try again.'));
+                return of(null);
+              }),
+            ),
+      ),
+      tap(() => this.quoting.set(false)),
+    ),
+    { initialValue: null },
+  );
+
   private canvas?: Canvas;
   private stored: Record<DesignSide, CanvasJson | null> = { FRONT: null, BACK: null };
   private draftTimer?: ReturnType<typeof setTimeout>;
@@ -127,6 +178,7 @@ export class Designer implements AfterViewInit {
       if (this.dirty()) this.saveDraft();
       void this.canvas?.dispose();
     });
+    this.pricingApi.info().subscribe({ next: (info) => this.pricing.set(info), error: () => this.pricing.set(null) });
     try {
       const options = await firstValueFrom(this.api.options());
       this.options.set(options);
@@ -348,6 +400,16 @@ export class Designer implements AfterViewInit {
     this.changed();
   }
 
+  /** Extra charge for a choice (0 when there is none), for the "+ INR" hints. */
+  protected charge(type: ChargeType, code: string): number {
+    return this.pricing()?.charges.find((c) => c.type === type && c.code === code)?.amount ?? 0;
+  }
+
+  protected setQuantity(value: number): void {
+    const q = Math.round(Number(value));
+    this.quantity.set(Number.isFinite(q) ? Math.min(this.maxQuantity(), Math.max(1, q)) : 1);
+  }
+
   protected colorEnabled(code: string): boolean {
     const o = this.options();
     return !!o && colorAvailable(o, this.type(), code);
@@ -537,6 +599,15 @@ export class Designer implements AfterViewInit {
     this.changed();
   }
 
+  /** Keep the latest change when the tab is reloaded or closed before the delayed draft save. */
+  @HostListener('window:pagehide')
+  protected onPageHide(): void {
+    if (this.dirty()) {
+      clearTimeout(this.draftTimer);
+      this.saveDraft();
+    }
+  }
+
   @HostListener('document:keydown', ['$event'])
   protected onKey(event: KeyboardEvent): void {
     if (event.key !== 'Delete' && event.key !== 'Backspace') return;
@@ -575,6 +646,10 @@ export class Designer implements AfterViewInit {
     counts[side] = live;
     counts[other] = this.stored[other]?.objects?.length ?? 0;
     this.counts.set(counts);
+    const texts = { FRONT: 0, BACK: 0 };
+    texts[side] = this.canvas?.getObjects().filter((o) => o instanceof IText && (o.text ?? '').trim()).length ?? 0;
+    texts[other] = (this.stored[other]?.objects ?? []).filter(isTextObject).length;
+    this.texts.set(texts);
   }
 
   private changed(): void {
