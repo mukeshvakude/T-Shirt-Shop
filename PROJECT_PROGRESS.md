@@ -28,7 +28,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Notifications (order confirmed, shipped, out for delivery, delivered, cancelled, refund, password reset; shop alerts for new orders and contact messages)
 - [x] Testing (91% backend line coverage, browser smoke test, payment test checklist, 0 npm audit findings)
 - [x] Deployment (deployment guide, Nginx with HTTPS and security headers, systemd service, backups, monitoring, production start-up checks; the shop is not hosted yet, B11)
-- [ ] GitHub Final Update
+- [x] GitHub Final Update (all 19 phases pushed to `DEV`; `main` untouched. Open the pull request DEV → main at https://github.com/mukeshvakude/T-Shirt-Shop/compare/main...DEV and merge after review)
 
 ## Phase 1 findings: existing repository
 
@@ -247,4 +247,4 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 16 | Admin portal: dashboard, orders, payments and refunds, customers, contact inbox (87 unit + 86 integration backend tests, 96 frontend tests, admin browser run) | `648a93f` |
 | 2026-11-04 | 17 | Notifications: order, shipping, cancellation, refund and password reset emails, shop alerts, Indian digit grouping (90 unit + 90 integration backend tests) | `df281e8` |
 | 2026-11-04 | 18 | Testing: JaCoCo coverage (91% instructions, 72% branches, 92% lines), Jackson missing-boolean fix, browser smoke test and cleanup scripts, testing guide and payment test checklist (90 unit + 91 integration backend tests, 96 frontend tests, 11/11 smoke steps, 0 npm audit findings) | `e02fe45` |
-| 2026-11-04 | 19 | Production deployment: DEPLOYMENT.md, Nginx with HTTPS and security headers, systemd unit, backups, release build, production start-up checks (93 unit + 91 integration backend tests, 96 frontend tests, production build, prod-profile start checked) | see git log on `DEV` |
+| 2026-11-04 | 19 | Production deployment: DEPLOYMENT.md, Nginx with HTTPS and security headers, systemd unit, backups, release build, production start-up checks (93 unit + 91 integration backend tests, 96 frontend tests, production build, prod-profile start checked) | `50096a2` |
