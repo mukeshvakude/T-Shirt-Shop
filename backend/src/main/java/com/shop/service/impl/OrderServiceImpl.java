@@ -72,6 +72,7 @@ public class OrderServiceImpl implements OrderService {
     private final AppSettingService settings;
     private final JsonMapper json;
     private final Clock clock;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     // ------------------------------------------------------------------ reading
 
@@ -144,6 +145,9 @@ public class OrderServiceImpl implements OrderService {
             case DELIVERED -> "Delivered";
             default -> null;
         }, adminId, now);
+        if (to == Order.Status.SHIPPED || to == Order.Status.OUT_FOR_DELIVERY || to == Order.Status.DELIVERED) {
+            events.publishEvent(com.shop.notification.OrderEvent.of(order.getOrderNumber(), com.shop.notification.OrderEvent.Type.valueOf(to.name())));
+        }
         log.info("Order {}: {} -> {} by admin {}", order.getOrderNumber(), from, to, adminId);
         return toResponse(order);
     }

@@ -31,6 +31,8 @@ app:
       full-name: Test Admin
   jobs:
     enabled: false
+  notifications:
+    async: false
   storage:
     local-dir: ./target/test-uploads
   # Fake test-mode key so the online payment path can be exercised; never a real credential.

@@ -88,6 +88,7 @@ public class CheckoutServiceImpl implements CheckoutService {
     private final AppProperties properties;
     private final JsonMapper json;
     private final Clock clock;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     // ------------------------------------------------------------------ summary
 
@@ -202,6 +203,9 @@ public class CheckoutServiceImpl implements CheckoutService {
         cartRow.getItems().clear();
         cartRow.setCouponCode(null);
         carts.saveAndFlush(cartRow);
+        if (cod) {
+            events.publishEvent(com.shop.notification.OrderEvent.of(order.getOrderNumber(), com.shop.notification.OrderEvent.Type.CONFIRMED));
+        }
         log.info("Order {} placed by user {}: {} {} via {}", order.getOrderNumber(), userId, order.getCurrency(),
                 order.getGrandTotal(), method);
         return orderService.toResponse(order);

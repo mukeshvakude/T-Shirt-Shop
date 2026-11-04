@@ -3,7 +3,6 @@ package com.shop.service.impl;
 import java.awt.Color;
 import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
-import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -187,10 +186,7 @@ public class InvoicePdf {
     }
 
     static String money(BigDecimal amount) {
-        NumberFormat f = NumberFormat.getNumberInstance(Locale.forLanguageTag("en-IN"));
-        f.setMinimumFractionDigits(2);
-        f.setMaximumFractionDigits(2);
-        return (amount.signum() < 0 ? "- INR " : "INR ") + f.format(amount.abs());
+        return (amount.signum() < 0 ? "- INR " : "INR ") + com.shop.util.MoneyUtils.groupIndian(amount.abs(), true);
     }
 
     private static String date(Instant instant) {

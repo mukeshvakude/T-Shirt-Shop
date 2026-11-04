@@ -47,6 +47,15 @@ class MoneyUtilsTest {
     }
 
     @Test
+    void groupsDigitsTheIndianWay() {
+        assertThat(MoneyUtils.groupIndian(new BigDecimal("125000"), false)).isEqualTo("1,25,000");
+        assertThat(MoneyUtils.groupIndian(new BigDecimal("12345678.5"), false)).isEqualTo("1,23,45,678.50");
+        assertThat(MoneyUtils.groupIndian(new BigDecimal("1047"), true)).isEqualTo("1,047.00");
+        assertThat(MoneyUtils.groupIndian(new BigDecimal("999"), false)).isEqualTo("999");
+        assertThat(MoneyUtils.groupIndian(new BigDecimal("-82.8"), false)).isEqualTo("-82.80");
+    }
+
+    @Test
     void normalizesToTwoDecimals() {
         assertThat(MoneyUtils.normalize(new BigDecimal("12.345")).toPlainString()).isEqualTo("12.35");
         assertThat(MoneyUtils.normalize(new BigDecimal("12")).toPlainString()).isEqualTo("12.00");

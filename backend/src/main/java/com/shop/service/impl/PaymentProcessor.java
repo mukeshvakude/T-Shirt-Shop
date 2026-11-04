@@ -56,6 +56,7 @@ public class PaymentProcessor {
     private final OrderLifecycle lifecycle;
     private final RazorpayGateway gateway;
     private final JsonMapper json;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     public Result apply(Order order, Payment attempt, GatewayPayment gp, String source, Instant now) {
         if ("failed".equals(gp.status())) {
@@ -133,6 +134,7 @@ public class PaymentProcessor {
         order.setConfirmedAt(now);
         order.setReservationExpiresAt(null);
         lifecycle.record(order, Order.Status.PENDING.name(), "Paid online (Razorpay payment " + gp.id() + ")", null, now);
+        events.publishEvent(com.shop.notification.OrderEvent.of(order.getOrderNumber(), com.shop.notification.OrderEvent.Type.CONFIRMED));
         log.info("Order {} confirmed by {} payment {}", order.getOrderNumber(), source, gp.id());
         return Result.CONFIRMED;
     }
@@ -160,6 +162,8 @@ public class PaymentProcessor {
                 payment.setStatus(Order.PaymentStatus.REFUNDED);
                 order.setPaymentStatus(Order.PaymentStatus.REFUNDED);
                 payment.setNeedsReview(false);
+                events.publishEvent(new com.shop.notification.OrderEvent(order.getOrderNumber(),
+                        com.shop.notification.OrderEvent.Type.REFUND_STARTED, amount));
             }
             lifecycle.record(order, order.getOrderStatus().name(), "Refund of ₹" + amount.toPlainString() + " started ("
                     + refund.id() + "): " + reason, null, now);

@@ -46,4 +46,30 @@ public final class MoneyUtils {
     public static BigDecimal percentOf(BigDecimal amount, BigDecimal percent) {
         return normalize(amount.multiply(percent).divide(HUNDRED, SCALE + 2, RoundingMode.HALF_UP));
     }
+
+    /**
+     * Indian digit grouping without a currency sign: 125000 to "1,25,000", 1047.5 to "1,047.50".
+     * {@code alwaysPaise} prints ".00" for whole amounts too (invoices); otherwise whole rupees have no decimals.
+     */
+    public static String groupIndian(BigDecimal amount, boolean alwaysPaise) {
+        BigDecimal value = amount.abs().setScale(SCALE, RoundingMode.HALF_UP);
+        boolean whole = value.stripTrailingZeros().scale() <= 0;
+        String plain = value.toPlainString();
+        String integer = plain.substring(0, plain.indexOf('.'));
+        String fraction = plain.substring(plain.indexOf('.'));
+        StringBuilder out = new StringBuilder();
+        int n = integer.length();
+        if (n <= 3) {
+            out.append(integer);
+        } else {
+            String head = integer.substring(0, n - 3);
+            for (int i = 0; i < head.length(); i++) {
+                if (i > 0 && (head.length() - i) % 2 == 0) out.append(',');
+                out.append(head.charAt(i));
+            }
+            out.append(',').append(integer, n - 3, n);
+        }
+        if (alwaysPaise || !whole) out.append(fraction);
+        return (amount.signum() < 0 ? "-" : "") + out;
+    }
 }

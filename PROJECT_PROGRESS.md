@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-03 (Phase 16)
+Last updated: 2026-11-04 (Phase 17)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -25,7 +25,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Webhooks (signed, stored once per event id, retry-safe; reconciliation job every 5 minutes)
 - [x] Order Management (order history, details with delivery progress and tracking, customer cancellation with stock return and refunds, admin status API, PDF invoices)
 - [x] Admin Dashboard (dashboard, orders with status actions, payments with refunds and review, customers with blocking, contact inbox)
-- [ ] Notifications
+- [x] Notifications (order confirmed, shipped, out for delivery, delivered, cancelled, refund, password reset; shop alerts for new orders and contact messages)
 - [ ] Testing
 - [ ] Deployment
 - [ ] GitHub Final Update
@@ -69,7 +69,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 14 | Payment verification and webhooks | Signature verify, gateway fetch, webhook idempotency, late payment refunds, reconciliation | Done |
 | 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Done (admin screens follow in Phase 16) |
 | 16 | Admin portal | Dashboard metrics, orders, payments, refunds, customers, customization (catalog pages delivered in Phase 5) | Done |
-| 17 | Notifications | Order confirmation, status update and password reset emails | Pending |
+| 17 | Notifications | Order confirmation, status update and password reset emails | Done (sending needs SMTP, B6) |
 | 18 | Testing | Backend unit and slice tests, frontend tests, payment test checklist, bug fixes | Pending |
 | 19 | Production deployment | Prod builds, Nginx + HTTPS, env vars, backups, logging, monitoring, live-mode guide | Pending |
 
@@ -83,7 +83,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~B4~~ | Resolved 2026-11-02: portable MySQL 8.4.13 LTS on 127.0.0.1:3306, databases `tshirt_shop` and `tshirt_shop_test`, user `tshirt_app` | - | Not a Windows service. For autostart at logon, copy `C:\Users\ADMIN\tools\start-mysql-hidden.vbs` into the Startup folder (Win+R, then `shell:startup`). Otherwise run `start-mysql.cmd` after a reboot |
 | B5 | Razorpay test keys | Now (Phase 13 is built) | Create test-mode Key ID, Key Secret and Webhook Secret in the Razorpay Dashboard and put them in the local `.env` (`RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`), then restart the backend. Never paste the secret into chat or commit it |
 | B10 | Settlement bank account | Before live payments | Razorpay pays out to the bank account verified in the Razorpay Dashboard (Account & Settings, Bank account details), not to an address set in the code. On 2026-11-03 the owner named a PhonePe UPI ID for payouts: add the bank account linked to that UPI ID in the dashboard during KYC. Test-mode payments never move real money |
-| B6 | SMTP credentials | Phase 17 | Provide a mail account (for example Gmail app password or a transactional provider) via `.env`. Until then password reset links are only logged (dev) |
+| B6 | SMTP credentials | Now (Phase 17 is built) | Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` and `MAIL_FROM` in `.env` (for example a Gmail app password, Zoho Mail, Amazon SES or Brevo SMTP), then restart. Until then emails are only logged as "not sent". Set `BUSINESS_EMAIL` to receive new-order and contact alerts |
 | B9 | Admin login email | Before launch | The local `.env` uses `admin@tshirtshop.local` with a generated password (copy kept in `C:\Users\ADMIN\tools\mysql-credentials.txt`). For production, set your real address and a new password |
 | B7 | Cloudinary account (optional) | Phase 19 | Only if cloud storage is preferred over secure local storage. Phase 9 uses secure local storage for artwork and previews |
 | B8 | Business content | Before launch | Fill in `frontend/src/app/core/config/site.config.ts`: brand name, support email and phone, address, business hours, social links (empty values are hidden, nothing is invented). Replace the sample product illustrations with real photos. Have the Privacy, Terms and Returns texts reviewed for your business |
@@ -180,6 +180,10 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Admin payments: every attempt with its full gateway and audit log; a paid online payment can be refunded in full with a reason (for returns after delivery); review flags are cleared with an audit entry.
 - Admin customers: search, orders and spend, recent orders; blocking an account signs the customer out everywhere and stops sign-in (admins cannot be blocked here).
 - Contact inbox: New / Read / Replied / Closed, reply by email link.
+- Phase 17 emails: order confirmed (Cash on Delivery at placement, online when paid), shipped (courier and tracking), out for delivery, delivered, cancelled (mentions the refund when there is one, so a cancel-with-refund sends one email), refund started (for example a refund after delivery), and password reset links. The shop gets a "new order" and a "contact form" email at `BUSINESS_EMAIL` when set.
+- Emails are sent after the database transaction commits, on a small background pool, so a rolled-back action never emails and a slow mail server never slows the shop. Failures are logged and never break the action. Logs mask addresses (n***@example.com) and never contain email content.
+- Templates are inline-styled HTML with a plain-text part; all values are HTML-escaped. Amounts use Indian digit grouping (₹1,25,000), also on invoices.
+- The mail health check is switched off so an unreachable mail server does not mark the shop as down.
 - A personal UPI ID is not used as a payment destination in the code: payments go through Razorpay, which settles to the merchant bank account (B10).
 - "First order" coupons such as WELCOME10 rely on the per-customer limit of 1; there is no separate "no previous orders" rule.
 - Refresh-token reuse detection now allows a 10-second grace window: if a rotated token is replayed while its successor was never used (page reloaded during a refresh call), the session continues with a new token. Any other replay still revokes all sessions.
@@ -194,7 +198,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~T4~~ | Mermaid diagrams not render-checked | Resolved: all three diagrams render with mermaid-cli 11 |
 | T5 | A disabled account keeps a valid access token for up to 15 minutes | Accepted: refresh is blocked immediately. Revisit if instant lockout is needed |
 | T6 | Rate limits are in memory per instance | Fine for one server. Add proxy limits if scaling out (Phase 19) |
-| T7 | Password reset links are not emailed yet | Phase 17. Dev profile logs the link |
+| ~~T7~~ | Password reset links were not emailed | Resolved in Phase 17 (needs SMTP settings, B6) |
 | ~~T8~~ | Sample products pointed at `/assets/products/*.jpg` images that did not exist | Resolved in Phase 6: generated sample illustrations for every sample product and colour. Replace with real photos before launch |
 | T9 | Text search uses LIKE, which is fine for a small catalog | Switch to the existing MySQL FULLTEXT index if the catalog grows into the thousands |
 | T10 | Uploaded images are stored as uploaded (not re-encoded) | Safe because content is validated and served with nosniff from random URLs. Re-encoding/thumbnails can come with Cloudinary in Phase 9 or 19 |
@@ -213,7 +217,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | T27 | Invoices show GST-inclusive prices without a tax breakdown per rate | Add HSN codes and CGST/SGST/IGST split if the owner's accountant requires it |
 | ~~T25~~ | Flagged payments had no admin screen | Resolved in Phase 16 (Payments, "Needs review") |
 | T28 | Coupons are managed in the database only (no admin page) | Add an admin coupons page if the owner wants to create offers without SQL |
-| T21 | Order confirmation emails are not sent yet | Phase 17 (notifications) |
+| ~~T21~~ | Order emails were not sent | Resolved in Phase 17 (needs SMTP settings, B6) |
 | T22 | Address JSON must include `makeDefault`: Jackson 3 rejects missing primitive booleans by default | Clients send it; consider `Boolean` fields or relaxing FAIL_ON_NULL_FOR_PRIMITIVES in Phase 18 |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
 
@@ -237,4 +241,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 13 | Razorpay integration: create order, Standard Checkout, signature verification, retry, failure reports, pay-after-hold handling (87 unit + 71 integration backend tests, 92 frontend tests) | `d749622` |
 | 2026-11-03 | 14 | Payment verification and webhooks: gateway re-check, capture, signed idempotent webhooks, automatic refunds, reconciliation job (87 unit + 77 integration backend tests, 92 frontend tests, live Razorpay test-mode checks) | `139860f` |
 | 2026-11-03 | 15 | Order management: history, tracking, cancellation with stock return and refunds, admin status API, cash collection, PDF invoices (87 unit + 82 integration backend tests, 95 frontend tests, orders browser run) | `d943020` |
-| 2026-11-03 | 16 | Admin portal: dashboard, orders, payments and refunds, customers, contact inbox (87 unit + 86 integration backend tests, 96 frontend tests, admin browser run) | see git log on `DEV` |
+| 2026-11-03 | 16 | Admin portal: dashboard, orders, payments and refunds, customers, contact inbox (87 unit + 86 integration backend tests, 96 frontend tests, admin browser run) | `648a93f` |
+| 2026-11-04 | 17 | Notifications: order, shipping, cancellation, refund and password reset emails, shop alerts, Indian digit grouping (90 unit + 90 integration backend tests) | see git log on `DEV` |

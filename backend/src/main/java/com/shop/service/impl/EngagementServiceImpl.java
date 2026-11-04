@@ -46,6 +46,7 @@ public class EngagementServiceImpl implements EngagementService {
     private final RateLimiter rateLimiter;
     private final SecurityProperties security;
     private final Clock clock;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     @Override
     @Transactional
@@ -90,6 +91,8 @@ public class EngagementServiceImpl implements EngagementService {
         message.setUserAgent(client.userAgent());
         contactMessages.save(message);
         log.info("Contact message {} received", message.getId());
+        events.publishEvent(new com.shop.notification.ContactReceivedEvent(message.getName(), message.getEmail(), message.getPhone(),
+                message.getSubject(), message.getMessage()));
     }
 
     @Override

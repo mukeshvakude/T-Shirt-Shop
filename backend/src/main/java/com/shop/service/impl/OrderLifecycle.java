@@ -32,6 +32,7 @@ public class OrderLifecycle {
     private final OrderStatusHistoryRepository history;
     private final CouponRepository coupons;
     private final CouponRedemptionRepository redemptions;
+    private final org.springframework.context.ApplicationEventPublisher events;
 
     /** Cancels the order. Payment status is left to the caller (cancelled, failed or refunded). */
     public void cancel(Order order, String reason, Long changedBy, Instant now) {
@@ -59,6 +60,7 @@ public class OrderLifecycle {
             }
         }
         record(order, from, reason, changedBy, now);
+        events.publishEvent(com.shop.notification.OrderEvent.of(order.getOrderNumber(), com.shop.notification.OrderEvent.Type.CANCELLED));
     }
 
     /** Writes a history entry; {@code from} equal to the current status records a note without a status change. */

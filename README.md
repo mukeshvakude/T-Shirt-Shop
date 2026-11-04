@@ -5,13 +5,13 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 16 of 19 complete (architecture, database, backend
+> **Status:** Phases 1 to 17 of 19 complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
 > home page, product listing and details, customer portal, custom T-Shirt designer,
 > dynamic pricing, shopping cart, checkout with Cash on Delivery, Razorpay payments
 > with verification, webhooks, automatic refunds and reconciliation, order management with
 > tracking, cancellation and PDF invoices, and the admin portal with dashboard, orders,
-> payments, customers and messages). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> payments, customers and messages, and email notifications). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -147,6 +147,19 @@ The Key Secret and Webhook Secret stay on the backend and are never sent to Angu
 Where the money goes: Razorpay settles payments to the bank account verified in your Razorpay
 account (Account & Settings, Bank account details). It is not set in this code. Live mode needs
 completed KYC and live keys (`rzp_live_...`).
+
+## Email (notifications)
+
+Set these in `.env` and restart the backend; without them emails are only logged as "not sent":
+
+```
+MAIL_HOST=smtp.gmail.com        # or your provider's SMTP host
+MAIL_PORT=587
+MAIL_USERNAME=you@yourdomain.com
+MAIL_PASSWORD=app-password       # never commit it
+MAIL_FROM=orders@yourdomain.com
+BUSINESS_EMAIL=you@yourdomain.com   # receives new-order and contact alerts
+```
 
 ## Environment variables
 
