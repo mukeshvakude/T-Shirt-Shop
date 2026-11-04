@@ -124,3 +124,14 @@ export const STATUS_LABELS: Record<string, string> = {
   CREATED: 'Created', SUCCESS: 'Paid', FAILED: 'Failed', REFUNDED: 'Refunded',
   NEW: 'New', READ: 'Read', REPLIED: 'Replied', CLOSED: 'Closed',
 };
+
+/** WhatsApp messages the admin can send with one click from their own WhatsApp (nothing is sent by the server). */
+export interface AdminWhatsAppLinks {
+  /** Customer number with country code, or null when the order phone is not a valid mobile number. */
+  phone: string | null;
+  /** The customer asked for this order's updates on WhatsApp. */
+  optedIn: boolean;
+  /** Updates are also sent automatically through the WhatsApp Cloud API. */
+  automatic: boolean;
+  messages: { type: string; label: string; text: string; url: string }[];
+}

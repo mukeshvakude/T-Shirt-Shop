@@ -1,6 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 
@@ -12,7 +13,7 @@ import { PASSWORD_VALIDATORS, passwordsMatch } from '../../auth/register/registe
 
 @Component({
   selector: 'app-account-profile',
-  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule],
+  imports: [ReactiveFormsModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatCheckboxModule],
   templateUrl: './account-profile.html',
   styleUrls: ['../account-pages.scss', './account-profile.scss'],
 })
@@ -30,6 +31,7 @@ export class AccountProfile {
   protected readonly details = this.fb.group({
     fullName: [this.user()?.fullName ?? '', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
     phone: [this.user()?.phone ?? '', [Validators.pattern(/^[6-9]\d{9}$/)]],
+    whatsappOptIn: [!!this.user()?.whatsappOptIn],
   });
 
   protected readonly email = this.fb.group({
@@ -53,10 +55,10 @@ export class AccountProfile {
     }
     const v = this.details.getRawValue();
     this.savingDetails.set(true);
-    this.api.updateProfile(v.fullName.trim(), v.phone.trim() || null).subscribe({
+    this.api.updateProfile(v.fullName.trim(), v.phone.trim() || null, v.whatsappOptIn).subscribe({
       next: (user) => {
         this.auth.updateUser(user);
-        this.details.reset({ fullName: user.fullName, phone: user.phone ?? '' });
+        this.details.reset({ fullName: user.fullName, phone: user.phone ?? '', whatsappOptIn: !!user.whatsappOptIn });
         this.savingDetails.set(false);
         this.notify.success('Your details were saved.');
       },

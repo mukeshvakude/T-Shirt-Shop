@@ -13,7 +13,7 @@ function order(patch: Partial<OrderDetail> = {}): OrderDetail {
     orderNumber: 'TS-20261103-123456', status: 'SHIPPED', paymentStatus: 'PENDING', paymentMethod: 'COD',
     placedAt: '2026-11-03T10:00:00Z', reservationExpiresAt: null, awaitingPayment: false, items: [], itemsTotal: 998,
     customizationTotal: 0, shipping: 49, discount: 0, couponCode: null, total: 1047, currency: 'INR',
-    contact: { name: 'Isha', email: 'i@example.com', phone: '9876543210' },
+    contact: { name: 'Isha', email: 'i@example.com', phone: '9876543210', whatsappUpdates: false },
     shippingAddress: { fullName: 'Isha', phone: '9876543210', line1: '7 Hill Road', line2: null, landmark: null, city: 'Mumbai', state: 'Maharashtra', pincode: '400050' },
     note: null, cancelReason: null,
     history: [

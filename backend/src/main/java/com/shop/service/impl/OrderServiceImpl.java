@@ -197,7 +197,7 @@ public class OrderServiceImpl implements OrderService {
                 o.getPaymentMethod().name(), o.getPlacedAt(), o.getReservationExpiresAt(), awaitingPayment(o), items, o.getSubtotal(),
                 o.getCustomizationTotal(), o.getShippingCharge(), o.getDiscountTotal(), o.getCouponCode(),
                 o.getGrandTotal(), o.getCurrency(),
-                new OrderResponse.Contact(o.getContactName(), o.getContactEmail(), o.getContactPhone()), address,
+                new OrderResponse.Contact(o.getContactName(), o.getContactEmail(), o.getContactPhone(), o.isWhatsappUpdates()), address,
                 o.getCustomerNote(), o.getCancelReason(), entries, o.getConfirmedAt(), o.getShippedAt(), o.getDeliveredAt(),
                 o.getCancelledAt(), o.getCourierName(), o.getTrackingNumber(), canCancel(o), invoiceAvailable(o));
     }

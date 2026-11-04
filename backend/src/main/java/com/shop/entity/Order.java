@@ -86,6 +86,9 @@ public class Order extends BaseEntity {
     @Column(name = "contact_phone", nullable = false, length = 15)
     private String contactPhone;
 
+    @Column(name = "whatsapp_updates", nullable = false)
+    private boolean whatsappUpdates;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "shipping_address", nullable = false, columnDefinition = "json")
     private String shippingAddress;

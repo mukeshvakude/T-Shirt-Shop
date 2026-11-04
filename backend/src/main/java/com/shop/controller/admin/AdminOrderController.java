@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.shop.dto.order.AdminOrderStatusRequest;
 import com.shop.dto.order.OrderResponse;
+import com.shop.notification.WhatsAppLinks;
 import com.shop.service.OrderService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,13 @@ public class AdminOrderController {
     private static final String NUMBER = "^TS-[0-9]{8}-[0-9]{6}$";
 
     private final OrderService orders;
+    private final WhatsAppLinks whatsApp;
+
+    @GetMapping("/{orderNumber}/whatsapp")
+    @Operation(summary = "One-click WhatsApp messages (wa.me links with the text typed) for the order's current state")
+    public WhatsAppLinks.OrderLinks whatsapp(@PathVariable @Pattern(regexp = NUMBER) String orderNumber) {
+        return whatsApp.forOrder(orderNumber);
+    }
 
     @PatchMapping("/{orderNumber}/status")
     @Operation(summary = "Move an order to Processing, Shipped, Out for delivery, Delivered, or cancel it")

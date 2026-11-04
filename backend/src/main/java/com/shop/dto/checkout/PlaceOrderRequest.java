@@ -25,7 +25,9 @@ public record PlaceOrderRequest(
         boolean saveAddress,
         @NotBlank @Pattern(regexp = "RAZORPAY|COD") String paymentMethod,
         @Size(max = 500) String note,
-        @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal expectedTotal) {
+        @NotNull @DecimalMin("0.00") @Digits(integer = 10, fraction = 2) BigDecimal expectedTotal,
+        /** Send this order's updates on WhatsApp to the contact phone (also remembered for next time). */
+        boolean whatsappUpdates) {
 
     public record Contact(
             @NotBlank @Size(min = 2, max = 120) String name,

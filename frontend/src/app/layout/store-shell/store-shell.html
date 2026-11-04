@@ -99,6 +99,13 @@
   <router-outlet />
 </main>
 
+@if (whatsappLink(); as wa) {
+  <a class="whatsapp-fab" [href]="wa" target="_blank" rel="noopener" aria-label="Chat with us on WhatsApp (opens WhatsApp)">
+    <span class="material-symbols-outlined" aria-hidden="true">chat</span>
+    <span class="label">WhatsApp us</span>
+  </a>
+}
+
 <footer class="footer">
   <div class="footer-grid">
     <div class="brand-col">

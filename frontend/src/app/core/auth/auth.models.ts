@@ -5,6 +5,8 @@ export interface AuthUser {
   email: string;
   fullName: string;
   phone?: string;
+  /** Order updates on WhatsApp (also the default for the checkout checkbox). */
+  whatsappOptIn?: boolean;
   emailVerified: boolean;
   roles: Role[];
   createdAt: string;

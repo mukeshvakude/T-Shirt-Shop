@@ -72,6 +72,8 @@ export class CheckoutPage implements OnInit {
 
   protected readonly payment = this.fb.control<PaymentMethod | ''>('', Validators.required);
   protected readonly note = this.fb.control('', Validators.maxLength(500));
+  /** Order updates on WhatsApp to the contact mobile; ticked when the customer chose it before. */
+  protected readonly whatsapp = this.fb.control(false);
 
   constructor() {
     // The receiver defaults to the customer: copy name and phone until the address fields are edited.
@@ -113,6 +115,7 @@ export class CheckoutPage implements OnInit {
 
   private prefill(s: CheckoutSummary): void {
     this.contact.patchValue({ name: s.contact.name ?? '', email: s.contact.email ?? '', phone: s.contact.phone ?? '' });
+    this.whatsapp.setValue(!!s.contact.whatsappOptIn);
     const preferred = s.addresses.find((a) => a.isDefault) ?? s.addresses[0];
     if (preferred) {
       this.addressMode.set('saved');
@@ -170,6 +173,7 @@ export class CheckoutPage implements OnInit {
       paymentMethod: this.payment.value,
       note: this.note.value.trim() || null,
       expectedTotal: s.totals.total,
+      whatsappUpdates: this.whatsapp.value,
     };
     this.placing.set(true);
     try {

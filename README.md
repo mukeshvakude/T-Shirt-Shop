@@ -151,7 +151,8 @@ completed KYC and live keys (`rzp_live_...`).
 
 ## Email (notifications)
 
-Set these in `.env` and restart the backend; without them emails are only logged as "not sent":
+Set these in `.env` and restart the backend; without them emails are only logged as "not sent".
+Step-by-step Gmail guide: [docs/EMAIL_SETUP.md](docs/EMAIL_SETUP.md).
 
 ```
 MAIL_HOST=smtp.gmail.com        # or your provider's SMTP host
@@ -161,6 +162,13 @@ MAIL_PASSWORD=app-password       # never commit it
 MAIL_FROM=orders@yourdomain.com
 BUSINESS_EMAIL=you@yourdomain.com   # receives new-order and contact alerts
 ```
+
+## WhatsApp
+
+A "WhatsApp us" chat button, customer opt-in for order updates (checkout and profile), one-click
+"Send on WhatsApp" messages on the admin order page, and optional automatic updates through the Meta WhatsApp
+Cloud API. Set `WHATSAPP_CHAT_NUMBER` in `.env` for the button; see [docs/WHATSAPP.md](docs/WHATSAPP.md) for
+automatic messages and the template texts.
 
 ## Environment variables
 

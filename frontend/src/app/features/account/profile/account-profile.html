@@ -21,6 +21,10 @@
         <mat-error>Enter a 10-digit mobile number</mat-error>
       }
     </mat-form-field>
+    <div class="full whatsapp">
+      <mat-checkbox formControlName="whatsappOptIn">Send my order updates on WhatsApp</mat-checkbox>
+      <small>Sent to the mobile number you give at checkout. You can switch this off at any time.</small>
+    </div>
     <div class="actions">
       <button mat-flat-button type="submit" [disabled]="savingDetails() || details.pristine">
         {{ savingDetails() ? 'Saving…' : 'Save details' }}

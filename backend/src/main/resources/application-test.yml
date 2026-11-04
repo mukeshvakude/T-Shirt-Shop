@@ -5,6 +5,10 @@ spring:
     url: ${TEST_DB_URL:jdbc:mysql://localhost:3306/tshirt_shop_test?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
     username: ${TEST_DB_USERNAME:${DB_USERNAME}}
     password: ${TEST_DB_PASSWORD:${DB_PASSWORD}}
+  mail:
+    host: ""
+    username: ""
+    password: ""
   flyway:
     locations: classpath:db/migration
 
@@ -40,3 +44,12 @@ app:
     razorpay-key-id: rzp_test_ITONLYFAKEKEY01
     razorpay-key-secret: integration-tests-only
     razorpay-webhook-secret: webhook-integration-tests-only
+  # Tests never use real mail or WhatsApp accounts from .env (NotificationIT sets its own mocked ones)
+  mail:
+    from: ""
+  whatsapp:
+    chat-number: ""
+    owner-number: ""
+    cloud-api:
+      access-token: ""
+      phone-number-id: ""

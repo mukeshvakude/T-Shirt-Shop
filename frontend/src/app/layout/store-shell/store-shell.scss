@@ -301,3 +301,34 @@ main { flex: 1; outline: none; }
   display: grid;
   place-items: center;
 }
+
+// Floating WhatsApp chat link (shown only when WHATSAPP_CHAT_NUMBER is set)
+.whatsapp-fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 48px;
+  padding: 0 18px 0 14px;
+  border-radius: 999px;
+  background: #1f7a3d; // WhatsApp-like green with white text at AA contrast
+  color: #fff;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+
+  .material-symbols-outlined { color: #fff; font-size: 22px; }
+  &:hover { background: #17612f; }
+  &:focus-visible { outline: 3px solid #111; outline-offset: 3px; }
+
+  @media (max-width: 600px) {
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    justify-content: center;
+    .label { display: none; }
+  }
+}

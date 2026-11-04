@@ -39,6 +39,7 @@
               @if (invalid('contact', 'email')) { <small class="err">Enter a valid email address.</small> }
               <small class="hint">We send your order confirmation here.</small>
             </label>
+            <label class="check wide"><input type="checkbox" [formControl]="whatsapp" /> Also send me order updates on WhatsApp</label>
           </div>
         </section>
 

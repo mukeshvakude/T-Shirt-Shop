@@ -116,6 +116,15 @@ app:
     gstin: ${BUSINESS_GSTIN:}
     email: ${BUSINESS_EMAIL:}
     phone: ${BUSINESS_PHONE:}
+  # WhatsApp (optional): chat button number, owner alerts and Meta Cloud API for automatic messages
+  whatsapp:
+    chat-number: ${WHATSAPP_CHAT_NUMBER:}
+    owner-number: ${WHATSAPP_OWNER_NUMBER:}
+    cloud-api:
+      access-token: ${WHATSAPP_ACCESS_TOKEN:}
+      phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
+      api-base: https://graph.facebook.com/v21.0
+      template-language: ${WHATSAPP_TEMPLATE_LANGUAGE:en}
   mail:
     from: ${MAIL_FROM:}
   notifications:

@@ -121,6 +121,7 @@ an `X-Request-Id` header that matches the `requestId` in logs.
 | GET, PATCH | `/api/admin/messages[?status&page]`, `/api/admin/messages/{id}` | `ROLE_ADMIN` |
 | PATCH | `/api/admin/orders/{orderNumber}/status` | `ROLE_ADMIN` (PROCESSING, SHIPPED with courier and tracking, OUT_FOR_DELIVERY, DELIVERED, CANCELLED) |
 | GET | `/api/admin/orders/{orderNumber}/invoice` | `ROLE_ADMIN` (PDF) |
+| GET | `/api/admin/orders/{orderNumber}/whatsapp` | `ROLE_ADMIN` (one-click wa.me messages for the order's current state) |
 | GET, DELETE | `/api/cart` | Signed in (cart with current prices, stock status, coupon, shipping, total; DELETE empties it) |
 | POST | `/api/cart/items` | Signed in (`sku` for a product, or `designCode` + optional `sizeCode` for a custom T-Shirt) |
 | PATCH, DELETE | `/api/cart/items/{id}` | Signed in (quantity, size, colour; remove) |
@@ -146,6 +147,7 @@ an `X-Request-Id` header that matches the `requestId` in logs.
 | GET | `/api/products/{slug}/reviews?page&size` | Public (approved reviews) |
 | GET, PUT, DELETE | `/api/account/wishlist`, `/ids`, `/{productId}` | Signed in |
 | GET | `/api/home` | Public (all home page sections, 60 s cache) |
+| GET | `/api/site` | Public (WhatsApp chat number for the storefront button, 5 min cache) |
 | GET | `/api/offers`, `/api/reviews/highlights?limit=6` | Public |
 | POST | `/api/newsletter`, `/api/contact` | Public, rate limited, always 202 |
 | GET | `/api/products?q&category&minPrice&maxPrice&sizes&colors&featured&newArrival&inStock&sort&page&size` | Public |

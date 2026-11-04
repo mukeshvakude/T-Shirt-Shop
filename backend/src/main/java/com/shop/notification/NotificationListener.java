@@ -12,13 +12,15 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import com.shop.config.AppProperties;
+import com.shop.config.WhatsAppProperties;
 import com.shop.dto.order.OrderResponse;
 import com.shop.repository.OrderRepository;
 import com.shop.service.OrderService;
 
 /**
- * Turns order and contact events into emails once the change is committed (a rolled-back action
- * never emails anyone). A cancellation that includes a refund sends one email, not two.
+ * Turns order and contact events into emails, and WhatsApp messages for orders where the customer
+ * asked for them, once the change is committed (a rolled-back action never messages anyone). A
+ * cancellation that includes a refund sends one message, not two.
  */
 @Component
 public class NotificationListener {
@@ -32,13 +34,20 @@ public class NotificationListener {
     private final OrderService orderService;
     private final TransactionTemplate readOnly;
     private final String shopEmail;
+    private final WhatsAppSender whatsApp;
+    private final WhatsAppMessages whatsAppMessages;
+    private final String ownerWhatsApp;
     private final Map<String, Instant> recentCancellations = new ConcurrentHashMap<>();
 
     public NotificationListener(NotificationExecutor executor, EmailSender email, EmailTemplates templates, OrderRepository orders,
-            OrderService orderService, PlatformTransactionManager tx, AppProperties properties) {
+            OrderService orderService, PlatformTransactionManager tx, AppProperties properties, WhatsAppSender whatsApp,
+            WhatsAppMessages whatsAppMessages, WhatsAppProperties whatsAppProperties) {
         this.executor = executor;
         this.email = email;
         this.templates = templates;
+        this.whatsApp = whatsApp;
+        this.whatsAppMessages = whatsAppMessages;
+        this.ownerWhatsApp = whatsAppProperties.ownerDigits();
         this.orders = orders;
         this.orderService = orderService;
         this.readOnly = new TransactionTemplate(tx);
@@ -82,6 +91,12 @@ public class NotificationListener {
         if (event.type() == OrderEvent.Type.CONFIRMED && shopEmail != null && !shopEmail.isBlank()) {
             EmailTemplates.Email shop = templates.newOrderForShop(o);
             email.send(shopEmail, shop.subject(), shop.html(), shop.text());
+        }
+        if (o.contact().whatsappUpdates()) {
+            whatsApp.send(o.contact().phone(), whatsAppMessages.forEvent(o, event.type(), event.amount()));
+        }
+        if (event.type() == OrderEvent.Type.CONFIRMED && ownerWhatsApp != null) {
+            whatsApp.send(ownerWhatsApp, whatsAppMessages.newOrderForShop(o));
         }
     }
 }

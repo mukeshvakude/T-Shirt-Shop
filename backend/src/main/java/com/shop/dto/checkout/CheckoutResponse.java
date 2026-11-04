@@ -23,7 +23,7 @@ public record CheckoutResponse(
             BigDecimal total) {
     }
 
-    public record Contact(String name, String email, String phone) {
+    public record Contact(String name, String email, String phone, boolean whatsappOptIn) {
     }
 
     /** RAZORPAY or COD, with the reason when it cannot be used for this order. */

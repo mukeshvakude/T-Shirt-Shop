@@ -102,6 +102,9 @@ public class AccountServiceImpl implements AccountService {
         }
         user.setFullName(request.fullName().trim());
         user.setPhone(phone);
+        if (request.whatsappOptIn() != null) {
+            user.setWhatsappOptIn(request.whatsappOptIn());
+        }
         users.saveAndFlush(user);
         return userMapper.toResponse(user);
     }

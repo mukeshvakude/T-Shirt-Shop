@@ -8,6 +8,7 @@ import { ReferenceApi } from '../../core/api/reference.api';
 import { StoreApi } from '../../core/api/store.api';
 import { AuthService } from '../../core/auth/auth.service';
 import { CartService } from '../../core/cart/cart.service';
+import { SiteSettings } from '../../core/config/site-settings.service';
 import { SITE, categoryLink } from '../../core/config/site.config';
 import { Category } from '../../core/models/catalog.models';
 import { Offer } from '../../core/models/store.models';
@@ -46,6 +47,17 @@ export class StoreShell {
     { initialValue: this.router.url },
   );
   protected readonly returnUrl = computed(() => (this.url().startsWith('/login') ? '/' : this.url()));
+
+  /** Floating "Chat on WhatsApp" link; mentions the order when on an order page. Hidden where it would cover controls. */
+  private readonly settings = inject(SiteSettings);
+  protected readonly whatsappLink = computed(() => {
+    const url = this.url();
+    if (/^\/(customize|checkout)/.test(url)) return null;
+    const order = /^\/order\/(TS-\d{8}-\d{6})/.exec(url)?.[1];
+    return this.settings.chatLink(
+      order ? `Hi ${SITE.brandName}, I have a question about my order ${order}.` : `Hi ${SITE.brandName}, I have a question.`,
+    );
+  });
 
   protected link = categoryLink;
 

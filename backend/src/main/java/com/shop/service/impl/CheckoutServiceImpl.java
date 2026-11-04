@@ -99,7 +99,7 @@ public class CheckoutServiceImpl implements CheckoutService {
         User user = users.findById(userId).orElseThrow(() -> new ResourceNotFoundException("Account", userId));
         CheckoutResponse.Totals totals = totals(cart);
         return new CheckoutResponse(cart, totals,
-                new CheckoutResponse.Contact(user.getFullName(), user.getEmail(), user.getPhone()),
+                new CheckoutResponse.Contact(user.getFullName(), user.getEmail(), user.getPhone(), user.isWhatsappOptIn()),
                 accounts.addresses(userId), paymentOptions(totals.total()), settings.getInt("stock.reservation_minutes"));
     }
 
@@ -148,6 +148,9 @@ public class CheckoutServiceImpl implements CheckoutService {
         order.setContactName(r.contact().name().trim());
         order.setContactEmail(r.contact().email().trim().toLowerCase(java.util.Locale.ROOT));
         order.setContactPhone(r.contact().phone().trim());
+        order.setWhatsappUpdates(r.whatsappUpdates());
+        // Remember the WhatsApp choice as the default for the next checkout and the account page
+        users.findById(userId).ifPresent(u -> u.setWhatsappOptIn(r.whatsappUpdates()));
         order.setShippingAddress(json.writeValueAsString(address));
         order.setCustomerNote(r.note() == null || r.note().isBlank() ? null : r.note().trim());
         order.setPlacedAt(now);

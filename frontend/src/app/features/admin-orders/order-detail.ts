@@ -7,7 +7,7 @@ import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { AdminConsoleApi } from '../../core/api/admin-console.api';
-import { AdminOrderDetail, NEXT_STATUS_ACTIONS, STATUS_LABELS } from '../../core/models/admin.models';
+import { AdminOrderDetail, AdminWhatsAppLinks, NEXT_STATUS_ACTIONS, STATUS_LABELS } from '../../core/models/admin.models';
 import { NotifyService } from '../../core/notify.service';
 import { InrPipe } from '../../shared/inr.pipe';
 
@@ -98,6 +98,28 @@ import { InrPipe } from '../../shared/inr.pipe';
               @if (d.order.courierName) { <p><strong>{{ d.order.courierName }}</strong> · {{ d.order.trackingNumber }}</p> }
               @if (d.order.note) { <p class="muted">Customer note: {{ d.order.note }}</p> }
             </section>
+            @if (whatsapp(); as wa) {
+              <section class="card whatsapp">
+                <h2>WhatsApp</h2>
+                @if (!wa.phone) {
+                  <p class="muted">The order phone is not a valid mobile number.</p>
+                } @else {
+                  <p class="muted">
+                    @if (wa.optedIn) { The customer asked for updates on WhatsApp. }
+                    @else { The customer did not ask for WhatsApp updates; message only if needed for this order. }
+                    @if (wa.automatic) { Status updates are also sent automatically. }
+                  </p>
+                  <div class="wa-buttons">
+                    @for (m of wa.messages; track m.type) {
+                      <a mat-stroked-button [href]="m.url" target="_blank" rel="noopener" [title]="m.text">
+                        Send "{{ m.label }}"
+                      </a>
+                    }
+                  </div>
+                  <small class="muted">Opens WhatsApp with the message typed; you press send.</small>
+                }
+              </section>
+            }
             <section class="card">
               <h2>History</h2>
               <ol class="history">
@@ -153,6 +175,7 @@ import { InrPipe } from '../../shared/inr.pipe';
     .history { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px;
       li { border-left: 2px solid #111; padding-left: 12px; font-size: 13px; display: grid; }
       small { color: #777; } span { color: #444; } }
+    .wa-buttons { display: grid; gap: 8px; margin-bottom: 8px; a { justify-content: flex-start; } }
     @media (max-width: 1000px) { .grid { grid-template-columns: minmax(0, 1fr); } }
   `,
 })
@@ -162,6 +185,7 @@ export class AdminOrderDetailPage implements OnInit {
 
   readonly number = input.required<string>();
   protected readonly detail = signal<AdminOrderDetail | null>(null);
+  protected readonly whatsapp = signal<AdminWhatsAppLinks | null>(null);
   protected readonly busy = signal(false);
   protected readonly shipping = signal(false);
   protected readonly labels = STATUS_LABELS;
@@ -223,6 +247,11 @@ export class AdminOrderDetailPage implements OnInit {
     this.api.order(this.number()).subscribe({
       next: (d) => this.detail.set(d),
       error: (err: unknown) => this.notify.error(err, 'The order could not be loaded.'),
+    });
+    // Messages follow the status, so they are reloaded with the order. Optional: no error message.
+    this.api.whatsapp(this.number()).subscribe({
+      next: (w) => this.whatsapp.set(w),
+      error: () => this.whatsapp.set(null),
     });
   }
 }

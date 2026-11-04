@@ -43,7 +43,8 @@ public record OrderResponse(
             String designCode, String designName, List<PriceLine> charges) {
     }
 
-    public record Contact(String name, String email, String phone) {
+    /** {@code whatsappUpdates}: the customer asked for this order's updates on WhatsApp. */
+    public record Contact(String name, String email, String phone, boolean whatsappUpdates) {
     }
 
     public record Address(String fullName, String phone, String line1, String line2, String landmark, String city,

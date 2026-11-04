@@ -8,6 +8,7 @@ import {
   AdminPage,
   AdminPaymentDetail,
   AdminPaymentRow,
+  AdminWhatsAppLinks,
   CustomerDetail,
   CustomerRow,
   Dashboard,
@@ -49,6 +50,11 @@ export class AdminConsoleApi {
 
   updateStatus(number: string, body: { status: string; courierName?: string; trackingNumber?: string; note?: string }): Observable<OrderDetail> {
     return this.http.patch<OrderDetail>(`/api/admin/orders/${encodeURIComponent(number)}/status`, body);
+  }
+
+  /** One-click WhatsApp messages (wa.me links with the text already typed) for the order's current state. */
+  whatsapp(number: string): Observable<AdminWhatsAppLinks> {
+    return this.http.get<AdminWhatsAppLinks>(`/api/admin/orders/${encodeURIComponent(number)}/whatsapp`);
   }
 
   invoice(number: string): Observable<Blob> {

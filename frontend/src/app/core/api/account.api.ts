@@ -16,8 +16,8 @@ export class AccountApi {
     return this.http.get<Dashboard>(`${this.base}/dashboard`);
   }
 
-  updateProfile(fullName: string, phone: string | null): Observable<AuthUser> {
-    return this.http.put<AuthUser>(`${this.base}/profile`, { fullName, phone: phone ?? '' });
+  updateProfile(fullName: string, phone: string | null, whatsappOptIn?: boolean): Observable<AuthUser> {
+    return this.http.put<AuthUser>(`${this.base}/profile`, { fullName, phone: phone ?? '', whatsappOptIn });
   }
 
   changeEmail(newEmail: string, currentPassword: string): Observable<AuthUser> {

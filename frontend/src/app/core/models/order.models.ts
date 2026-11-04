@@ -23,7 +23,7 @@ export interface PaymentOption {
 export interface CheckoutSummary {
   cart: Cart;
   totals: CheckoutTotals;
-  contact: { name: string; email: string; phone: string | null };
+  contact: { name: string; email: string; phone: string | null; whatsappOptIn: boolean };
   addresses: Address[];
   paymentOptions: PaymentOption[];
   reservationMinutes: number;
@@ -38,6 +38,8 @@ export interface PlaceOrderRequest {
   note: string | null;
   /** The total the customer saw; the server compares it and never uses it as the price. */
   expectedTotal: number;
+  /** Send this order's updates on WhatsApp (remembered for next time). */
+  whatsappUpdates: boolean;
 }
 
 export interface OrderItem {
@@ -72,7 +74,7 @@ export interface OrderDetail {
   couponCode: string | null;
   total: number;
   currency: string;
-  contact: { name: string; email: string; phone: string };
+  contact: { name: string; email: string; phone: string; whatsappUpdates: boolean };
   shippingAddress: {
     fullName: string;
     phone: string;

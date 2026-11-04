@@ -16,7 +16,7 @@ function summary(total = 947.2): CheckoutSummary {
         unitPrice: 499, unitMrp: 599, lineTotal: 998, status: 'OK', message: null, variants: [], design: null }],
     },
     totals: { itemsTotal: 998, customizationTotal: 0, shipping: 49, discount: 0, total },
-    contact: { name: 'Meera Iyer', email: 'meera@example.com', phone: '9876543210' },
+    contact: { name: 'Meera Iyer', email: 'meera@example.com', phone: '9876543210', whatsappOptIn: true },
     addresses: [],
     paymentOptions: [
       { method: 'RAZORPAY', available: false, message: 'Online payment is not available yet. Please choose Cash on Delivery.' },
@@ -102,6 +102,7 @@ describe('CheckoutPage', () => {
       saveAddress: true,
       paymentMethod: 'COD',
       expectedTotal: 947.2,
+      whatsappUpdates: true, // pre-ticked from the customer's saved choice
       address: expect.objectContaining({ city: 'Pune', state: 'Maharashtra', pincode: '411001', makeDefault: false }),
     }));
     req.flush({ orderNumber: 'TS-20261103-123456' });

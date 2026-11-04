@@ -41,6 +41,9 @@ public class User extends BaseEntity {
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified;
 
+    @Column(name = "whatsapp_opt_in", nullable = false)
+    private boolean whatsappOptIn;
+
     @Column(name = "failed_login_attempts", nullable = false)
     private int failedLoginAttempts;
 
