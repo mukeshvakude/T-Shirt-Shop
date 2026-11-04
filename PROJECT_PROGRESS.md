@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-04 (Phase 18)
+Last updated: 2026-11-04 (Phase 19)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -27,7 +27,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Admin Dashboard (dashboard, orders with status actions, payments with refunds and review, customers with blocking, contact inbox)
 - [x] Notifications (order confirmed, shipped, out for delivery, delivered, cancelled, refund, password reset; shop alerts for new orders and contact messages)
 - [x] Testing (91% backend line coverage, browser smoke test, payment test checklist, 0 npm audit findings)
-- [ ] Deployment
+- [x] Deployment (deployment guide, Nginx with HTTPS and security headers, systemd service, backups, monitoring, production start-up checks; the shop is not hosted yet, B11)
 - [ ] GitHub Final Update
 
 ## Phase 1 findings: existing repository
@@ -71,7 +71,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 16 | Admin portal | Dashboard metrics, orders, payments, refunds, customers, customization (catalog pages delivered in Phase 5) | Done |
 | 17 | Notifications | Order confirmation, status update and password reset emails | Done (sending needs SMTP, B6) |
 | 18 | Testing | Backend unit and slice tests, frontend tests, payment test checklist, bug fixes | Done |
-| 19 | Production deployment | Prod builds, Nginx + HTTPS, env vars, backups, logging, monitoring, live-mode guide | Pending |
+| 19 | Production deployment | Prod builds, Nginx + HTTPS, env vars, backups, logging, monitoring, live-mode guide | Done (files and guide; hosting is B11) |
 
 ## Blocked / needs owner action
 
@@ -85,7 +85,8 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | B10 | Settlement bank account | Before live payments | Razorpay pays out to the bank account verified in the Razorpay Dashboard (Account & Settings, Bank account details), not to an address set in the code. On 2026-11-03 the owner named a PhonePe UPI ID for payouts: add the bank account linked to that UPI ID in the dashboard during KYC. Test-mode payments never move real money |
 | B6 | SMTP credentials | Now (Phase 17 is built) | Set `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` and `MAIL_FROM` in `.env` (for example a Gmail app password, Zoho Mail, Amazon SES or Brevo SMTP), then restart. Until then emails are only logged as "not sent". Set `BUSINESS_EMAIL` to receive new-order and contact alerts |
 | B9 | Admin login email | Before launch | The local `.env` uses `admin@tshirtshop.local` with a generated password (copy kept in `C:\Users\ADMIN\tools\mysql-credentials.txt`). For production, set your real address and a new password |
-| B7 | Cloudinary account (optional) | Phase 19 | Only if cloud storage is preferred over secure local storage. Phase 9 uses secure local storage for artwork and previews |
+| B7 | Cloudinary account (optional) | Not needed for launch | Local storage under `/var/lib/tshirt-shop/uploads` is backed up nightly by `deploy/backup.sh`. Cloud storage is only worth it with several servers |
+| B11 | Server, domain and go-live | When you are ready to launch | Rent a Linux server (VPS), point your domain at it, then follow [DEPLOYMENT.md](DEPLOYMENT.md): live Razorpay keys after KYC, webhook registration, SMTP, business details, backups and the go-live checklist |
 | B8 | Business content | Before launch | Fill in `frontend/src/app/core/config/site.config.ts`: brand name, support email and phone, address, business hours, social links (empty values are hidden, nothing is invented). Replace the sample product illustrations with real photos. Have the Privacy, Terms and Returns texts reviewed for your business |
 
 ## Decisions made with sensible defaults
@@ -180,6 +181,8 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 - Admin payments: every attempt with its full gateway and audit log; a paid online payment can be refunded in full with a reason (for returns after delivery); review flags are cleared with an audit entry.
 - Admin customers: search, orders and spend, recent orders; blocking an account signs the customer out everywhere and stops sign-in (admins cannot be blocked here).
 - Contact inbox: New / Read / Replied / Closed, reply by email link.
+- Phase 19 production: the app refuses to start in the `prod` profile with http:// or localhost addresses, a non-Secure refresh cookie, password reset links in the log, API docs on or missing Razorpay keys, and warns about test keys, a missing webhook secret, email, business details and a relative upload folder (never logging values). Checked against a real start: refused with the dev settings, started with HTTPS settings, Swagger answered 401, logs were JSON with no secrets.
+- Phase 19 deploy files: Nginx site (HTTPS, HTTP and www redirects, SPA fallback, `/api` and `/media` proxy with forwarding headers overwritten so clients cannot fake their IP, a per-IP limit, a 12 MB body limit, security headers, CSP in report-only mode until a live payment test is clean, actuator hidden except health), a hardened systemd unit, nightly `mysqldump` and uploads backups kept 14 days, and a release build script. The Nginx file was not run through `nginx -t` here (no Nginx on this PC); the guide runs `nginx -t` before every reload.
 - Phase 17 emails: order confirmed (Cash on Delivery at placement, online when paid), shipped (courier and tracking), out for delivery, delivered, cancelled (mentions the refund when there is one, so a cancel-with-refund sends one email), refund started (for example a refund after delivery), and password reset links. The shop gets a "new order" and a "contact form" email at `BUSINESS_EMAIL` when set.
 - Emails are sent after the database transaction commits, on a small background pool, so a rolled-back action never emails and a slow mail server never slows the shop. Failures are logged and never break the action. Logs mask addresses (n***@example.com) and never contain email content.
 - Templates are inline-styled HTML with a plain-text part; all values are HTML-escaped. Amounts use Indian digit grouping (₹1,25,000), also on invoices.
@@ -197,22 +200,22 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~T3~~ | Integration tests left data in `tshirt_shop_test` | Resolved: `DatabaseCleaner` resets user data before each test. Two back-to-back full runs pass |
 | ~~T4~~ | Mermaid diagrams not render-checked | Resolved: all three diagrams render with mermaid-cli 11 |
 | T5 | A disabled account keeps a valid access token for up to 15 minutes | Accepted: refresh is blocked immediately. Revisit if instant lockout is needed |
-| T6 | Rate limits are in memory per instance | Fine for one server. Add proxy limits if scaling out (Phase 19) |
+| T6 | Rate limits are in memory per instance | One server is fine; Nginx adds a per-IP API limit (`deploy/nginx-tshirt-shop.conf`). Use a shared store only if scaling out to several servers |
 | ~~T7~~ | Password reset links were not emailed | Resolved in Phase 17 (needs SMTP settings, B6) |
 | ~~T8~~ | Sample products pointed at `/assets/products/*.jpg` images that did not exist | Resolved in Phase 6: generated sample illustrations for every sample product and colour. Replace with real photos before launch |
 | T9 | Text search uses LIKE, which is fine for a small catalog | Switch to the existing MySQL FULLTEXT index if the catalog grows into the thousands |
 | T10 | Uploaded images are stored as uploaded (not re-encoded) | Safe because content is validated and served with nosniff from random URLs. Re-encoding/thumbnails can come with Cloudinary in Phase 9 or 19 |
-| T11 | Fonts load from Google Fonts (local DNS hiccups showed up as console errors during tests) | Phase 19: self-host Inter and Playfair Display, and build a subset icon font with only the ~40 icons used. Measured on 2026-11-03: Google serves the icon font at ~0.95 MB; the full self-hostable icon package is ~13 MB unpacked, so copying it as-is would be slower |
+| T11 | Fonts load from Google Fonts (local DNS hiccups showed up as console errors during tests) | After launch (optional): self-host Inter and Playfair Display, and build a subset icon font with only the ~40 icons used. Measured on 2026-11-03: Google serves the icon font at ~0.95 MB; the full self-hostable icon package is ~13 MB unpacked, so copying it as-is would be slower |
 | ~~T12~~ | Product cards linked to pages that arrived in Phase 7 | Resolved in Phase 7: listing, search and product pages are live |
 | T14 | Guest bag lives only in this browser until Phase 11 | Phase 11 merges it into the server cart on sign-in |
 | T13 | A signed-in customer who opens `/admin` lands on the home page without a message | Accepted: customers have no reason to open admin links; revisit if support requests show confusion |
-| T16 | Uploaded artwork that is never saved in a design stays on disk | Phase 19: a cleanup job for unattached uploads older than 7 days |
-| T17 | Designer fonts load from Google Fonts | Same plan as T11 (self-host in Phase 19) |
+| T16 | Uploaded artwork that is never saved in a design stays on disk | Open. A simple "no design attached" cleanup is **not safe**: deleting a design detaches its images even when another saved design (or an ordered one) still shows the same upload. A cleanup must check the design canvases first. Disk use is small (5 MB per upload, 20 uploads per hour per customer) |
+| T17 | Designer fonts load from Google Fonts | Same plan as T11 (optional, after launch) |
 | T18 | The blank T-Shirt price per style comes from its custom product, so changing it means editing that product in the admin portal | Fine for now; a "base price" field on the Pricing page can be added if the owner prefers one place |
 | ~~T19~~ | `/checkout` showed a "coming soon" page | Resolved in Phase 12 |
 | T20 | Online payment is shown as unavailable until real Razorpay test keys are configured | Owner action B5; the payment window is built and tested with a stub |
 | ~~T23~~ | Late payments were only flagged for review | Resolved in Phase 14: refunded automatically |
-| T24 | Webhooks cannot reach this development PC | Reconciliation confirms payments within 5 minutes locally. In production, register `https://<domain>/api/payments/webhook` in the Razorpay Dashboard (Phase 19) |
+| ~~T24~~ | Webhooks cannot reach a development PC | Production steps are in DEPLOYMENT.md section 8; locally, reconciliation confirms payments within 5 minutes |
 | T26 | Invoice seller details are only the shop name until `BUSINESS_*` values (legal name, address, GSTIN, email, phone) are set in `.env` | Owner action before launch; a GST-registered business must set `BUSINESS_GSTIN` |
 | T27 | Invoices show GST-inclusive prices without a tax breakdown per rate | Add HSN codes and CGST/SGST/IGST split if the owner's accountant requires it |
 | ~~T25~~ | Flagged payments had no admin screen | Resolved in Phase 16 (Payments, "Needs review") |
@@ -243,4 +246,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 15 | Order management: history, tracking, cancellation with stock return and refunds, admin status API, cash collection, PDF invoices (87 unit + 82 integration backend tests, 95 frontend tests, orders browser run) | `d943020` |
 | 2026-11-03 | 16 | Admin portal: dashboard, orders, payments and refunds, customers, contact inbox (87 unit + 86 integration backend tests, 96 frontend tests, admin browser run) | `648a93f` |
 | 2026-11-04 | 17 | Notifications: order, shipping, cancellation, refund and password reset emails, shop alerts, Indian digit grouping (90 unit + 90 integration backend tests) | `df281e8` |
-| 2026-11-04 | 18 | Testing: JaCoCo coverage (91% instructions, 72% branches, 92% lines), Jackson missing-boolean fix, browser smoke test and cleanup scripts, testing guide and payment test checklist (90 unit + 91 integration backend tests, 96 frontend tests, 11/11 smoke steps, 0 npm audit findings) | see git log on `DEV` |
+| 2026-11-04 | 18 | Testing: JaCoCo coverage (91% instructions, 72% branches, 92% lines), Jackson missing-boolean fix, browser smoke test and cleanup scripts, testing guide and payment test checklist (90 unit + 91 integration backend tests, 96 frontend tests, 11/11 smoke steps, 0 npm audit findings) | `e02fe45` |
+| 2026-11-04 | 19 | Production deployment: DEPLOYMENT.md, Nginx with HTTPS and security headers, systemd unit, backups, release build, production start-up checks (93 unit + 91 integration backend tests, 96 frontend tests, production build, prod-profile start checked) | see git log on `DEV` |

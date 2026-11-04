@@ -49,3 +49,7 @@ Thumbs.db
 # ===== Database dumps =====
 *.sql.gz
 backups/
+
+# Release builds and real production settings (deploy/prod.env.example is the template)
+/release/
+prod.env

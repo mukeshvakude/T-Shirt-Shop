@@ -2,3 +2,5 @@
 *.sh text eol=lf
 *.cmd text eol=crlf
 *.bat text eol=crlf
+# Deployment files run on Linux: always LF
+deploy/** text eol=lf

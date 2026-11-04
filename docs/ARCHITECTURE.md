@@ -264,7 +264,7 @@ Shipping is free above a configurable threshold and a flat charge otherwise. Bot
 
 ## 10. Environments and deployment
 
-Details come in Phase 19.
+Step-by-step instructions and the files are in [DEPLOYMENT.md](../DEPLOYMENT.md) and [deploy/](../deploy/).
 
 - `dev` profile: local MySQL, Razorpay test keys, local image storage, Swagger enabled.
 - `prod` profile: secrets from the environment, Swagger disabled, HTTPS terminated at Nginx, Angular served as static files by Nginx, Spring Boot as a systemd service or container, daily `mysqldump` backups, structured logs.

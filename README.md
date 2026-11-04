@@ -5,13 +5,13 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 18 of 19 complete (architecture, database, backend
+> **Status:** All 19 phases complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
 > home page, product listing and details, customer portal, custom T-Shirt designer,
 > dynamic pricing, shopping cart, checkout with Cash on Delivery, Razorpay payments
 > with verification, webhooks, automatic refunds and reconciliation, order management with
 > tracking, cancellation and PDF invoices, and the admin portal with dashboard, orders,
-> payments, customers and messages, email notifications, and testing). Testing guide:
+> payments, customers and messages, email notifications, testing, and production deployment files). Testing guide:
 > [docs/TESTING.md](docs/TESTING.md); payment checks: [docs/PAYMENT_TEST_CHECKLIST.md](docs/PAYMENT_TEST_CHECKLIST.md). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
@@ -175,8 +175,9 @@ The planned API surface is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Deployment
 
-Covered in Phase 19: production builds, Nginx with HTTPS, environment
-configuration, backups, logging and monitoring.
+See [DEPLOYMENT.md](DEPLOYMENT.md): server setup, production settings, Nginx with HTTPS,
+Razorpay live mode and webhooks, email, backups, logging, monitoring, updates and a go-live
+checklist. Ready-made files are in [deploy/](deploy/).
 
 ## Development workflow
 

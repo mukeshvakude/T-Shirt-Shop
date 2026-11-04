@@ -1,0 +1,31 @@
+# systemd unit for the Spring Boot API.
+#   sudo cp deploy/tshirt-shop.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now tshirt-shop
+#   journalctl -u tshirt-shop -f        (JSON logs)
+[Unit]
+Description=T-Shirt Shop API (Spring Boot)
+After=network-online.target mysql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=tshirt
+Group=tshirt
+WorkingDirectory=/opt/tshirt-shop
+# Secrets live only in this root-owned file (chmod 600), never in git. Template: deploy/prod.env.example
+EnvironmentFile=/etc/tshirt-shop/prod.env
+ExecStart=/usr/bin/java -Xms256m -Xmx768m -XX:+ExitOnOutOfMemoryError -jar /opt/tshirt-shop/app.jar --spring.profiles.active=prod
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=10
+TimeoutStopSec=40
+
+# Hardening: the app may only write to its uploads folder
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/tshirt-shop
+
+[Install]
+WantedBy=multi-user.target
