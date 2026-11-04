@@ -1,6 +1,6 @@
 # Project Progress
 
-Last updated: 2026-11-04 (Phase 17)
+Last updated: 2026-11-04 (Phase 18)
 Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 
 ## Progress tracker
@@ -26,7 +26,7 @@ Working branch: `DEV`. `main` stays stable and only receives reviewed merges.
 - [x] Order Management (order history, details with delivery progress and tracking, customer cancellation with stock return and refunds, admin status API, PDF invoices)
 - [x] Admin Dashboard (dashboard, orders with status actions, payments with refunds and review, customers with blocking, contact inbox)
 - [x] Notifications (order confirmed, shipped, out for delivery, delivered, cancelled, refund, password reset; shop alerts for new orders and contact messages)
-- [ ] Testing
+- [x] Testing (91% backend line coverage, browser smoke test, payment test checklist, 0 npm audit findings)
 - [ ] Deployment
 - [ ] GitHub Final Update
 
@@ -70,7 +70,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 15 | Order management | History, details, tracking, cancellation, status history, PDF invoice | Done (admin screens follow in Phase 16) |
 | 16 | Admin portal | Dashboard metrics, orders, payments, refunds, customers, customization (catalog pages delivered in Phase 5) | Done |
 | 17 | Notifications | Order confirmation, status update and password reset emails | Done (sending needs SMTP, B6) |
-| 18 | Testing | Backend unit and slice tests, frontend tests, payment test checklist, bug fixes | Pending |
+| 18 | Testing | Backend unit and slice tests, frontend tests, payment test checklist, bug fixes | Done |
 | 19 | Production deployment | Prod builds, Nginx + HTTPS, env vars, backups, logging, monitoring, live-mode guide | Pending |
 
 ## Blocked / needs owner action
@@ -218,7 +218,7 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | ~~T25~~ | Flagged payments had no admin screen | Resolved in Phase 16 (Payments, "Needs review") |
 | T28 | Coupons are managed in the database only (no admin page) | Add an admin coupons page if the owner wants to create offers without SQL |
 | ~~T21~~ | Order emails were not sent | Resolved in Phase 17 (needs SMTP settings, B6) |
-| T22 | Address JSON must include `makeDefault`: Jackson 3 rejects missing primitive booleans by default | Clients send it; consider `Boolean` fields or relaxing FAIL_ON_NULL_FOR_PRIMITIVES in Phase 18 |
+| ~~T22~~ | Missing true/false fields (for example `makeDefault`) were rejected with 400 | Resolved in Phase 18: missing fields default to false (regression test in `AccountIT`) |
 | T15 | Account deletion and data export (DPDP rights) are handled by request through the Contact page | Add self-service deletion/export before or after launch, as the owner prefers |
 
 ## Change log
@@ -242,4 +242,5 @@ The brief contains two phase lists. The 19-phase "Strict step-by-step execution"
 | 2026-11-03 | 14 | Payment verification and webhooks: gateway re-check, capture, signed idempotent webhooks, automatic refunds, reconciliation job (87 unit + 77 integration backend tests, 92 frontend tests, live Razorpay test-mode checks) | `139860f` |
 | 2026-11-03 | 15 | Order management: history, tracking, cancellation with stock return and refunds, admin status API, cash collection, PDF invoices (87 unit + 82 integration backend tests, 95 frontend tests, orders browser run) | `d943020` |
 | 2026-11-03 | 16 | Admin portal: dashboard, orders, payments and refunds, customers, contact inbox (87 unit + 86 integration backend tests, 96 frontend tests, admin browser run) | `648a93f` |
-| 2026-11-04 | 17 | Notifications: order, shipping, cancellation, refund and password reset emails, shop alerts, Indian digit grouping (90 unit + 90 integration backend tests) | see git log on `DEV` |
+| 2026-11-04 | 17 | Notifications: order, shipping, cancellation, refund and password reset emails, shop alerts, Indian digit grouping (90 unit + 90 integration backend tests) | `df281e8` |
+| 2026-11-04 | 18 | Testing: JaCoCo coverage (91% instructions, 72% branches, 92% lines), Jackson missing-boolean fix, browser smoke test and cleanup scripts, testing guide and payment test checklist (90 unit + 91 integration backend tests, 96 frontend tests, 11/11 smoke steps, 0 npm audit findings) | see git log on `DEV` |

@@ -64,6 +64,14 @@ On Windows use `mvnw.cmd`. `JAVA_HOME` must point to JDK 21.
 ./mvnw verify    # also runs *IT integration tests against MySQL tshirt_shop_test
 ```
 
+`verify` also writes a JaCoCo coverage report of both test kinds to `target/site/jacoco/index.html`
+(Phase 18: 92% of lines). Full guide: [../docs/TESTING.md](../docs/TESTING.md).
+
+```bash
+# skip coverage when not needed
+./mvnw verify -Djacoco.skip=true
+```
+
 ## Build for production
 
 ```bash

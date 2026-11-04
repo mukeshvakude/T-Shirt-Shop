@@ -173,6 +173,21 @@ class AccountIT {
         assertThat(home).isPositive();
     }
 
+    /** Regression (Phase 18): a request that leaves out a true/false field is accepted (treated as false). */
+    @Test
+    void missingTrueFalseFieldsDefaultToFalse() throws Exception {
+        mvc.perform(as(post("/api/account/addresses")).content("{\"fullName\":\"Asha Rao\",\"phone\":\"9876543210\","
+                        + "\"line1\":\"1 Main Road\",\"city\":\"Pune\",\"state\":\"Maharashtra\",\"pincode\":\"411001\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.isDefault").value(true)); // first address becomes the default anyway
+        mvc.perform(as(post("/api/account/addresses")).content("{\"fullName\":\"Asha Rao\",\"phone\":\"9876543210\","
+                        + "\"line1\":\"2 Side Road\",\"city\":\"Pune\",\"state\":\"Maharashtra\",\"pincode\":\"411001\"}"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.isDefault").value(false));
+        // A missing required number still fails validation instead of silently becoming 0
+        mvc.perform(as(post("/api/cart/items")).content("{\"sku\":\"ANY\"}")).andExpect(status().isBadRequest());
+    }
+
     @Test
     void addressValidationEditingAndOwnership() throws Exception {
         long id = address("Home", false);

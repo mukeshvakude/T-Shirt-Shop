@@ -49,6 +49,10 @@ spring:
     clean-disabled: true
   jackson:
     default-property-inclusion: non_null
+    # Jackson 3 rejects a missing true/false or number field by default; treat it as false / 0 instead
+    # (required numbers are still checked by @Min / @NotNull validation).
+    deserialization:
+      fail-on-null-for-primitives: false
   mvc:
     problemdetails:
       enabled: true

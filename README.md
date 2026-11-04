@@ -5,13 +5,14 @@ Customized T-Shirts. It includes a storefront, a customer account portal, an
 admin portal, a Fabric.js T-Shirt designer with live pricing, and Razorpay
 online payments alongside Cash on Delivery.
 
-> **Status:** Phases 1 to 17 of 19 complete (architecture, database, backend
+> **Status:** Phases 1 to 18 of 19 complete (architecture, database, backend
 > foundation, authentication, product management with the admin portal, storefront
 > home page, product listing and details, customer portal, custom T-Shirt designer,
 > dynamic pricing, shopping cart, checkout with Cash on Delivery, Razorpay payments
 > with verification, webhooks, automatic refunds and reconciliation, order management with
 > tracking, cancellation and PDF invoices, and the admin portal with dashboard, orders,
-> payments, customers and messages, and email notifications). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
+> payments, customers and messages, email notifications, and testing). Testing guide:
+> [docs/TESTING.md](docs/TESTING.md); payment checks: [docs/PAYMENT_TEST_CHECKLIST.md](docs/PAYMENT_TEST_CHECKLIST.md). See [PROJECT_PROGRESS.md](PROJECT_PROGRESS.md).
 
 ## Technology stack
 
@@ -89,7 +90,7 @@ Requires JDK 21 (`JAVA_HOME`) and a running MySQL with the `.env` values filled 
 ```bash
 cd backend
 ./mvnw spring-boot:run      # dev profile by default; Windows: mvnw.cmd spring-boot:run
-./mvnw verify               # unit tests + integration tests against MySQL
+./mvnw verify               # unit + integration tests against MySQL, coverage in target/site/jacoco
 ```
 
 - Swagger UI: http://localhost:8080/swagger-ui.html
